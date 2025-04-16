@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Welcome, {{ session['user_info']['name'] }}!</h1>
+  <p>You can reset a student's password using the form below.</p>
+  <a href="{{ url_for('reset') }}" class="btn btn-primary">Reset Student Password</a>
+{% endblock %}
