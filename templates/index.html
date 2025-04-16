@@ -1,6 +1,141 @@
-{% extends "base.html" %}
-{% block content %}
-  <h1>Welcome, {{ session['user_info']['name'] }}!</h1>
-  <p>You can reset a student's password using the form below.</p>
-  <a href="{{ url_for('reset') }}" class="btn btn-primary">Reset Student Password</a>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Password Reset App</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css"
+  />
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/style.css') }}"
+  />
+</head>
+<body class="bg-light">
+  <nav class="navbar navbar-expand-lg navbar-white bg-white shadow-sm">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="#">🔐 ResetApp</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarsExample"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarsExample">
+        <ul class="navbar-nav ms-auto align-items-center">
+          {% if user %}
+          <li class="nav-item dropdown">
+            <a
+              class="nav-link dropdown-toggle d-flex align-items-center"
+              href="#"
+              id="userMenu"
+              data-bs-toggle="dropdown"
+            >
+              <div class="avatar rounded-circle bg-primary text-white text-center">
+                {{ user.name[0]|upper }}
+              </div>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li>
+                <span class="dropdown-item-text">{{ user.email }}</span>
+              </li>
+              <li><hr class="dropdown-divider" /></li>
+              <li>
+                <a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a>
+              </li>
+            </ul>
+          </li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container py-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div
+            class="alert alert-{{ category }} alert-dismissible fade show"
+            role="alert"
+          >
+            {{ message }}
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="alert"
+            ></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% if not user %}
+      <div class="text-center mt-5">
+        <h1 class="display-5">Welcome!</h1>
+        <p class="lead">
+          Please <a href="{{ url_for('login') }}">sign in with Google</a> to
+          continue.
+        </p>
+      </div>
+    {% else %}
+      <div
+        class="card mx-auto shadow-sm p-4"
+        style="max-width: 500px;"
+      >
+        <h4 class="card-title mb-3">Reset Student Password</h4>
+        <form method="POST">
+          <div class="mb-3">
+            <label for="student_email" class="form-label"
+              >Student Email</label
+            >
+            <input
+              id="student_email"
+              name="student_email"
+              type="email"
+              class="form-control"
+              placeholder="student@example.com"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn-danger w-100">
+            Reset Password
+          </button>
+        </form>
+
+        {% if new_password %}
+        <div
+          id="password-display"
+          class="mt-4 text-center animate__animated animate__fadeInDown"
+        >
+          <h5>New Password for {{ student_email }}:</h5>
+          <p id="new-password" class="fs-4 fw-bold">{{ new_password }}</p>
+          <p>
+            This password disappears in
+            <span id="timer">120</span> seconds.
+          </p>
+        </div>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  <canvas id="confetti-canvas"></canvas>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/party-js@1.0.2/bundle/party.min.js"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
