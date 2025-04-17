@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" class="light-mode">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>How to Use ResetApp</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+</head>
+<body class="bg-light">
+  <!-- reuse your navbar partial or copy the navbar here -->
+  {% include 'partials/navbar.html' %}
+
+  <div class="container py-5">
+    <h1 class="display-4 mb-4">How to Use ResetApp</h1>
+
+    <ol class="fs-5">
+      <li><strong>Search for a student</strong><br/>
+        Type at least two characters of the student's first name, last name, or student number into the search box.
+        As you type, a dropdown will show matching entries in the format <code>First Last, 1000553</code>.
+        Click the entry you want; it will fill the field as <code>email@hart.k12.ga.us (First Last)</code>.</li>
+
+      <li class="mt-4"><strong>Confirm selection</strong><br/>
+        Make sure the name in parentheses matches the student you intend.
+        If the name is truncated, hover over the input to scroll and view the full name.</li>
+
+      <li class="mt-4"><strong>Reset the password</strong><br/>
+        Click the <span class="badge bg-danger">Reset Password</span> button.
+        A confirmation dialog will pop up—click <code>OK</code> to proceed.</li>
+
+      <li class="mt-4"><strong>Copy &amp; share</strong><br/>
+        Once generated, your new password will appear on screen for 120 seconds.
+        Copy it and send it to the student; it will expire after two minutes.</li>
+
+      <li class="mt-4"><strong>Use dark/light mode</strong><br/>
+        Open the menu via the <i class="bi bi-list"></i> icon, then click “Toggle Dark/Light Mode” to switch themes.
+        Your preference is saved automatically.</li>
+    </ol>
+
+    <div class="mt-5">
+      <a href="{{ url_for('index') }}" class="btn btn-primary">
+        ← Back to Reset Page
+      </a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
