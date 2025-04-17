@@ -4,3 +4,4 @@ google-auth-oauthlib==0.5.3
 google-api-python-client==2.70.0
 requests==2.32.2
 Flask-Session==0.4.0
+python-dotenv
