@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Password Reset App</title>
 
-  <!-- Bootstrap CSS & icons -->
+  <!-- Bootstrap & Icons -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet"
@@ -15,7 +15,7 @@
     rel="stylesheet"
   />
 
-  <!-- Animate.css for fade‑in -->
+  <!-- Animate.css -->
   <link
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css"
@@ -28,7 +28,7 @@
   />
 
   <style>
-    /* Light & dark background */
+    /* Light & dark backgrounds */
     body, html {
       height: 100%;
       margin: 0;
@@ -43,7 +43,44 @@
       color: #e1e1e1;
     }
 
-    /* Suggestion dropdown styling */
+    /* Navbar flex adjustments */
+    .navbar-nav {
+      display: flex;
+      align-items: center;
+    }
+    /* Welcome text grows to push the icon right */
+    .welcome-text {
+      flex: 1;
+      font-size: 1.75rem;
+      font-weight: 500;
+      padding-left: 1rem;
+    }
+
+    /* Remove default dropdown caret */
+    .dropdown-toggle::after {
+      display: none;
+    }
+
+    /* Hamburger icon: always black, rotates on open */
+    #menuIcon {
+      font-size: 2rem;
+      color: #212529 !important;
+      transition: transform 0.3s ease;
+    }
+    .dark-mode #menuIcon {
+      color: #212529 !important;
+    }
+    #userMenu.show #menuIcon {
+      transform: rotate(90deg);
+    }
+
+    /* Enlarge dropdown menu by 50% */
+    .dropdown-menu {
+      transform: scale(1.5);
+      transform-origin: top right;
+    }
+
+    /* Suggestion dropdown */
     .suggestions {
       position: absolute;
       width: 100%;
@@ -56,7 +93,7 @@
       cursor: pointer;
     }
 
-    /* Truncate long input, scroll on hover */
+    /* Truncate input, scroll on hover */
     #student_email {
       white-space: nowrap;
       overflow-x: hidden;
@@ -66,21 +103,12 @@
     #student_email:hover {
       overflow-x: auto;
     }
-    /* Scrollbar styling */
     #student_email::-webkit-scrollbar {
       height: 6px;
     }
     #student_email::-webkit-scrollbar-thumb {
       background-color: rgba(0,0,0,0.2);
       border-radius: 3px;
-    }
-
-    /* Avatar in dropdown */
-    .avatar {
-      width: 32px;
-      height: 32px;
-      line-height: 32px;
-      font-size: 1rem;
     }
   </style>
 </head>
@@ -97,30 +125,35 @@
       >
         <span class="navbar-toggler-icon"></span>
       </button>
-
       <div class="collapse navbar-collapse" id="navbarsExample">
-        <ul class="navbar-nav ms-auto align-items-center gap-2">
+        <ul class="navbar-nav ms-auto align-items-center">
           {% if user %}
-          <li class="nav-item dropdown">
+          <li class="nav-item dropdown d-flex align-items-center w-100">
             <a
-              class="nav-link dropdown-toggle d-flex align-items-center"
+              class="nav-link dropdown-toggle d-flex align-items-center p-0 w-100"
               href="#"
               id="userMenu"
               data-bs-toggle="dropdown"
+              aria-expanded="false"
             >
-              <div class="avatar rounded-circle bg-primary text-white text-center me-1">
-                {{ user.name[0]|upper }}
-              </div>
-              <small>Welcome, {{ user.name }}!</small>
+              <span class="welcome-text">Welcome, {{ user.name }}!</span>
+              <i class="bi bi-list" id="menuIcon"></i>
             </a>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+            <ul
+              class="dropdown-menu dropdown-menu-end animate__animated animate__fadeIn"
+              aria-labelledby="userMenu"
+            >
               <li><a class="dropdown-item" href="{{ url_for('help_page') }}">Help</a></li>
               <li><a class="dropdown-item" href="{{ url_for('admin_page') }}">Admin Page</a></li>
-              <li><a class="dropdown-item" href="https://support.hart.k12.ga.us" target="_blank">Submit a Ticket</a></li>
+              <li>
+                <a class="dropdown-item" href="https://support.hart.k12.ga.us" target="_blank">
+                  Submit a Ticket
+                </a>
+              </li>
               <li>
                 <button id="toggleTheme" class="dropdown-item d-flex align-items-center">
                   <i class="bi bi-circle-half me-2"></i>
-                  Toggle Light/Dark Mode
+                  <span id="toggleText">Toggle Dark Mode</span>
                 </button>
               </li>
               <li><hr class="dropdown-divider"></li>
@@ -139,14 +172,10 @@
 
   <!-- Main Content -->
   <div class="container py-4">
-    <!-- Flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
-          <div
-            class="alert alert-{{ category }} alert-dismissible fade show"
-            role="alert"
-          >
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
             {{ message }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
           </div>
@@ -155,7 +184,6 @@
     {% endwith %}
 
     {% if not user %}
-      <!-- Unauthenticated landing -->
       <div class="text-center mt-5">
         <h1 class="display-5">Welcome!</h1>
         <p class="lead">
@@ -163,7 +191,6 @@
         </p>
       </div>
     {% else %}
-      <!-- Reset form card -->
       <div class="card mx-auto shadow-sm p-4" style="max-width: 900px; width:90%;">
         <h4 class="card-title mb-3">Reset Student Password</h4>
         <form id="resetForm" method="POST" autocomplete="off">
@@ -184,10 +211,7 @@
         </form>
 
         {% if new_password %}
-        <div
-          id="password-display"
-          class="mt-4 text-center animate__animated animate__fadeInDown"
-        >
+        <div id="password-display" class="mt-4 text-center animate__animated animate__fadeInDown">
           <h5>New Password for {{ student_name }}:</h5>
           <p id="new-password" class="fs-4 fw-bold">{{ new_password }}</p>
           <p>This password disappears in <span id="timer">120</span> seconds.</p>
@@ -197,26 +221,33 @@
     {% endif %}
   </div>
 
-  <!-- Confetti canvas -->
   <canvas id="confetti-canvas"></canvas>
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/party-js@1.0.2/bundle/party.min.js"></script>
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-
   <script>
-    // Theme toggle
+    // THEME TOGGLE & LABEL
     const html = document.documentElement;
     const toggle = document.getElementById('toggleTheme');
-    html.className = (localStorage.getItem('theme') || 'light') + '-mode';
+    const toggleText = document.getElementById('toggleText');
+    function updateToggleText() {
+      toggleText.textContent = html.classList.contains('light-mode')
+        ? 'Toggle Dark Mode'
+        : 'Toggle Light Mode';
+    }
+    const saved = localStorage.getItem('theme') || 'light';
+    html.className = saved + '-mode';
+    updateToggleText();
     toggle.addEventListener('click', () => {
       const next = html.classList.contains('light-mode') ? 'dark' : 'light';
       html.className = next + '-mode';
       localStorage.setItem('theme', next);
+      updateToggleText();
     });
 
-    // Suggestion dropdown
+    // SUGGESTION DROPDOWN
     const input = document.getElementById('student_email');
     const suggestionBox = document.getElementById('suggestion-list');
     const hiddenName = document.getElementById('student_name');
@@ -241,10 +272,9 @@
               const el = document.createElement('button');
               el.type = 'button';
               el.className = 'list-group-item list-group-item-action';
-              el.textContent = item.label; // "First Last, 1001"
+              el.textContent = item.label;
               el.addEventListener('click', () => {
-                // display "email (First Last)"
-                input.value = `${item.value} (${ item.label.split(',')[0] })`;
+                input.value = `${item.value} (${item.label.split(',')[0]})`;
                 hiddenName.value = item.label.split(',')[0];
                 suggestionBox.classList.add('d-none');
               });
@@ -261,17 +291,16 @@
       }
     });
 
-    // Confirm before reset
-    document.getElementById('resetForm')
-      .addEventListener('submit', function(e) {
-        e.preventDefault();
-        const display = input.value;
-        if (confirm(`Are you sure you want to reset the password for ${display}?`)) {
-          e.target.submit();
-        }
-      });
+    // CONFIRM BEFORE RESET
+    document.getElementById('resetForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const display = input.value;
+      if (confirm(`Are you sure you want to reset the password for ${display}?`)) {
+        e.target.submit();
+      }
+    });
 
-    // Countdown timer
+    // COUNTDOWN TIMER
     {% if new_password %}
       let timeLeft = 120;
       const timerEl = document.getElementById('timer');
