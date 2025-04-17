@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light-mode">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Password Reset App</title>
+
+  <!-- Bootstrap CSS & icons -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet"
@@ -12,17 +14,79 @@
     href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
     rel="stylesheet"
   />
+
+  <!-- Animate.css for fade‑in -->
   <link
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css"
   />
+
+  <!-- Your custom CSS -->
   <link
     rel="stylesheet"
     href="{{ url_for('static', filename='css/style.css') }}"
   />
+
+  <style>
+    /* Light & dark background */
+    body, html {
+      height: 100%;
+      margin: 0;
+      transition: background 0.3s, color 0.3s;
+    }
+    .light-mode body {
+      background: #f8f9fa;
+      color: #212529;
+    }
+    .dark-mode body {
+      background: #121212;
+      color: #e1e1e1;
+    }
+
+    /* Suggestion dropdown styling */
+    .suggestions {
+      position: absolute;
+      width: 100%;
+      top: 100%;
+      z-index: 1000;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .suggestions .list-group-item {
+      cursor: pointer;
+    }
+
+    /* Truncate long input, scroll on hover */
+    #student_email {
+      white-space: nowrap;
+      overflow-x: hidden;
+      text-overflow: ellipsis;
+      transition: overflow 0.2s;
+    }
+    #student_email:hover {
+      overflow-x: auto;
+    }
+    /* Scrollbar styling */
+    #student_email::-webkit-scrollbar {
+      height: 6px;
+    }
+    #student_email::-webkit-scrollbar-thumb {
+      background-color: rgba(0,0,0,0.2);
+      border-radius: 3px;
+    }
+
+    /* Avatar in dropdown */
+    .avatar {
+      width: 32px;
+      height: 32px;
+      line-height: 32px;
+      font-size: 1rem;
+    }
+  </style>
 </head>
-<body class="bg-light">
-  <nav class="navbar navbar-expand-lg navbar-white bg-white shadow-sm">
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg bg-white shadow-sm">
     <div class="container-fluid">
       <a class="navbar-brand fw-bold" href="#">🔐 ResetApp</a>
       <button
@@ -33,8 +97,9 @@
       >
         <span class="navbar-toggler-icon"></span>
       </button>
+
       <div class="collapse navbar-collapse" id="navbarsExample">
-        <ul class="navbar-nav ms-auto align-items-center">
+        <ul class="navbar-nav ms-auto align-items-center gap-2">
           {% if user %}
           <li class="nav-item dropdown">
             <a
@@ -43,19 +108,28 @@
               id="userMenu"
               data-bs-toggle="dropdown"
             >
-              <div class="avatar rounded-circle bg-primary text-white text-center">
+              <div class="avatar rounded-circle bg-primary text-white text-center me-1">
                 {{ user.name[0]|upper }}
               </div>
+              <small>Welcome, {{ user.name }}!</small>
             </a>
-            <ul class="dropdown-menu dropdown-menu-end">
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+              <li><a class="dropdown-item" href="{{ url_for('help_page') }}">Help</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('admin_page') }}">Admin Page</a></li>
+              <li><a class="dropdown-item" href="https://support.hart.k12.ga.us" target="_blank">Submit a Ticket</a></li>
               <li>
-                <span class="dropdown-item-text">{{ user.email }}</span>
+                <button id="toggleTheme" class="dropdown-item d-flex align-items-center">
+                  <i class="bi bi-circle-half me-2"></i>
+                  Toggle Light/Dark Mode
+                </button>
               </li>
-              <li><hr class="dropdown-divider" /></li>
-              <li>
-                <a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a>
-              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
             </ul>
+          </li>
+          {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('login_page') }}">Sign In</a>
           </li>
           {% endif %}
         </ul>
@@ -63,7 +137,9 @@
     </div>
   </nav>
 
+  <!-- Main Content -->
   <div class="container py-4">
+    <!-- Flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
@@ -72,47 +148,39 @@
             role="alert"
           >
             {{ message }}
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="alert"
-            ></button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
           </div>
         {% endfor %}
       {% endif %}
     {% endwith %}
 
     {% if not user %}
+      <!-- Unauthenticated landing -->
       <div class="text-center mt-5">
         <h1 class="display-5">Welcome!</h1>
         <p class="lead">
-          Please <a href="{{ url_for('login') }}">sign in with Google</a> to
-          continue.
+          Please <a href="{{ url_for('login_page') }}">sign in with Google</a> to continue.
         </p>
       </div>
     {% else %}
-      <div
-        class="card mx-auto shadow-sm p-4"
-        style="max-width: 500px;"
-      >
+      <!-- Reset form card -->
+      <div class="card mx-auto shadow-sm p-4" style="max-width: 900px; width:90%;">
         <h4 class="card-title mb-3">Reset Student Password</h4>
-        <form method="POST">
-          <div class="mb-3">
-            <label for="student_email" class="form-label"
-              >Student Email</label
-            >
+        <form id="resetForm" method="POST" autocomplete="off">
+          <div class="mb-3 position-relative">
+            <label for="student_email" class="form-label">Student Name or #</label>
             <input
               id="student_email"
               name="student_email"
-              type="email"
-              class="form-control"
-              placeholder="student@example.com"
+              type="text"
+              class="form-control form-control-lg"
+              placeholder="Type name or student #"
               required
             />
+            <div id="suggestion-list" class="list-group suggestions d-none"></div>
+            <input type="hidden" name="student_name" id="student_name" />
           </div>
-          <button type="submit" class="btn btn-danger w-100">
-            Reset Password
-          </button>
+          <button type="submit" class="btn btn-danger w-100 btn-lg">Reset Password</button>
         </form>
 
         {% if new_password %}
@@ -120,22 +188,99 @@
           id="password-display"
           class="mt-4 text-center animate__animated animate__fadeInDown"
         >
-          <h5>New Password for {{ student_email }}:</h5>
+          <h5>New Password for {{ student_name }}:</h5>
           <p id="new-password" class="fs-4 fw-bold">{{ new_password }}</p>
-          <p>
-            This password disappears in
-            <span id="timer">120</span> seconds.
-          </p>
+          <p>This password disappears in <span id="timer">120</span> seconds.</p>
         </div>
         {% endif %}
       </div>
     {% endif %}
   </div>
 
+  <!-- Confetti canvas -->
   <canvas id="confetti-canvas"></canvas>
 
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/party-js@1.0.2/bundle/party.min.js"></script>
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+  <script>
+    // Theme toggle
+    const html = document.documentElement;
+    const toggle = document.getElementById('toggleTheme');
+    html.className = (localStorage.getItem('theme') || 'light') + '-mode';
+    toggle.addEventListener('click', () => {
+      const next = html.classList.contains('light-mode') ? 'dark' : 'light';
+      html.className = next + '-mode';
+      localStorage.setItem('theme', next);
+    });
+
+    // Suggestion dropdown
+    const input = document.getElementById('student_email');
+    const suggestionBox = document.getElementById('suggestion-list');
+    const hiddenName = document.getElementById('student_name');
+    let debounce;
+    input.addEventListener('input', () => {
+      const q = input.value.trim();
+      clearTimeout(debounce);
+      if (q.length < 1) {
+        suggestionBox.classList.add('d-none');
+        return;
+      }
+      debounce = setTimeout(() => {
+        fetch(`/search_users?q=${encodeURIComponent(q)}`)
+          .then(r => r.json())
+          .then(data => {
+            suggestionBox.innerHTML = '';
+            if (!data.length) {
+              suggestionBox.classList.add('d-none');
+              return;
+            }
+            data.forEach(item => {
+              const el = document.createElement('button');
+              el.type = 'button';
+              el.className = 'list-group-item list-group-item-action';
+              el.textContent = item.label; // "First Last, 1001"
+              el.addEventListener('click', () => {
+                // display "email (First Last)"
+                input.value = `${item.value} (${ item.label.split(',')[0] })`;
+                hiddenName.value = item.label.split(',')[0];
+                suggestionBox.classList.add('d-none');
+              });
+              suggestionBox.appendChild(el);
+            });
+            suggestionBox.classList.remove('d-none');
+          })
+          .catch(console.error);
+      }, 200);
+    });
+    document.addEventListener('click', e => {
+      if (!input.contains(e.target) && !suggestionBox.contains(e.target)) {
+        suggestionBox.classList.add('d-none');
+      }
+    });
+
+    // Confirm before reset
+    document.getElementById('resetForm')
+      .addEventListener('submit', function(e) {
+        e.preventDefault();
+        const display = input.value;
+        if (confirm(`Are you sure you want to reset the password for ${display}?`)) {
+          e.target.submit();
+        }
+      });
+
+    // Countdown timer
+    {% if new_password %}
+      let timeLeft = 120;
+      const timerEl = document.getElementById('timer');
+      const countdown = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = timeLeft;
+        if (timeLeft <= 0) clearInterval(countdown);
+      }, 1000);
+    {% endif %}
+  </script>
 </body>
 </html>

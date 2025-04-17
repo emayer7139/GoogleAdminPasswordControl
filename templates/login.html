@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" class="light-mode">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign In • ResetApp</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      transition: background 0.3s;
+    }
+    .dark-mode body {
+      background: #121212;
+      color: #e1e1e1;
+    }
+    .light-mode body {
+      background: #f8f9fa;
+      color: #212529;
+    }
+    .card {
+      border-radius: 1rem;
+    }
+    .google-btn {
+      /* light gray background */
+      background: #f0f0f0;
+      border: 1px solid #ccc;
+      color: #444;
+
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .google-btn:hover {
+      /* slightly darker on hover */
+      background: #e2e2e2;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    .spinner-border {
+      width: 1.5rem;
+      height: 1.5rem;
+      border-width: 0.2em;
+    }
+    .theme-toggle {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <!-- Dark mode toggle -->
+  <div class="theme-toggle">
+    <button class="btn btn-sm" id="toggleTheme">🌓</button>
+  </div>
+
+  <div class="d-flex justify-content-center align-items-center" style="height:100vh">
+    <div class="card p-5 shadow-lg text-center" style="max-width:600px; width:95%;">
+      <!-- Logo -->
+      <img src="{{ url_for('static', filename='img/logo.png') }}"
+           alt="ResetApp Logo"
+           class="mb-4"
+           style="height:64px;"/>
+
+      <!-- Bigger Heading -->
+      <h1 class="display-3 mb-3">Welcome Back!</h1>
+      <p class="lead mb-4">
+        Sign in with your Google account to securely reset student passwords.
+      </p>
+
+      <!-- Light‑gray Google button -->
+      <button id="googleSignIn" class="btn google-btn w-100 py-3 fs-4" aria-label="Sign in with Google">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+             alt=""
+             style="height:24px;"/>
+        <span id="btnText">Sign in with Google</span>
+        <div id="btnSpinner" class="spinner-border text-primary d-none" role="status"></div>
+      </button>
+
+      <!-- Help link -->
+      <p class="mt-4">
+        <a href="/help" class="small">Need help signing in?</a>
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Dark/light mode persistence
+    const html = document.documentElement;
+    const toggle = document.getElementById('toggleTheme');
+    html.className = (localStorage.getItem('theme') || 'light') + '-mode';
+    toggle.onclick = () => {
+      const next = html.classList.contains('light-mode') ? 'dark' : 'light';
+      html.className = next + '-mode';
+      localStorage.setItem('theme', next);
+    };
+
+    // Spinner on click
+    const btn = document.getElementById('googleSignIn');
+    const text = document.getElementById('btnText');
+    const spinner = document.getElementById('btnSpinner');
+    btn.onclick = () => {
+      btn.disabled = true;
+      text.classList.add('d-none');
+      spinner.classList.remove('d-none');
+      window.location = "{{ url_for('login_google') }}";
+    };
+  </script>
+</body>
+</html>
