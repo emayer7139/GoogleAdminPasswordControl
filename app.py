@@ -13,6 +13,10 @@ from google.auth.transport.requests import Request as GoogleRequest
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from config import Config
+from datetime import datetime
+
+# in-memory audit log; in production you might write this to a database
+audit_logs = []
 
 # Logging
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
@@ -221,10 +225,43 @@ def search_users():
 def help_page():
     return render_template('help.html')
 
+# near the bottom of app.py, above the 404 handler
+
+@app.route('/instructions')
+@login_required
+def instructions_page():
+    return render_template('instructions.html', user=session.get('user_info'))
+
+
 @app.route('/admin')
 @login_required
 def admin_page():
-    return render_template('admin.html', user=session.get('user_info'))
+    # build a readonly Directory client
+    creds = service_account.Credentials.from_service_account_file(
+        app.config['SERVICE_ACCOUNT_FILE'],
+        scopes=['https://www.googleapis.com/auth/admin.directory.user.readonly']
+    ).with_subject(app.config['ADMIN_USER'])
+    service = build('admin', 'directory_v1', credentials=creds)
+
+    # fetch up to 200 users, ordered by email
+    resp = service.users().list(
+      customer='my_customer',
+      maxResults=200,
+      orderBy='email'
+    ).execute()
+    users = resp.get('users', [])
+
+    return render_template(
+      'admin.html',
+      user=session['user_info'],
+      users=users,
+      audit_logs=audit_logs
+    )
+
+@app.route('/documentation')
+@login_required
+def documentation():
+    return render_template('documentation.html', user=session.get('user_info'))
 
 @app.errorhandler(404)
 def page_not_found(e):
