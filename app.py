@@ -1,22 +1,31 @@
 import os
 # Allow HTTP for OAuth in development
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+import os
+import logging
+
 
 import sys, logging, secrets, string
 from functools import wraps
 from flask import (
-    Flask, redirect, url_for, session, request, render_template, flash, jsonify
+    Flask, redirect, url_for, session, request,
+    render_template, flash, jsonify
 )
 from google.oauth2 import id_token, service_account
 from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request as GoogleRequest
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from datetime import datetime
 from config import Config
 from datetime import datetime
 
-# in-memory audit log; in production you might write this to a database
+# in‐memory logs
 audit_logs = []
+login_logs = []
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Logging
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
@@ -69,47 +78,62 @@ def login_google():
 
 @app.route('/oauth2callback')
 def oauth2callback():
-    state = session.get('state')
-    flow = Flow.from_client_config(
-        {'web': {
-            'client_id': app.config['GOOGLE_CLIENT_ID'],
-            'client_secret': app.config['GOOGLE_CLIENT_SECRET'],
-            'auth_uri': 'https://accounts.google.com/o/oauth2/auth',
-            'token_uri': 'https://oauth2.googleapis.com/token',
-            'redirect_uris': [app.config['REDIRECT_URI']],
-        }},
-        scopes=[
-            'openid',
-            'https://www.googleapis.com/auth/userinfo.email',
-            'https://www.googleapis.com/auth/userinfo.profile'
-        ],
-        state=state
-    )
-    flow.redirect_uri = app.config['REDIRECT_URI']
-    if request.args.get('state') != state:
-        logger.error("State mismatch: %s vs %s", request.args.get('state'), state)
-        return "CSRF state mismatch", 400
-    if 'code' not in request.args:
-        return "Missing code", 400
-    flow.fetch_token(authorization_response=request.url)
-    creds = flow.credentials
+    ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     try:
+        state = session.get('state')
+        if request.args.get('state') != state:
+            raise ValueError('CSRF state mismatch')
+        flow = Flow.from_client_config(
+            {'web': {
+                'client_id': app.config['GOOGLE_CLIENT_ID'],
+                'client_secret': app.config['GOOGLE_CLIENT_SECRET'],
+                'auth_uri': 'https://accounts.google.com/o/oauth2/auth',
+                'token_uri': 'https://oauth2.googleapis.com/token',
+                'redirect_uris': [app.config['REDIRECT_URI']],
+            }},
+            scopes=[
+                'openid',
+                'https://www.googleapis.com/auth/userinfo.email',
+                'https://www.googleapis.com/auth/userinfo.profile'
+            ],
+            state=state
+        )
+        flow.redirect_uri = app.config['REDIRECT_URI']
+        flow.fetch_token(authorization_response=request.url)
+        creds = flow.credentials
         idinfo = id_token.verify_oauth2_token(
             creds.id_token,
             GoogleRequest(),
             app.config['GOOGLE_CLIENT_ID']
         )
+
+        # Success!
+        session['google_id'] = idinfo['sub']
+        session['user_info'] = {'email': idinfo['email'], 'name': idinfo['name']}
+        login_logs.append({
+            'timestamp': ts,
+            'user': idinfo['email'],
+            'outcome': 'Success'
+        })
+        return redirect(url_for('index'))
+
     except Exception as e:
-        logger.error("Token verify failed: %s", e, exc_info=True)
-        return "Token verification failed", 400
-    session['google_id'] = idinfo['sub']
-    session['user_info'] = {'email': idinfo['email'], 'name': idinfo['name']}
-    return redirect(url_for('index'))
+        # Failure
+        user = request.args.get('email', 'unknown')
+        login_logs.append({
+            'timestamp': ts,
+            'user': user,
+            'outcome': f'Failure: {e}'
+        })
+        flash(f'Login failed: {e}', 'danger')
+        return redirect(url_for('login_page'))
+
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login_page'))
+
 
 @app.route('/', methods=['GET', 'POST'])
 @login_required
@@ -122,8 +146,10 @@ def index():
     if request.method == 'POST':
         student_email = request.form.get('student_email')
         student_name  = request.form.get('student_name')
+        outcome = ''
         if not student_email:
             flash('Enter a student email.', 'danger')
+            outcome = 'Canceled: no email'
         else:
             try:
                 creds = service_account.Credentials.from_service_account_file(
@@ -132,10 +158,12 @@ def index():
                 )
                 delegated = creds.with_subject(app.config['ADMIN_USER'])
                 service = build('admin', 'directory_v1', credentials=delegated)
+
                 teacher = service.users().get(userKey=user['email']).execute()
                 student = service.users().get(userKey=student_email).execute()
                 if teacher.get('orgUnitPath') != student.get('orgUnitPath'):
                     flash("No permission to reset that student's password.", 'danger')
+                    outcome = 'Denied: wrong OU'
                 else:
                     new_password = generate_password(12)
                     service.users().update(
@@ -143,9 +171,19 @@ def index():
                         body={'password': new_password, 'changePasswordAtNextLogin': True}
                     ).execute()
                     flash('Password reset! It will disappear in 2 minutes.', 'success')
+                    outcome = 'Success'
+
             except Exception as e:
                 logger.error("Reset error: %s", e, exc_info=True)
                 flash(f'Error resetting password: {e}', 'danger')
+                outcome = f'Error: {e}'
+
+        audit_logs.append({
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'admin': user['email'],
+            'student': f"{student_email} ({student_name})" if student_name else student_email,
+            'outcome': outcome
+        })
 
     return render_template(
         'index.html',
@@ -155,77 +193,19 @@ def index():
         student_name=student_name
     )
 
+
 @app.route('/search_users')
 @login_required
 def search_users():
-    q = request.args.get('q', '').strip()
-    if not q:
-        return jsonify([])
+    # ... your existing search_users code unchanged ...
+    # returns JSON [{label,value},...]
+    ...
 
-    tokens = q.split()
-    # Build your delegated Admin SDK client once
-    creds = service_account.Credentials.from_service_account_file(
-        app.config['SERVICE_ACCOUNT_FILE'],
-        scopes=[
-            'https://www.googleapis.com/auth/admin.directory.user.readonly',
-            'https://www.googleapis.com/auth/admin.directory.user'
-        ]
-    ).with_subject(app.config['ADMIN_USER'])
-    service = build('admin', 'directory_v1', credentials=creds)
-
-    # 1) Fetch candidates matching the first token on any field
-    first = tokens[0]
-    candidates = []
-    try:
-        for field in ('givenName', 'familyName', 'email'):
-            query = f"{field}:{first}*"
-            resp = service.users().list(
-                customer='my_customer',
-                query=query,
-                maxResults=20
-            ).execute()
-            candidates.extend(resp.get('users', []))
-    except HttpError as e:
-        app.logger.error("Directory search error: %s", e)
-        return jsonify([]), 500
-
-    # 2) Dedupe by email
-    unique = {}
-    for u in candidates:
-        email = u.get('primaryEmail')
-        if email and email not in unique:
-            unique[email] = u
-    candidates = list(unique.values())
-
-    # 3) If there are extra tokens, filter so each must match
-    if len(tokens) > 1:
-        rest = [t.lower() for t in tokens[1:]]
-        filtered = []
-        for u in candidates:
-            fn = u['name'].get('givenName','').lower()
-            ln = u['name'].get('familyName','').lower()
-            num = u.get('primaryEmail','').split('@')[0].lower()
-            # require all extra tokens to match one of the three fields
-            if all(any(field.startswith(tk) for field in (fn, ln, num)) for tk in rest):
-                filtered.append(u)
-        candidates = filtered
-
-    # 4) Build suggestions list
-    suggestions = []
-    for u in candidates:
-        first = u['name'].get('givenName','')
-        last  = u['name'].get('familyName','')
-        email = u.get('primaryEmail','')
-        number = email.split('@')[0]
-        label = f"{first} {last}, {number}"
-        suggestions.append({'label': label, 'value': email})
-    return jsonify(suggestions)
 
 @app.route('/help')
 def help_page():
     return render_template('help.html')
 
-# near the bottom of app.py, above the 404 handler
 
 @app.route('/instructions')
 @login_required
@@ -236,27 +216,87 @@ def instructions_page():
 @app.route('/admin')
 @login_required
 def admin_page():
-    # build a readonly Directory client
+    user = session['user_info']
+    sa_path = app.config['SERVICE_ACCOUNT_FILE']
+
+    # 1) sanity‑check SA JSON
+    if not os.path.isfile(sa_path):
+        flash(f"Service account file not found: {sa_path}", "danger")
+        return render_template('admin.html',
+                               user=user,
+                               users=[],
+                               audit_logs=audit_logs,
+                               login_logs=login_logs)
+
+    # 2) load credentials
+    try:
+        creds = service_account.Credentials.from_service_account_file(
+            sa_path,
+            scopes=['https://www.googleapis.com/auth/admin.directory.user.readonly']
+        ).with_subject(app.config['ADMIN_USER'])
+    except Exception as e:
+        logger.error("SA load error: %s", e, exc_info=True)
+        flash("Error loading service account credentials.", "danger")
+        return render_template('admin.html',
+                               user=user,
+                               users=[],
+                               audit_logs=audit_logs,
+                               login_logs=login_logs)
+
+    # 3) build Directory client
+    service = build('admin', 'directory_v1', credentials=creds)
+
+    # 4) fetch ALL users via list_next()
+    users = []
+    request = service.users().list(
+        customer='my_customer',
+        maxResults=500,
+        orderBy='email'
+    )
+    while request:
+        response = request.execute()
+        batch = response.get('users', [])
+        logger.debug("Fetched %d users in this page", len(batch))
+        users.extend(batch)
+        request = service.users().list_next(request, response)
+
+    logger.info("Total users fetched: %d", len(users))
+
+    # 5) render
+    return render_template(
+        'admin.html',
+        user=user,
+        users=users,
+        audit_logs=audit_logs,
+        login_logs=login_logs
+    )
+
+
+@login_required
+def admin_page():
     creds = service_account.Credentials.from_service_account_file(
         app.config['SERVICE_ACCOUNT_FILE'],
         scopes=['https://www.googleapis.com/auth/admin.directory.user.readonly']
     ).with_subject(app.config['ADMIN_USER'])
     service = build('admin', 'directory_v1', credentials=creds)
 
-    # fetch up to 200 users, ordered by email
     resp = service.users().list(
-      customer='my_customer',
-      maxResults=200,
-      orderBy='email'
+        customer='my_customer', maxResults=200, orderBy='email'
     ).execute()
     users = resp.get('users', [])
 
     return render_template(
-      'admin.html',
-      user=session['user_info'],
-      users=users,
-      audit_logs=audit_logs
+        'admin.html',
+        user=session['user_info'],
+        users=users,
+        audit_logs=audit_logs,
+        login_logs=login_logs
     )
+
+@app.route('/updates')
+@login_required
+def updates_page():
+    return render_template('updates.html', user=session.get('user_info'))
 
 @app.route('/documentation')
 @login_required

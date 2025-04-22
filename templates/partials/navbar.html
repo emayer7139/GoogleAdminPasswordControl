@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg bg-white shadow-sm">
+<nav class="navbar navbar-expand-lg" id="mainNavbar">
   <div class="container-fluid">
     <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">🔐 ResetApp</a>
     <button class="navbar-toggler" type="button"
@@ -12,26 +12,44 @@
           <a class="nav-link dropdown-toggle d-flex align-items-center p-0 w-100"
              href="#"
              id="userMenu"
-             data-bs-toggle="dropdown"
-             aria-expanded="false">
+             data-bs-toggle="dropdown">
             <span class="welcome-text">Welcome, {{ user.name }}!</span>
             <i class="bi bi-list" id="menuIcon"></i>
           </a>
-          <ul class="dropdown-menu dropdown-menu-end animate__animated animate__fadeIn"
-              aria-labelledby="userMenu">
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
 
-            {# Usage Instructions (always available once logged in) #}
-            <li>
-              <a class="dropdown-item" href="{{ url_for('instructions_page') }}">
-                Usage Instructions
-              </a>
-            </li>
+            {# Documentation on Admin page #}
+            {% if request.endpoint == 'admin_page' %}
+              <li>
+                <a class="dropdown-item" href="{{ url_for('documentation') }}">
+                  Documentation
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="{{ url_for('updates_page') }}">
+                  What’s New
+                </a>
+              </li>
+            {% endif %}
 
+            {# Usage Instructions on all other pages except Help/Instructions/Admin #}
+            {% if request.endpoint not in ['help_page','instructions_page','admin_page'] %}
+              <li>
+                <a class="dropdown-item" href="{{ url_for('instructions_page') }}">
+                  Usage Instructions
+                </a>
+              </li>
+            {% endif %}
+
+            {# Admin link, hidden on Admin #}
+            {% if request.endpoint != 'admin_page' %}
             <li>
               <a class="dropdown-item" href="{{ url_for('admin_page') }}">
-                Admin Page
+                Admin Dashboard
               </a>
             </li>
+            {% endif %}
+
             <li>
               <a class="dropdown-item"
                  href="https://support.hart.k12.ga.us"
@@ -47,10 +65,9 @@
             </li>
             <li><hr class="dropdown-divider"></li>
             <li>
-              <a class="dropdown-item" href="{{ url_for('logout') }}">
-                Logout
-              </a>
+              <a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a>
             </li>
+
           </ul>
         </li>
         {% else %}

@@ -1,37 +1,79 @@
-/* Base background */
-body {
-    background-color: #f2f4f7;
-  }
-  
-  /* Navbar brand styling */
-  .navbar-brand {
-    font-size: 1.5rem;
-  }
-  
-  /* User avatar circle */
-  .avatar {
-    width: 2rem;
-    height: 2rem;
-    line-height: 2rem;
-    font-weight: 600;
-  }
-  
-  /* Fullscreen confetti canvas */
-  #confetti-canvas {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    z-index: 9999;
-  }
-  
-  /* Reset-button “pop” on hover */
-  .btn-danger {
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-  
-  .btn-danger:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-  }
-  
+/* Base (light-mode) navbar */
+#mainNavbar {
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Dark mode styles */
+.dark-mode #mainNavbar {
+  background-color: #2b2e33 !important;
+  box-shadow: none;
+}
+
+/* Navbar links & text */
+#mainNavbar .navbar-brand,
+#mainNavbar .nav-link,
+.dark-mode #mainNavbar .navbar-brand,
+.dark-mode #mainNavbar .nav-link,
+.dark-mode .welcome-text,
+.dark-mode #toggleText {
+  color: #f8f9fa !important;
+}
+
+/* Ensure the hamburger icon is visible */
+.dark-mode #menuIcon {
+  color: #f8f9fa !important;
+}
+
+/* Tweak dropdown in dark mode to match */
+.dark-mode .dropdown-menu {
+  background-color: #2b2e33;
+}
+.dark-mode .dropdown-item {
+  color: #f8f9fa;
+}
+.dark-mode .dropdown-item:hover,
+.dark-mode .dropdown-item:focus {
+  background-color: #3a3f47;
+}
+
+/* Welcome text sizing */
+.welcome-text {
+  font-size: 1.5rem;
+  font-weight: 500;
+  flex: 1;
+  padding-left: 1rem;
+}
+
+/* Dropdown icon rotation */
+#menuIcon {
+  font-size: 1.75rem;
+  transition: transform 0.3s ease;
+}
+#userMenu.show #menuIcon {
+  transform: rotate(90deg);
+}
+/* Dark‐mode navbar background */
+.dark-mode #mainNavbar {
+  background-color: #2b2e33 !important;
+}
+
+/* Navbar links & icons in dark mode */
+.dark-mode #mainNavbar .navbar-brand,
+.dark-mode #mainNavbar .nav-link,
+.dark-mode .welcome-text,
+.dark-mode #toggleText,
+.dark-mode #menuIcon {
+  color: #f8f9fa !important;
+}
+
+/* Dark‐mode dropdown */
+.dark-mode .dropdown-menu {
+  background-color: #2b2e33;
+}
+.dark-mode .dropdown-item {
+  color: #f8f9fa;
+}
+.dark-mode .dropdown-item:hover {
+  background-color: #3a3f47;
+}
