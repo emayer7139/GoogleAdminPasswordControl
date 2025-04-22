@@ -13,7 +13,7 @@ class Config:
     GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "your_google_client_secret")
 
     # Base URL setting - either your domain or localhost for testing
-    BASE_URL = os.environ.get("BASE_URL", "http://localhost:5000")
+    BASE_URL = os.environ.get("BASE_URL")
     
     # Redirect URI: either explicitly set or constructed from BASE_URL
     REDIRECT_URI = os.environ.get("REDIRECT_URI", BASE_URL + "/oauth2callback")
