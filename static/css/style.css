@@ -15,39 +15,65 @@
   height: 24px;
 }
 
+/* Base (light‑mode) navbar */
+#mainNavbar {
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Welcome text sizing */
+.welcome-text {
+  font-size: 1.5rem;
+  font-weight: 500;
+  flex: 1;
+  padding-left: 1rem;
+}
+
+/* Dropdown icon rotation */
+#menuIcon {
+  font-size: 1.75rem;
+  transition: transform 0.3s ease;
+}
+#userMenu.show #menuIcon {
+  transform: rotate(90deg);
+}
+
 /* Dark‑mode overrides */
 html.dark-mode body {
   background-color: #20232a;
   color:            #c0c0c0;
 }
-html.dark-mode .card {
-  background-color: #2e3138;
-  border-color:     #3a3f4b;
-  color:            #e0e0e0;
-}
-html.dark-mode .theme-toggle .btn {
-  background: #3a3f4b;
-  color:      #c0c0c0;
-}
-html.dark-mode .google-btn {
-  background-color: #3a3f4b;
-  color:            #e0e0e0;
-  border: 1px solid #4f555f;
-}
-html.dark-mode .google-btn:hover {
-  background-color: #4f555f;
-}
+
 /* Dark‑mode navbar */
+html.dark-mode #mainNavbar {
+  background-color: #2b2e33 !important;
+  box-shadow: none;
+}
 html.dark-mode .navbar,
 html.dark-mode .navbar.navbar-expand-lg {
-  background-color: #2b2e33 !important;   /* slightly lighter charcoal */
+  background-color: #2b2e33 !important;
   border-bottom: 1px solid #3a3f47;
 }
-html.dark-mode .navbar-brand,
-html.dark-mode .navbar-text,
-html.dark-mode .dropdown-toggle,
-html.dark-mode .nav-link {
-  color: #e0e0e0 !important;
+#mainNavbar .navbar-brand,
+#mainNavbar .nav-link,
+.dark-mode #mainNavbar .navbar-brand,
+.dark-mode #mainNavbar .nav-link,
+.dark-mode .welcome-text,
+.dark-mode #toggleText,
+.dark-mode #menuIcon {
+  color: #f8f9fa !important;
+}
+
+/* Dark‑mode dropdown */
+.dark-mode .dropdown-menu {
+  background-color: #2b2e33;
+}
+.dark-mode .dropdown-item {
+  color: #f8f9fa;
+}
+.dark-mode .dropdown-item:hover,
+.dark-mode .dropdown-item:focus {
+  background-color: #3a3f47;
 }
 
 /* Dark‑mode input fields */
@@ -60,11 +86,27 @@ html.dark-mode .form-control::placeholder {
   color: #b2b8c2;
 }
 
-/* Dark‑mode cards & modals (if you haven’t already) */
+/* Dark‑mode cards & modals */
 html.dark-mode .card,
 html.dark-mode .modal-content {
   background-color: #2e3138;
   border-color:     #3a3f47;
   color:            #e0e0e0;
+}
+
+/* Dark‑mode theme toggle button */
+html.dark-mode .theme-toggle .btn {
+  background: #3a3f4b;
+  color:      #c0c0c0;
+}
+
+/* Dark‑mode google button */
+html.dark-mode .google-btn {
+  background-color: #3a3f4b;
+  color:            #e0e0e0;
+  border: 1px solid #4f555f;
+}
+html.dark-mode .google-btn:hover {
+  background-color: #4f555f;
 }
 

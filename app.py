@@ -3,18 +3,19 @@ import sys
 import logging
 import secrets
 import string
-
+from datetime import datetime
 from functools import wraps
+
 from flask import (
     Flask, redirect, url_for, session, request,
     render_template, flash, jsonify
 )
+from werkzeug.middleware.proxy_fix import ProxyFix
 from google.oauth2 import id_token, service_account
 from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request as GoogleRequest
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-from werkzeug.middleware.proxy_fix import ProxyFix
 
 from config import Config
 
@@ -22,15 +23,18 @@ from config import Config
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 logger = logging.getLogger(__name__)
 
-# ─── Create Flask app + ProxyFix ─────────────────────────────────────
+# ─── Flask app + ProxyFix (trust X-Forwarded-*) ──────────────────────
 app = Flask(__name__, static_folder='static', template_folder='templates')
-# trust X-Forwarded headers from nginx
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 app.config.from_object(Config)
 app.secret_key = app.config['SECRET_KEY']
 
-# ─── Helpers ─────────────────────────────────────────────────────────
+# ─── In‑memory logs ─────────────────────────────────────────────────
+audit_logs = []
+login_logs = []
+
+# ─── Helpers ────────────────────────────────────────────────────────
 def generate_password(length=12):
     alphabet = string.ascii_letters + string.digits
     return ''.join(secrets.choice(alphabet) for _ in range(length))
@@ -65,6 +69,9 @@ def login_google():
         ]
     )
     flow.redirect_uri = app.config['REDIRECT_URI']
+    # trust the proxy’s X-Forwarded-Proto header for https
+    flow.oauth2session.trust_env = True
+
     auth_url, state = flow.authorization_url(
         prompt='consent',
         include_granted_scopes='true',
@@ -75,79 +82,84 @@ def login_google():
 
 @app.route('/oauth2callback')
 def oauth2callback():
-    # finish OAuth handshake
-    state = session.get('state')
-    flow = Flow.from_client_config(
-        {'web': {
-            'client_id':     app.config['GOOGLE_CLIENT_ID'],
-            'client_secret': app.config['GOOGLE_CLIENT_SECRET'],
-            'auth_uri':      'https://accounts.google.com/o/oauth2/auth',
-            'token_uri':     'https://oauth2.googleapis.com/token',
-            'redirect_uris': [app.config['REDIRECT_URI']],
-        }},
-        scopes=[
-            'openid',
-            'https://www.googleapis.com/auth/userinfo.email',
-            'https://www.googleapis.com/auth/userinfo.profile',
-        ],
-        state=state
-    )
-    flow.redirect_uri = app.config['REDIRECT_URI']
-
-    # CSRF/state check
-    if request.args.get('state') != state:
-        logger.error("State mismatch: %s vs %s", request.args.get('state'), state)
-        return "CSRF state mismatch", 400
-
-    # Exchange code → tokens
-    flow.fetch_token(authorization_response=request.url)
-    creds = flow.credentials
-
-    # Verify ID token
+    ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     try:
+        state = session.get('state')
+        if request.args.get('state') != state:
+            raise ValueError('CSRF state mismatch')
+
+        flow = Flow.from_client_config(
+            {'web': {
+                'client_id':     app.config['GOOGLE_CLIENT_ID'],
+                'client_secret': app.config['GOOGLE_CLIENT_SECRET'],
+                'auth_uri':      'https://accounts.google.com/o/oauth2/auth',
+                'token_uri':     'https://oauth2.googleapis.com/token',
+                'redirect_uris': [app.config['REDIRECT_URI']],
+            }},
+            scopes=[
+                'openid',
+                'https://www.googleapis.com/auth/userinfo.email',
+                'https://www.googleapis.com/auth/userinfo.profile',
+            ],
+            state=state
+        )
+        flow.redirect_uri = app.config['REDIRECT_URI']
+        flow.oauth2session.trust_env = True
+
+        flow.fetch_token(authorization_response=request.url)
+        creds = flow.credentials
+
         idinfo = id_token.verify_oauth2_token(
             creds.id_token,
             GoogleRequest(),
             app.config['GOOGLE_CLIENT_ID']
         )
-    except Exception as e:
-        logger.error("Token verify failed", exc_info=True)
-        return "Token verification failed", 400
 
-    email = idinfo['email']
-    session['google_id'] = idinfo['sub']
-    session['user_info'] = {'email': email, 'name': idinfo['name']}
+        # store user info
+        email = idinfo['email']
+        session['google_id'] = idinfo['sub']
+        session['user_info'] = {'email': email, 'name': idinfo['name']}
 
-    # ─── STAFF‑ONLY GATE (plus super‑admins) ──────────────────────────
-    svc_creds = service_account.Credentials.from_service_account_file(
-        app.config['SERVICE_ACCOUNT_FILE'],
-        scopes=['https://www.googleapis.com/auth/admin.directory.user.readonly']
-    ).with_subject(app.config['ADMIN_USER'])
-    admin_svc = build('admin', 'directory_v1', credentials=svc_creds)
+        # record login success
+        login_logs.append({
+            'timestamp': ts,
+            'user': email,
+            'outcome': 'Success'
+        })
 
-    try:
-        me       = admin_svc.users().get(userKey=email).execute()
+        # ─── STAFF‑ONLY GATE (allow super‑admins too) ───────────────
+        svc_creds = service_account.Credentials.from_service_account_file(
+            app.config['SERVICE_ACCOUNT_FILE'],
+            scopes=['https://www.googleapis.com/auth/admin.directory.user.readonly']
+        ).with_subject(app.config['ADMIN_USER'])
+        admin_svc = build('admin', 'directory_v1', credentials=svc_creds)
+
+        me = admin_svc.users().get(userKey=email).execute()
         ou_path  = me.get('orgUnitPath', '')
         is_super = me.get('isAdmin', False)
-    except HttpError as e:
-        logger.error("Unable to fetch own account info: %s", e, exc_info=True)
-        flash("Authentication error", 'danger')
-        session.clear()
-        return redirect(url_for('login_page'))
 
-    # allow staff OUs or any Google super-admin
-    allowed_ous = [
-        '/Staff/District',
-        '/Staff/Faculty',
-        '/Staff/Long Term Subs',
-        '/Staff/School Admins',
-    ]
-    if not (is_super or any(ou_path.startswith(p) for p in allowed_ous)):
-        flash('Only authorized staff may sign in.', 'danger')
-        session.clear()
-        return redirect(url_for('login_page'))
+        allowed_ous = [
+            '/Staff/District',
+            '/Staff/Faculty',
+            '/Staff/Long Term Subs',
+            '/Staff/School Admins',
+        ]
+        if not (is_super or any(ou_path.startswith(prefix) for prefix in allowed_ous)):
+            flash('Only authorized staff may sign in.', 'danger')
+            session.clear()
+            return redirect(url_for('login_page'))
 
-    return redirect(url_for('index'))
+        return redirect(url_for('index'))
+
+    except Exception as e:
+        # record failure
+        login_logs.append({
+            'timestamp': ts,
+            'user': session.get('user_info', {}).get('email', 'unknown'),
+            'outcome': f'Failure: {e}'
+        })
+        flash(f'Login failed: {e}', 'danger')
+        return redirect(url_for('login_page'))
 
 @app.route('/logout')
 def logout():
@@ -155,13 +167,14 @@ def logout():
     return redirect(url_for('login_page'))
 
 # ─── MAIN APP ────────────────────────────────────────────────────────
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET','POST'])
 @login_required
 def index():
     user           = session['user_info']
     new_password   = None
     student_email  = None
     student_name   = None
+    outcome        = ''
 
     if request.method == 'POST':
         student_email = request.form.get('student_email','').strip()
@@ -169,6 +182,7 @@ def index():
 
         if not student_email:
             flash('Enter a student email.', 'danger')
+            outcome = 'Canceled: no email'
         else:
             creds = service_account.Credentials.from_service_account_file(
                 app.config['SERVICE_ACCOUNT_FILE'],
@@ -177,38 +191,46 @@ def index():
             svc = build('admin', 'directory_v1', credentials=creds)
 
             try:
-                teacher     = svc.users().get(userKey=user['email']).execute()
-                teacher_ou  = teacher.get('orgUnitPath','')
-                student     = svc.users().get(userKey=student_email).execute()
-                student_ou  = student.get('orgUnitPath','')
+                teacher = svc.users().get(userKey=user['email']).execute()
+                student = svc.users().get(userKey=student_email).execute()
 
-                # only reset real students
-                if not student_ou.startswith('/Students'):
+                # only reset /Students
+                if not student.get('orgUnitPath','').startswith('/Students'):
                     flash("I can only reset student passwords.", 'danger')
-                # optional: enforce same OU
-                elif teacher_ou != student_ou:
+                    outcome = 'Denied: not a student'
+
+                # optional: same‑OU enforcement
+                elif teacher.get('orgUnitPath') != student.get('orgUnitPath'):
                     flash("No permission to reset that student's password.", 'danger')
+                    outcome = 'Denied: wrong OU'
+
                 else:
                     new_password = generate_password(12)
                     svc.users().update(
                         userKey=student_email,
-                        body={
-                            'password': new_password,
-                            'changePasswordAtNextLogin': True
-                        }
+                        body={'password': new_password, 'changePasswordAtNextLogin': True}
                     ).execute()
                     flash('Password reset! It will disappear in 2 minutes.', 'success')
+                    outcome = 'Success'
 
             except Exception as e:
                 logger.error("Reset error", exc_info=True)
                 flash(f'Error resetting password: {e}', 'danger')
+                outcome = f'Error: {e}'
+
+        audit_logs.append({
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'admin':     user['email'],
+            'student':   f"{student_email} ({student_name})" if student_name else student_email,
+            'outcome':   outcome
+        })
 
     return render_template(
         'index.html',
         user=user,
         new_password=new_password,
         student_email=student_email,
-        student_name=student_name,
+        student_name=student_name
     )
 
 # ─── AJAX USER SUGGESTION ────────────────────────────────────────────
@@ -232,18 +254,16 @@ def search_users():
     candidates = []
     try:
         for field in ('givenName','familyName','email'):
-            query = f"{field}:{tokens[0]}*"
             resp = svc.users().list(
                 customer='my_customer',
-                query=query,
+                query=f"{field}:{tokens[0]}*",
                 maxResults=20
             ).execute()
             candidates.extend(resp.get('users',[]))
-    except HttpError as e:
-        logger.error("Directory search error", exc_info=True)
+    except HttpError:
         return jsonify([]), 500
 
-    # dedupe
+    # dedupe & multi‑token filter
     unique = {}
     for u in candidates:
         email = u.get('primaryEmail')
@@ -251,36 +271,102 @@ def search_users():
             unique[email] = u
     candidates = list(unique.values())
 
-    # multi‑token filter
     if len(tokens)>1:
         rest = [t.lower() for t in tokens[1:]]
-        filtered=[]
-        for u in candidates:
-            fn, ln = u['name'].get('givenName','').lower(), u['name'].get('familyName','').lower()
-            num     = u.get('primaryEmail','').split('@')[0].lower()
-            if all(any(val.startswith(tk) for val in (fn,ln,num)) for tk in rest):
-                filtered.append(u)
-        candidates = filtered
+        candidates = [
+            u for u in candidates
+            if all(any(val.startswith(tk) for val in (
+                u['name'].get('givenName','').lower(),
+                u['name'].get('familyName','').lower(),
+                u.get('primaryEmail','').split('@')[0].lower()
+            )) for tk in rest)
+        ]
 
-    # build suggestions
-    out = []
-    for u in candidates:
-        first  = u['name'].get('givenName','')
-        last   = u['name'].get('familyName','')
-        email  = u.get('primaryEmail','')
-        number = email.split('@')[0]
-        label  = f"{first} {last}, {number}"
-        out.append({'label':label,'value':email})
-    return jsonify(out)
+    return jsonify([
+        {
+            'label': f"{u['name'].get('givenName','')} {u['name'].get('familyName','')}, {u.get('primaryEmail','').split('@')[0]}",
+            'value': u.get('primaryEmail','')
+        }
+        for u in candidates
+    ])
 
+# ─── MISC PAGES ─────────────────────────────────────────────────────
 @app.route('/help')
 def help_page():
     return render_template('help.html')
 
+@app.route('/instructions')
+@login_required
+def instructions_page():
+    return render_template('instructions.html', user=session['user_info'])
+
+@app.route('/documentation')
+@login_required
+def documentation_page():
+    return render_template('documentation.html', user=session['user_info'])
+
+@app.route('/updates')
+@login_required
+def updates_page():
+    return render_template('updates.html', user=session['user_info'])
+
 @app.route('/admin')
 @login_required
 def admin_page():
-    return render_template('admin.html', user=session.get('user_info'))
+    user = session['user_info']
+    sa_path = app.config['SERVICE_ACCOUNT_FILE']
+
+    # 1) Sanity‑check your service‑account JSON file
+    if not os.path.isfile(sa_path):
+        flash(f"Service account file not found: {sa_path}", "danger")
+        return render_template('admin.html',
+                               user=user,
+                               users=[],
+                               audit_logs=audit_logs,
+                               login_logs=login_logs)
+
+    # 2) Load the credentials
+    try:
+        creds = service_account.Credentials.from_service_account_file(
+            sa_path,
+            scopes=['https://www.googleapis.com/auth/admin.directory.user.readonly']
+        ).with_subject(app.config['ADMIN_USER'])
+    except Exception as e:
+        logger.error("SA load error: %s", e, exc_info=True)
+        flash("Error loading service account credentials.", "danger")
+        return render_template('admin.html',
+                               user=user,
+                               users=[],
+                               audit_logs=audit_logs,
+                               login_logs=login_logs)
+
+    # 3) Build the Directory API client
+    service = build('admin', 'directory_v1', credentials=creds)
+
+    # 4) Fetch all users via pagination
+    users = []
+    page_token = None
+    while True:
+        resp = service.users().list(
+            customer='my_customer',
+            maxResults=500,       # API max per page
+            orderBy='email',
+            pageToken=page_token
+        ).execute()
+        users.extend(resp.get('users', []))
+        page_token = resp.get('nextPageToken')
+        if not page_token:
+            break
+
+    # 5) Render the admin dashboard with every user
+    return render_template(
+        'admin.html',
+        user=user,
+        users=users,
+        audit_logs=audit_logs,
+        login_logs=login_logs
+    )
+
 
 @app.errorhandler(404)
 def page_not_found(e):

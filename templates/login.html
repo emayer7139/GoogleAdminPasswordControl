@@ -22,13 +22,13 @@
     <button class="btn btn-sm" id="toggleTheme">🌓</button>
   </div>
 
-  <div class="d-flex justify-content-center align-items-center full-height">
-    <div class="card login-card shadow-lg text-center">
-      <img
-        src="{{ url_for('static', filename='img/logo.png') }}"
-        alt="ResetApp Logo"
-        class="logo-img mb-4"
-      />
+  <div class="d-flex justify-content-center align-items-center" style="height:100vh">
+    <div class="card p-5 shadow-lg text-center" style="max-width:600px; width:95%;">
+      <!-- Logo -->
+      <img src="{{ url_for('static', filename='img/logo.png') }}"
+           alt="ResetApp Logo"
+           class="mb-4"
+           style="height:300px;"/>
 
       <h1 class="display-4 mb-3">Welcome Back!</h1>
       <p class="lead mb-4">
@@ -74,4 +74,3 @@
   </script>
 </body>
 </html>
-
