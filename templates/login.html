@@ -25,10 +25,13 @@
   <div class="d-flex justify-content-center align-items-center" style="height:100vh">
     <div class="card p-5 shadow-lg text-center" style="max-width:600px; width:95%;">
       <!-- Logo -->
-      <img src="{{ url_for('static', filename='img/logo.png') }}"
-           alt="ResetApp Logo"
-           class="mb-4"
-           style="height:300px;"/>
+      <img
+        id="logoImg"
+        src="{{ url_for('static', filename='img/logo.png') }}"
+        alt="ResetApp Logo"
+        class="mb-4"
+        style="height:200px;"
+      />    
 
       <h1 class="display-4 mb-3">Welcome Back!</h1>
       <p class="lead mb-4">
@@ -52,25 +55,61 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- … your Bootstrap & card HTML above … -->
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Theme toggle
-    const html = document.documentElement;
+    // Grab DOM elements
+    const html   = document.documentElement;
     const toggle = document.getElementById('toggleTheme');
-    html.className = (localStorage.getItem('theme') || 'light') + '-mode';
-    toggle.onclick = () => {
+    const logo   = document.getElementById('logoImg');
+    const btn    = document.getElementById('googleSignIn');
+    const btnText    = document.getElementById('btnText');
+    const btnSpinner = document.getElementById('btnSpinner');
+
+    // Logo file paths
+    const lightLogo = "{{ url_for('static', filename='img/logo.png') }}";
+    const darkLogo  = "{{ url_for('static', filename='img/dark_mode_logo.png') }}";
+
+    // Apply the correct theme class + logo on page load
+    function initTheme() {
+      const stored = localStorage.getItem('theme') || 'light';
+      html.className = stored + '-mode';
+      updateLogo();
+    }
+
+    // Swap the logo based on current theme class
+    function updateLogo() {
+      logo.src = html.classList.contains('dark-mode') ? darkLogo : lightLogo;
+    }
+
+    // Toggle handler: flip theme, persist, swap logo
+    function onToggleTheme() {
       const next = html.classList.contains('light-mode') ? 'dark' : 'light';
       html.className = next + '-mode';
       localStorage.setItem('theme', next);
-    };
+      updateLogo();
+    }
 
-    // Google‑sign‑in spinner
-    const btn = document.getElementById('googleSignIn');
-    btn.onclick = () => {
+    // Sign‑in button spinner
+    function onGoogleClick() {
       btn.disabled = true;
-      document.getElementById('btnText').classList.add('d-none');
-      document.getElementById('btnSpinner').classList.remove('d-none');
+      btnText.classList.add('d-none');
+      btnSpinner.classList.remove('d-none');
       window.location = "{{ url_for('login_google') }}";
-    };
+    }
+
+    // Hook it all up
+    toggle.addEventListener('click', onToggleTheme);
+    btn.addEventListener('click', onGoogleClick);
+
+    // Finally, initialize on page load
+    initTheme();
   </script>
+</body>
+</html>
+
+
+
 </body>
 </html>

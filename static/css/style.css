@@ -1,21 +1,76 @@
-/* Helper classes */
+/* ─── LOGIN PAGE STYLES ─────────────────────────────────────────── */
+
+/* full‐height flex container */
 .full-height {
   height: 100vh;
 }
+
+/* the white card */
 .login-card {
   max-width: 600px;
   width: 90%;
   padding: 2rem;
   border-radius: 1rem;
-}
-.logo-img {
-  height: 80px;
-}
-.google-icon {
-  height: 24px;
+  background-color: #fff;
 }
 
-/* Base (light‑mode) navbar */
+/* Logo sizing for both light & dark modes */
+.logo-img {
+  display: block;                /* so margin auto works */
+  margin: 0 auto 1.5rem auto;   /* centers & bottom gap */
+  width: 400px;                  /* fixed width */
+  max-width: 90%;                /* shrinks on small screens */
+  height: auto;                  /* preserve aspect ratio */
+  object-fit: contain;
+}
+
+/* Default (light‐mode) Google button: light grey with dark text */
+.google-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f2f2f2 !important;
+  color:            #1f1f1f !important;
+  border:           none !important;
+  padding:          0.75rem 1rem !important;
+  font-size:        1.1rem !important;
+  width:            100%;
+  transition:       box-shadow 0.2s ease !important;
+}
+
+/* Hover lift for any button */
+.google-btn:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+}
+
+/* Google icon inside button */
+.google-icon {
+  height: 24px;
+  width: auto;
+  margin-right: 0.5rem;
+}
+
+/* ─── DARK-MODE OVERRIDES (LOGIN) ───────────────────────────────── */
+
+html.dark-mode .login-card {
+  background-color: #2e3138;
+  color:            #e0e0e0;
+}
+
+html.dark-mode .google-btn {
+  background-color: #3a3f47 !important;
+  color:            #e0e0e0 !important;
+  border:           1px solid #4f555f !important;
+}
+
+html.dark-mode .google-btn:hover {
+  background-color: #4f555f !important;
+}
+
+
+/* ─── REST OF YOUR SITE’S EXISTING STYLES BELOW ──────────────── */
+
+/* Base (light-mode) navbar */
 #mainNavbar {
   background-color: #ffffff;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -38,13 +93,13 @@
   transform: rotate(90deg);
 }
 
-/* Dark‑mode overrides */
+/* Dark-mode overrides */
 html.dark-mode body {
   background-color: #20232a;
   color:            #c0c0c0;
 }
 
-/* Dark‑mode navbar */
+/* Dark-mode navbar */
 html.dark-mode #mainNavbar {
   background-color: #2b2e33 !important;
   box-shadow: none;
@@ -64,7 +119,7 @@ html.dark-mode .navbar.navbar-expand-lg {
   color: #f8f9fa !important;
 }
 
-/* Dark‑mode dropdown */
+/* Dark-mode dropdown */
 .dark-mode .dropdown-menu {
   background-color: #2b2e33;
 }
@@ -76,7 +131,7 @@ html.dark-mode .navbar.navbar-expand-lg {
   background-color: #3a3f47;
 }
 
-/* Dark‑mode input fields */
+/* Dark-mode input fields */
 html.dark-mode .form-control {
   background-color: #3a3f47;
   color:            #e0e0e0;
@@ -86,7 +141,7 @@ html.dark-mode .form-control::placeholder {
   color: #b2b8c2;
 }
 
-/* Dark‑mode cards & modals */
+/* Dark-mode cards & modals */
 html.dark-mode .card,
 html.dark-mode .modal-content {
   background-color: #2e3138;
@@ -94,19 +149,9 @@ html.dark-mode .modal-content {
   color:            #e0e0e0;
 }
 
-/* Dark‑mode theme toggle button */
+/* Dark-mode theme toggle button */
 html.dark-mode .theme-toggle .btn {
   background: #3a3f4b;
   color:      #c0c0c0;
-}
-
-/* Dark‑mode google button */
-html.dark-mode .google-btn {
-  background-color: #3a3f4b;
-  color:            #e0e0e0;
-  border: 1px solid #4f555f;
-}
-html.dark-mode .google-btn:hover {
-  background-color: #4f555f;
 }
 
