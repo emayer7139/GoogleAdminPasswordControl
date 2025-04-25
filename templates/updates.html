@@ -18,6 +18,7 @@
     .updates-list .list-group-item { font-size: 1rem; }
     .updates-list .date-label { font-weight: bold; margin-right: .5rem; }
     .bug-report { text-align: center; margin-bottom: 2rem; }
+    .in-works { background-color: #fff3cd; padding: 1rem; border-radius: .25rem; margin-bottom: 2rem; }
     .known-bugs { background-color: #f8d7da; padding: 1rem; border-radius: .25rem; margin-bottom: 2rem; }
 
     /* ─── Dark-mode Overrides ─── */
@@ -36,6 +37,15 @@
       border-color: #2c2f33;
       color: #e1e1e1;
     }
+    /* Dark-mode override for In the Works box */
+    html.dark-mode .in-works {
+     background-color: #343a40 !important;  /* match your dropdown/menu bg */
+     color: #e1e1e1 !important;             /* light text */
+    }
+      html.dark-mode .in-works h4,
+      html.dark-mode .in-works ul li {
+      color: #e1e1e1 !important;             /* ensure bullet text is light */
+      }
     html.dark-mode .known-bugs {
       background-color: #5a2126;
       color: #f8d7da;
@@ -55,6 +65,7 @@
     html.dark-mode .btn-secondary:hover {
       background-color: #495057 !important;
       border-color: #495057 !important;
+
     }
   </style>
 </head>
@@ -65,13 +76,25 @@
     <h1 class="display-4 updates-header">What’s New in ResetApp</h1>
 
 
+    <div class="in-works">
+      <h4>🚧 In the Works</h4>
+      <ul class="mb-0">
+        <li>Better Accept/Deny Reset-Password UI for teachers & admins.</li>
+        <li>Secure approval workflow (Yes/No) for extra reset requests.</li>
+        <li>Enhanced app security: 2FA, stricter session & CSP enforcement.</li>
+        <li>Bulk-reset capability & CSV import for large groups.</li>
+        <li>Customizable password policy settings (length, complexity).</li>
+        <li>Advanced analytics dashboard for usage & error tracking.</li>
+      </ul>
+      <p class="mt-2"><em>Stay tuned—coming soon!</em></p>
+    </div>
     <!-- Known Bugs -->
     <div class="known-bugs">
       <h4>🐞 Known Bugs</h4>
       <ul class="mb-0">
         <li>Searching for adding admin is "No staff found".</li>
+        <li>Filtering of existing admins.</li>
         <li>Emailing admins for reset limits.</li>
-        <li>Collecting Signin IP addresses.</li>
 
       </ul>
       <p class="mt-2"><em>We’re actively working on fixes.</em></p>
