@@ -26,18 +26,43 @@
       <ul class="mb-0">
         <li>Dark mode toggle is currently non-functional.</li>
         <li>Styling inconsistencies across pages.</li>
+        <li>Searching for adding admin is "No staff found".</li>
+        <li>Emailing admins for reset limits.</li>
+        <li>Collecting Signin IP addresses.</li>
+
       </ul>
       <p class="mt-2"><em>We’re actively working on fixes.</em></p>
     </div>
 
-      <!-- Report a Bug Button -->
-    <div class="bug-report">
-      <button class="btn btn-danger btn-lg"
-              onclick="window.open('https://forms.gle/4CQzutEnFrZjVnq36', '_blank')">
+  <div class="bug-report">
+      <p>See something off? Click the button below to let us know!</p>
+      <button class="btn btn-danger btn-lg" onclick="window.open('https://forms.gle/VvNTUKXKM5E5Dm6a6', '_blank')">
         🐞 Report a Bug
       </button>
     </div>
 
+  <!-- Version 1.0.7 -->
+
+<div class="mb-5">
+  <h2>📅 <span class="date-label">2025-04-24</span> Version 1.0.7</h2>
+  <ul class="list-group updates-list">
+    <li class="list-group-item">
+      🎨 <strong>Improved UI</strong>: enhanced with smoother layouts and fully responsive design.
+    </li>
+    <li class="list-group-item">
+      🛡️ <strong>Hardened Session Management</strong>: tightened cookie flags and session handling.
+    </li>
+    <li class="list-group-item">
+      🔒 <strong>Added CSP Headers</strong>: Content Security Policy implemented to mitigate XSS risks.
+    </li>
+    <li class="list-group-item">
+      📦 <strong>Dependency Updates</strong>: patched known vulnerabilities by upgrading all dependencies.
+    </li>
+    <li class="list-group-item">
+      🌐 <strong>Forced HTTPS</strong>: redirects now enforced on all protected routes.
+    </li>
+  </ul>
+</div>
 
     <!-- Version 1.0.6 -->
     <div class="mb-5">
@@ -138,12 +163,15 @@
         </li>
       </ul>
     </div>
+    <!-- Version 1.0.0 … -->
 
-    <!-- Back link -->
-    <div class="mt-4">
-      <a href="{{ url_for('admin_page') }}" class="btn btn-primary">← Back to Admin</a>
+    <div class="mt-5">
+      <button class="btn btn-secondary" onclick="history.back()">
+        ← Back
+      </button>
     </div>
   </div>
+
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

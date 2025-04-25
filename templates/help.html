@@ -37,7 +37,6 @@
   <!-- Dark/light toggle -->
   <div class="theme-toggle">
     <button class="btn btn-sm" id="toggleTheme">🌓</button>
-    </button>
   </div>
 
   <div class="d-flex justify-content-center align-items-center" style="height:100vh">
@@ -45,13 +44,18 @@
       <h1 class="display-4 mb-4">Need Help Signing In?</h1>
 
       <p class="lead mb-4">
-        If you’re having trouble with Google sign‑in, try these first:
+        If you’re having trouble with Google sign-in, try these first:
       </p>
 
       <ul class="text-start mb-5 fs-5">
         <li>Use your Hart County email (<code>@hart.k12.ga.us</code>).</li>
-        <li>Clear cookies for <code>localhost:5000</code> or <code>127.0.0.1:5000</code>, then retry.</li>
-        <li>Ensure pop‑ups are allowed—Google’s consent screen may open in a new window.</li>
+       <li>Clear cookies and cache for <code>https://resetapp.hart.k12.ga.us</code>, then retry.
+          <a href="https://support.google.com/accounts/answer/32050?hl=en&co=GENIE.Platform%3DDesktop"
+             target="_blank">
+            How to clear cookies &amp; cache
+          </a>
+        </li>
+        <li>Ensure pop-ups are allowed—Google’s consent screen may open in a new window.</li>
         <li>Always click the “Sign in with Google” button—don’t use browser navigation.</li>
       </ul>
 
@@ -59,11 +63,16 @@
         Still stuck?
       </p>
       <p class="fs-5 mb-4">
-        Email us at
-        <a href="mailto:support@hart.k12.ga.us">support@hart.k12.ga.us</a><br/>
-        Or submit a ticket:
-        <a href="https://support.hart.k12.ga.us" target="_blank">support.hart.k12.ga.us</a>
-      </p>
+  Email us at
+  <a href="https://mail.google.com/mail/?view=cm&fs=1&to=support@hart.k12.ga.us" target="_blank">
+    support@hart.k12.ga.us
+  </a><br/>
+  Or submit a ticket:
+  <a href="https://support.hart.k12.ga.us" target="_blank">
+    support.hart.k12.ga.us
+  </a>
+</p>
+
 
       <a href="{{ url_for('login_page') }}"
          class="btn btn-primary btn-lg px-4 py-2 fs-5">
