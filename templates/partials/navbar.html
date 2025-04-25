@@ -1,62 +1,83 @@
-<nav class="navbar navbar-expand-lg" id="mainNavbar">
+<!-- templates/partials/navbar.html -->
+<style>
+  /* Base page backgrounds */
+  body, html {
+    height: 100%; margin: 0; transition: background .3s, color .3s;
+  }
+  .light-mode body { background: #f8f9fa; color: #212529; }
+  .dark-mode  body { background: #121212; color: #e1e1e1; }
+
+  /* Navbar structure */
+  #mainNavbar { }
+  .navbar-nav      { display: flex; align-items: center; }
+  .welcome-text    { flex: 1; font-size: 1.75rem; font-weight: 500; padding-left: 1rem; }
+  .dropdown-toggle::after { display: none; }
+  .dropdown-menu   { transform: scale(1.5); transform-origin: top right; }
+
+  /* Icons */
+  #mobileIcon,
+  #menuIcon {
+    font-size: 2rem;
+    transition: transform .3s, color .3s;
+  }
+
+  /* Rotate on open */
+  .navbar-toggler:not(.collapsed) #mobileIcon { transform: rotate(90deg); }
+  #userMenu.show #menuIcon                   { transform: rotate(90deg); }
+
+  /* Light‐mode navbar text & icons */
+  html.light-mode #mainNavbar .navbar-brand,
+  html.light-mode #mainNavbar .nav-link,
+  html.light-mode #mainNavbar .dropdown-item,
+  html.light-mode #mainNavbar .welcome-text,
+  html.light-mode #mobileIcon,
+  html.light-mode #menuIcon {
+    color: #212529 !important;
+  }
+
+  /* Dark‐mode overrides */
+  html.dark-mode #mainNavbar { background: #1e1e1e !important; }
+  html.dark-mode .card,
+  html.dark-mode .shadow-sm { background: #1e1e1e !important; color: #e1e1e1 !important; }
+  html.dark-mode .dropdown-menu { background: #343a40 !important; }
+  html.dark-mode #mainNavbar .navbar-brand,
+  html.dark-mode #mainNavbar .nav-link,
+  html.dark-mode #mainNavbar .dropdown-item,
+  html.dark-mode #mainNavbar .welcome-text,
+  html.dark-mode #mobileIcon,
+  html.dark-mode #menuIcon {
+    color: #e1e1e1 !important;
+  }
+  html.dark-mode .dropdown-item:hover { background: #495057 !important; }
+</style>
+
+<nav id="mainNavbar" class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
   <div class="container-fluid">
     <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">🔐 ResetApp</a>
-    <button class="navbar-toggler" type="button"
-            data-bs-toggle="collapse" data-bs-target="#navbarsExample">
-      <span class="navbar-toggler-icon"></span>
+
+    <!-- mobile toggler -->
+    <button class="navbar-toggler collapsed border-0"
+            type="button" data-bs-toggle="collapse"
+            data-bs-target="#navbarsExample"
+            aria-controls="navbarsExample" aria-expanded="false"
+            aria-label="Toggle navigation">
+      <i class="bi bi-list" id="mobileIcon"></i>
     </button>
+
     <div class="collapse navbar-collapse" id="navbarsExample">
       <ul class="navbar-nav ms-auto align-items-center">
         {% if user %}
-        <li class="nav-item dropdown d-flex align-items-center w-100">
+        <li class="nav-item dropdown d-flex align-items-center">
           <a class="nav-link dropdown-toggle d-flex align-items-center p-0 w-100"
-             href="#"
-             id="userMenu"
-             data-bs-toggle="dropdown">
+             href="#" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
             <span class="welcome-text">Welcome, {{ user.name }}!</span>
             <i class="bi bi-list" id="menuIcon"></i>
           </a>
-          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-
-            {# Documentation on Admin page #}
-            {% if request.endpoint == 'admin_page' %}
-              <li>
-                <a class="dropdown-item" href="{{ url_for('documentation_page') }}">
-                  Documentation
-                </a>
-              </li>
-              <li>
-                <a class="dropdown-item" href="{{ url_for('updates_page') }}">
-                  What’s New
-                </a>
-              </li>
-            {% endif %}
-
-            {# Usage Instructions on all other pages except Help/Instructions/Admin #}
-            {% if request.endpoint not in ['help_page','instructions_page','admin_page'] %}
-              <li>
-                <a class="dropdown-item" href="{{ url_for('instructions_page') }}">
-                  Usage Instructions
-                </a>
-              </li>
-            {% endif %}
-
-            {# Admin link, hidden on Admin #}
-            {% if request.endpoint != 'admin_page' %}
-            <li>
-              <a class="dropdown-item" href="{{ url_for('admin_page') }}">
-                Admin Dashboard
-              </a>
-            </li>
-            {% endif %}
-
-            <li>
-              <a class="dropdown-item"
-                 href="https://support.hart.k12.ga.us"
-                 target="_blank">
-                Submit a Ticket
-              </a>
-            </li>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{{ url_for('updates_page') }}">What’s New</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('instructions_page') }}">Help</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin_page') }}">Admin Page</a></li>
+            <li><a class="dropdown-item" href="https://support.hart.k12.ga.us" target="_blank">Submit a Ticket</a></li>
             <li>
               <button id="toggleTheme" class="dropdown-item d-flex align-items-center">
                 <i class="bi bi-circle-half me-2"></i>
@@ -64,10 +85,7 @@
               </button>
             </li>
             <li><hr class="dropdown-divider"></li>
-            <li>
-              <a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a>
-            </li>
-
+            <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
           </ul>
         </li>
         {% else %}
@@ -79,3 +97,23 @@
     </div>
   </div>
 </nav>
+
+<script>
+  // theme toggle logic
+  const htmlEl = document.documentElement;
+  const btn     = document.getElementById('toggleTheme');
+  const txt     = document.getElementById('toggleText');
+  function update() {
+    txt.textContent = htmlEl.classList.contains('light-mode')
+      ? 'Toggle Dark Mode'
+      : 'Toggle Light Mode';
+  }
+  htmlEl.className = (localStorage.getItem('theme')||'light') + '-mode';
+  update();
+  btn.addEventListener('click', () => {
+    const next = htmlEl.classList.contains('light-mode') ? 'dark' : 'light';
+    htmlEl.className = next + '-mode';
+    localStorage.setItem('theme', next);
+    update();
+  });
+</script>

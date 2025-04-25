@@ -4,39 +4,95 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>How to Use ResetApp</title>
+
+  <!-- Bootstrap & Icons -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet"
   />
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+    rel="stylesheet"
+  />
+
+  <style>
+    /* Light & dark backgrounds */
+    body, html {
+      height: 100%; margin: 0;
+      transition: background 0.3s, color 0.3s;
+    }
+    .light-mode body {
+      background: #f8f9fa;
+      color: #212529;
+    }
+    .dark-mode body {
+      background: #121212;
+      color: #e1e1e1;
+    }
+
+    /* Inherit card‐style inversion for containers if you ever wrap in .card */
+    .container {
+      transition: background 0.3s, color 0.3s;
+    }
+    .light-mode .container {
+      background: transparent;
+      color: #212529;
+    }
+    .dark-mode .container {
+      background: transparent;
+      color: #e1e1e1;
+    }
+
+    /* Link colors */
+     /* Link colors inside cards – but NOT buttons */
++  .light-mode .card a:not(.btn) { color: #0d6efd; }
++  .dark-mode  .card a:not(.btn) { color: #64b5f6; }
+
+    /* Bug‐report styling */
+    .bug-report {
+      text-align: center;
+      margin: 3rem 0;
+    }
+  </style>
 </head>
-<body class="bg-light">
-  <!-- reuse your navbar partial or copy the navbar here -->
+<body>
   {% include 'partials/navbar.html' %}
 
   <div class="container py-5">
     <h1 class="display-4 mb-4">How to Use ResetApp</h1>
 
     <ol class="fs-5">
-      <li><strong>Search for a student</strong><br/>
-        Type at least two characters of the student's first name, last name, or student number into the search box.
-        As you type, a dropdown will show matching entries in the format <code>First Last, 1000553</code>.
-        Click the entry you want; it will fill the field as <code>email@hart.k12.ga.us (First Last)</code>.</li>
+      <li>
+        <strong>Search for a student</strong><br>
+        Type at least two characters of the student's first name, last name,
+        or student number into the search box. As you type, a dropdown will show
+        matching entries in the format <code>First Last, 1000553</code>. Click the
+        entry you want; it will fill the field as <code>email@hart.k12.ga.us (First Last)</code>.
+      </li>
 
-      <li class="mt-4"><strong>Confirm selection</strong><br/>
+      <li class="mt-4">
+        <strong>Confirm selection</strong><br>
         Make sure the name in parentheses matches the student you intend.
-        If the name is truncated, hover over the input to scroll and view the full name.</li>
+        If the name is truncated, hover over the input to scroll and view the full name.
+      </li>
 
-      <li class="mt-4"><strong>Reset the password</strong><br/>
+      <li class="mt-4">
+        <strong>Reset the password</strong><br>
         Click the <span class="badge bg-danger">Reset Password</span> button.
-        A confirmation dialog will pop up—click <code>OK</code> to proceed.</li>
+        A confirmation dialog will pop up—click <code>OK</code> to proceed.
+      </li>
 
-      <li class="mt-4"><strong>Copy &amp; share</strong><br/>
-        Once generated, your new password will appear on screen for 120 seconds.
-        Copy it and send it to the student; it will expire after two minutes.</li>
+      <li class="mt-4">
+        <strong>Copy &amp; share</strong><br>
+        Once generated, your new password will appear on screen for 120 seconds.
+        Copy it and send it to the student; it will expire after two minutes.
+      </li>
 
-      <li class="mt-4"><strong>Use dark/light mode</strong><br/>
-        Open the menu via the <i class="bi bi-list"></i> icon, then click “Toggle Dark/Light Mode” to switch themes.
-        Your preference is saved automatically.</li>
+      <li class="mt-4">
+        <strong>Use dark/light mode</strong><br>
+        Open the menu via the <i class="bi bi-list"></i> icon, then click
+        “Toggle Dark/Light Mode” to switch themes. Your preference is saved automatically.
+      </li>
     </ol>
 
     <div class="mt-5">
@@ -44,14 +100,18 @@
         ← Back to Reset Page
       </a>
     </div>
-   <div class="bug-report">
-       <div class="bug-report text-center mt-5">
+
+    <div class="bug-report">
       <p>See something off? Click the button below to let us know!</p>
-      <button class="btn btn-danger btn-lg" onclick="window.open('https://forms.gle/yourGoogleFormID', '_blank')">
+      <button
+        class="btn btn-danger btn-lg"
+        onclick="window.open('https://forms.gle/yourGoogleFormID', '_blank')"
+      >
         🐞 Report a Bug
       </button>
-    </div>
 
+  <!-- Bootstrap JS bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Navbar partial’s script already handles theme toggling -->
 </body>
 </html>

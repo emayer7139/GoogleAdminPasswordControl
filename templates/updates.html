@@ -4,13 +4,58 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>What’s New • ResetApp</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+    rel="stylesheet"
+  />
+
   <style>
     .updates-header { margin-bottom: 1.5rem; }
     .updates-list .list-group-item { font-size: 1rem; }
     .updates-list .date-label { font-weight: bold; margin-right: .5rem; }
     .bug-report { text-align: center; margin-bottom: 2rem; }
     .known-bugs { background-color: #f8d7da; padding: 1rem; border-radius: .25rem; margin-bottom: 2rem; }
+
+    /* ─── Dark-mode Overrides ─── */
+    html.dark-mode body {
+      background-color: #121212 !important;
+      color: #e1e1e1 !important;
+    }
+    html.dark-mode .container {
+      background: transparent;
+    }
+    html.dark-mode .updates-header {
+      color: #ffffff;
+    }
+    html.dark-mode .list-group-item {
+      background-color: #1e1e1e;
+      border-color: #2c2f33;
+      color: #e1e1e1;
+    }
+    html.dark-mode .known-bugs {
+      background-color: #5a2126;
+      color: #f8d7da;
+    }
+    html.dark-mode .bug-report p {
+      color: #e1e1e1;
+    }
+    html.dark-mode .bug-report .btn-danger {
+      /* keep the red button bright */
+      filter: brightness(1.1);
+    }
+    html.dark-mode .btn-secondary {
+      background-color: #3a3f47 !important;
+      border-color: #3a3f47 !important;
+      color: #e1e1e1 !important;
+    }
+    html.dark-mode .btn-secondary:hover {
+      background-color: #495057 !important;
+      border-color: #495057 !important;
+    }
   </style>
 </head>
 <body>
@@ -24,8 +69,6 @@
     <div class="known-bugs">
       <h4>🐞 Known Bugs</h4>
       <ul class="mb-0">
-        <li>Dark mode toggle is currently non-functional.</li>
-        <li>Styling inconsistencies across pages.</li>
         <li>Searching for adding admin is "No staff found".</li>
         <li>Emailing admins for reset limits.</li>
         <li>Collecting Signin IP addresses.</li>
@@ -39,6 +82,28 @@
       <button class="btn btn-danger btn-lg" onclick="window.open('https://forms.gle/VvNTUKXKM5E5Dm6a6', '_blank')">
         🐞 Report a Bug
       </button>
+    </div>
+
+    <!-- Version 1.0.8 -->
+    <div class="mb-5">
+      <h2>📅 <span class="date-label">2025-04-25</span> Version 1.0.8</h2>
+      <ul class="list-group updates-list">
+        <li class="list-group-item">
+          🌙 <strong>Dark Mode Polish</strong>: hamburger icon now inverts correctly, and nav-menu text & dropdown items all display high-contrast in dark mode.
+        </li>
+        <li class="list-group-item">
+          🧩 <strong>Unified Navbar Partial</strong>: identical styling across all pages—including help, instructions, and updates—with working rotate-on-open icons.
+        </li>
+        <li class="list-group-item">
+          📄 <strong>Help & Instructions Revamp</strong>: both pages now fully honor light/dark themes, with links and buttons adjusted for readability.
+        </li>
+        <li class="list-group-item">
+          🎨 <strong>CSS Cleanup</strong>: consolidated overrides, ensured only non-button links get custom colors, and added invert filter on <code>.navbar-toggler-icon</code>.
+        </li>
+        <li class="list-group-item">
+          ⚙️ <strong>No More Inline Scripts</strong>: moved all inline JS and styling into external JS/CSS files for cleaner HTML and easier maintenance.
+        </li>
+      </ul>
     </div>
 
   <!-- Version 1.0.7 -->

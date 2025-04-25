@@ -15,10 +15,13 @@
   height: 24px;
 }
 
-/* Base (light‑mode) navbar */
+/* Base (light-mode) navbar */
 #mainNavbar {
   background-color: #ffffff;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.navbar-toggler:not(.collapsed) #menuIcon {
+  transform: rotate(90deg);
 }
 
 /* Welcome text sizing */
@@ -38,13 +41,15 @@
   transform: rotate(90deg);
 }
 
-/* Dark‑mode overrides */
+/* Dark-mode overrides */
 html.dark-mode body {
   background-color: #20232a;
   color:            #c0c0c0;
 }
-
-/* Dark‑mode navbar */
+html.dark-mode #menuIcon {
+  color: #e1e1e1 !important;
+}
+/* Dark-mode navbar */
 html.dark-mode #mainNavbar {
   background-color: #2b2e33 !important;
   box-shadow: none;
@@ -64,7 +69,7 @@ html.dark-mode .navbar.navbar-expand-lg {
   color: #f8f9fa !important;
 }
 
-/* Dark‑mode dropdown */
+/* Dark-mode dropdown */
 .dark-mode .dropdown-menu {
   background-color: #2b2e33;
 }
@@ -76,7 +81,7 @@ html.dark-mode .navbar.navbar-expand-lg {
   background-color: #3a3f47;
 }
 
-/* Dark‑mode input fields */
+/* Dark-mode input fields */
 html.dark-mode .form-control {
   background-color: #3a3f47;
   color:            #e0e0e0;
@@ -86,7 +91,7 @@ html.dark-mode .form-control::placeholder {
   color: #b2b8c2;
 }
 
-/* Dark‑mode cards & modals */
+/* Dark-mode cards & modals */
 html.dark-mode .card,
 html.dark-mode .modal-content {
   background-color: #2e3138;
@@ -94,13 +99,13 @@ html.dark-mode .modal-content {
   color:            #e0e0e0;
 }
 
-/* Dark‑mode theme toggle button */
+/* Dark-mode theme toggle button */
 html.dark-mode .theme-toggle .btn {
   background: #3a3f4b;
   color:      #c0c0c0;
 }
 
-/* Dark‑mode google button */
+/* Dark-mode google button */
 html.dark-mode .google-btn {
   background-color: #3a3f4b;
   color:            #e0e0e0;
@@ -109,4 +114,18 @@ html.dark-mode .google-btn {
 html.dark-mode .google-btn:hover {
   background-color: #4f555f;
 }
+/* ——— Force the built-in toggler SVG to light in dark mode ——— */
+html.dark-mode nav#mainNavbar .navbar-toggler-icon {
+  /* WebKit prefix just in case */
+  -webkit-filter: invert(1) brightness(2) !important;
+          filter: invert(1) brightness(2) !important;
+/* ——— NEW: make the built-in hamburger icon light in dark mode ——— */
+html.dark-mode .navbar-toggler-icon {
+  /* invert the SVG and boost brightness */
+  filter: invert(1) brightness(2);
+}
 
+/* ——— NEW: if you’re using a <i id="mobileIcon"> for toggler, color it too ——— */
+html.dark-mode #mobileIcon {
+  color: #f8f9fa !important;
+}
