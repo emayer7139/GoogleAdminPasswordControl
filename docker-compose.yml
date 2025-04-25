@@ -10,4 +10,5 @@ services:
       - .env
     volumes:
       - ./service_account.json:/app/service_account.json:ro
-
+      - ./admin_users.json:/app/admin_users.json:rw
+      - ./reset_requests.json:/app/reset_requests.json:rw

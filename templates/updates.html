@@ -1,32 +1,92 @@
 <!DOCTYPE html>
 <html lang="en" class="light-mode">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>What’s New • ResetApp</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-        rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    .updates-header { margin-bottom: 1.5rem; }
+    .updates-list .list-group-item { font-size: 1rem; }
+    .updates-list .date-label { font-weight: bold; margin-right: .5rem; }
+    .bug-report { margin-top: 2rem; text-align: center; }
+    .known-bugs { background-color: #f8d7da; padding: 1rem; border-radius: 0.25rem; margin-top: 1rem; }
+  </style>
 </head>
 <body>
   {% include 'partials/navbar.html' %}
 
   <div class="container py-5">
-    <h1 class="display-4 mb-4">What’s New in ResetApp</h1>
-    <ul class="list-group">
-      <li class="list-group-item">
-        🐛 <strong>Fixed service account load error</strong>: we now check that your
-        JSON key file exists and is valid UTF‑8, and show you a flash message if not.
-      </li>
-      <li class="list-group-item">
-        🔒 <strong>Improved Admin page resilience</strong>: even if credentials fail,
-        the dashboard still renders so you can see logs and error hints.
-      </li>
-      <li class="list-group-item">
-        📜 <strong>Updates page</strong>: view this list at
-        <code>/updates</code> (linked only on Admin).
-      </li>
-      <!-- add any earlier bullet points here… -->
-    </ul>
+    <h1 class="display-4 updates-header">What’s New in ResetApp</h1>
+
+    <!-- Version 1.0.2 -->
+    <div class="mb-5">
+      <h2>📅 <span class="date-label">2025-04-23</span> Version 1.0.2</h2>
+      <ul class="list-group updates-list">
+        <li class="list-group-item">
+          🛠️ <strong>Admin Dashboard Overhaul</strong>: restructured into tabs with dedicated views:
+          <ul>
+            <li>Audit Logs &mdash; date filters & search 🔍</li>
+            <li>Login Logs &mdash; date filters & search 🔍</li>
+            <li>Users (Students) &mdash; live search, limited to <code>/Students</code> OU 👩‍🎓</li>
+            <li>Admins &mdash; manage list via live staff search 👥</li>
+            <li>Reset Requests &mdash; approve/deny daily limit increase requests ✅❌</li>
+          </ul>
+        </li>
+        <li class="list-group-item">
+          🔒 <strong>Admin Management</strong>: live-search staff-only OU when adding admins, with JS confirmation dialogs.
+        </li>
+        <li class="list-group-item">
+          ⏱️ <strong>Password Reset Limits</strong>: configurable daily cap (default 5), plus new <em>Request More</em> workflow.
+        </li>
+        <li class="list-group-item">
+          🛡️ <strong>Staff-Only OAuth Gate</strong>: only allowed OU prefixes can sign in, plus DEV_LOGIN_BYPASS for local testing.
+        </li>
+        <li class="list-group-item">
+          ⚙️ <strong>Error Handling</strong>: improved feedback, including custom 403 page and key-file validation with flash messages.
+        </li>
+      </ul>
+    </div>
+
+    <!-- Version 1.0.1 -->
+    <div class="mb-4">
+      <h2>📅 <span class="date-label">2025-04-17</span> Version 1.0.1</h2>
+      <ul class="list-group updates-list">
+        <li class="list-group-item">
+          🐛 <strong>Fixed service account load error</strong>: added explicit JSON key check and UTF-8 validation.
+        </li>
+        <li class="list-group-item">
+          🎨 <strong>New Styling</strong>: refreshed layout with Bootstrap 5 cards and responsive improvements.
+        </li>
+        <li class="list-group-item">
+          🚀 <strong>Performance Improvements</strong>: optimized API calls and in-memory caching for logs.
+        </li>
+      </ul>
+    </div>
+
+    <!-- Report a Bug -->
+    <div class="bug-report">
+      <h3>🚨 Report a Bug</h3>
+      <p>See something off? Click the button below to let us know!</p>
+      <button class="btn btn-danger btn-lg" onclick="window.open('https://docs.google.com/forms/d/1oQqoKB8CSvN61Q7-9Vl8JktmUx7g5gSyrWekhXToapU/edit', '_blank')">
+        🐞 Report a Bug
+      </button>
+      <p class="mt-2 small text-muted">
+        Or fill out our <a href="https://docs.google.com/forms/d/1oQqoKB8CSvN61Q7-9Vl8JktmUx7g5gSyrWekhXToapU/edit" target="_blank">Google Form</a>.
+      </p>
+    </div>
+
+    <!-- Known Bugs -->
+    <div class="known-bugs">
+      <h4>🐞 Known Bugs</h4>
+      <ul class="mb-0">
+        <li>Dark mode toggle is currently non-functional.</li>
+        <li>Styling inconsistencies across pages.</li>
+      </ul>
+      <p class="mt-2"><em>We’re actively working on fixes for these issues.</em></p>
+    </div>
+
+    <!-- Back link -->
     <div class="mt-4">
       <a href="{{ url_for('admin_page') }}" class="btn btn-primary">← Back to Admin</a>
     </div>
