@@ -118,67 +118,8 @@
   </style>
 </head>
 <body>
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg bg-white shadow-sm">
-    <div class="container-fluid">
-      <a class="navbar-brand fw-bold" href="#">🔐 ResetApp</a>
-      <button
-        class="navbar-toggler"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#navbarsExample"
-      >
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarsExample">
-        <ul class="navbar-nav ms-auto align-items-center">
-          {% if user %}
-          <li class="nav-item dropdown d-flex align-items-center w-100">
-            <a
-              class="nav-link dropdown-toggle d-flex align-items-center p-0 w-100"
-              href="#"
-              id="userMenu"
-              data-bs-toggle="dropdown"
-              aria-expanded="false"
-            >
-              <span class="welcome-text">Welcome, {{ user.name }}!</span>
-              <i class="bi bi-list" id="menuIcon"></i>
-            </a>
-            <ul
-              class="dropdown-menu dropdown-menu-end animate__animated animate__fadeIn"
-              aria-labelledby="userMenu"
-            >
-             <li>
-                <a class="dropdown-item" href="{{ url_for('updates_page') }}">
-                  What’s New
-                </a>
-              </li>
-              <li><a class="dropdown-item" href="{{ url_for('instructions_page') }}">Help</a></li>
-              <li><a class="dropdown-item" href="{{ url_for('admin_page') }}">Admin Page</a></li>
-              <li>
-                <a class="dropdown-item" href="https://support.hart.k12.ga.us" target="_blank">
-                  Submit a Ticket
-                </a>
-              </li>
-              <li>
-                <button id="toggleTheme" class="dropdown-item d-flex align-items-center">
-                  <i class="bi bi-circle-half me-2"></i>
-                  <span id="toggleText">Toggle Dark Mode</span>
-                </button>
-              </li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
-            </ul>
-          </li>
-          {% else %}
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('login_page') }}">Sign In</a>
-          </li>
-          {% endif %}
-        </ul>
-      </div>
-    </div>
-  </nav>
+
+  {% include 'partials/navbar.html' %}
 
   <!-- Main Content -->
   <div class="container py-4">
@@ -239,24 +180,6 @@
   <script src="https://cdn.jsdelivr.net/npm/party-js@1.0.2/bundle/party.min.js"></script>
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
   <script>
-    // THEME TOGGLE & LABEL
-    const html = document.documentElement;
-    const toggle = document.getElementById('toggleTheme');
-    const toggleText = document.getElementById('toggleText');
-    function updateToggleText() {
-      toggleText.textContent = html.classList.contains('light-mode')
-        ? 'Toggle Dark Mode'
-        : 'Toggle Light Mode';
-    }
-    const saved = localStorage.getItem('theme') || 'light';
-    html.className = saved + '-mode';
-    updateToggleText();
-    toggle.addEventListener('click', () => {
-      const next = html.classList.contains('light-mode') ? 'dark' : 'light';
-      html.className = next + '-mode';
-      localStorage.setItem('theme', next);
-      updateToggleText();
-    });
 
     // SUGGESTION DROPDOWN
     const input = document.getElementById('student_email');
