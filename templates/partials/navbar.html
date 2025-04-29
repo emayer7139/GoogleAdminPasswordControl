@@ -69,14 +69,12 @@ html.dark-mode .logo-dark  { display: inline-block; }
 
 <nav id="mainNavbar" class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
   <div class="container-fluid">
-    <!-- after -->
-<a class="navbar-brand" href="{{ url_for('index') }}">
-  <img src="{{ url_for('static', filename='img/logo.png') }}"
-       alt="ResetApp logo" class="logo logo-light">
-  <img src="{{ url_for('static', filename='img/dark_mode_logo.png') }}"
-       alt="ResetApp logo" class="logo logo-dark">
-</a>
-
+    <a class="navbar-brand" href="{{ url_for('index') }}">
+      <img src="{{ url_for('static', filename='img/logo.png') }}"
+           alt="ResetApp logo" class="logo logo-light">
+      <img src="{{ url_for('static', filename='img/dark_mode_logo.png') }}"
+           alt="ResetApp logo" class="logo logo-dark">
+    </a>
 
     <!-- mobile toggler -->
     <button class="navbar-toggler collapsed border-0"
@@ -96,32 +94,46 @@ html.dark-mode .logo-dark  { display: inline-block; }
             <span class="welcome-text">Welcome, {{ user.name }}!</span>
             <i class="bi bi-list" id="menuIcon"></i>
           </a>
-          <!-- inside your <ul class="dropdown-menu dropdown-menu-end"> -->
-<ul class="dropdown-menu dropdown-menu-end">
-  {# show Home only when not already on index #}
-  {% if request.endpoint != 'index' %}
-  <li>
-    <a class="dropdown-item" href="{{ url_for('index') }}">Home</a>
-  </li>
-  {% endif %}
+          <ul class="dropdown-menu dropdown-menu-end">
+            {# Home (hide on index) #}
+            {% if request.endpoint != 'index' %}
+            <li><a class="dropdown-item" href="{{ url_for('index') }}">Home</a></li>
+            {% endif %}
 
-  <li><a class="dropdown-item" href="{{ url_for('updates_page') }}">What’s New</a></li>
-  <li><a class="dropdown-item" href="{{ url_for('instructions_page') }}">Help</a></li>
-  <li><a class="dropdown-item" href="{{ url_for('admin_page') }}">Admin Page</a></li>
-  <li>
-    <a class="dropdown-item" href="https://support.hart.k12.ga.us" target="_blank">
-      Submit a Ticket
-    </a>
-  </li>
-  <li>
-    <button id="toggleTheme" class="dropdown-item d-flex align-items-center">
-      <i class="bi bi-circle-half me-2"></i>
-      <span id="toggleText">Toggle Dark Mode</span>
-    </button>
-  </li>
-  <li><hr class="dropdown-divider"></li>
-  <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
-</ul>
+            {# What’s New (hide on updates_page) #}
+            {% if request.endpoint != 'updates_page' %}
+            <li><a class="dropdown-item" href="{{ url_for('updates_page') }}">What’s New</a></li>
+            {% endif %}
+
+            {# Help (hide on instructions_page) #}
+            {% if request.endpoint != 'instructions_page' %}
+            <li><a class="dropdown-item" href="{{ url_for('instructions_page') }}">Help</a></li>
+            {% endif %}
+
+            {# Admin Page (hide on admin_page) #}
+            {% if request.endpoint != 'admin_page' %}
+            <li><a class="dropdown-item" href="{{ url_for('admin_page') }}">Admin Page</a></li>
+            {% endif %}
+            {# …but if *on* admin_page, swap in Documentation instead #}
+            {% if request.endpoint == 'admin_page' %}
+            <li><a class="dropdown-item" href="{{ url_for('documentation_page') }}">Documentation</a></li>
+                {% endif %}
+            <li>
+              <a class="dropdown-item" href="https://support.hart.k12.ga.us" target="_blank">
+                Submit a Ticket
+              </a>
+            </li>
+
+            <li>
+              <button id="toggleTheme" class="dropdown-item d-flex align-items-center">
+                <i class="bi bi-circle-half me-2"></i>
+                <span id="toggleText">Toggle Dark Mode</span>
+              </button>
+            </li>
+
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
+          </ul>
         </li>
         {% else %}
         <li class="nav-item">
@@ -134,21 +146,34 @@ html.dark-mode .logo-dark  { display: inline-block; }
 </nav>
 
 <script>
-  // theme toggle logic
-  const htmlEl = document.documentElement;
-  const btn     = document.getElementById('toggleTheme');
-  const txt     = document.getElementById('toggleText');
-  function update() {
-    txt.textContent = htmlEl.classList.contains('light-mode')
-      ? 'Toggle Dark Mode'
-      : 'Toggle Light Mode';
-  }
-  htmlEl.className = (localStorage.getItem('theme')||'light') + '-mode';
-  update();
-  btn.addEventListener('click', () => {
-    const next = htmlEl.classList.contains('light-mode') ? 'dark' : 'light';
-    htmlEl.className = next + '-mode';
-    localStorage.setItem('theme', next);
-    update();
+  // wrap everything in DOMContentLoaded so we don't race Bootstrap
+  document.addEventListener('DOMContentLoaded', () => {
+    const htmlEl = document.documentElement;
+    const btn     = document.getElementById('toggleTheme');
+    const txt     = document.getElementById('toggleText');
+
+    // if there's no toggleTheme button on this page, bail out
+    if (!btn || !txt) {
+      return;
+    }
+
+    // apply the correct label
+    function updateLabel() {
+      txt.textContent = htmlEl.classList.contains('light-mode')
+        ? 'Toggle Dark Mode'
+        : 'Toggle Light Mode';
+    }
+
+    // initialize from localStorage
+    htmlEl.className = (localStorage.getItem('theme') || 'light') + '-mode';
+    updateLabel();
+
+    // wire up the click
+    btn.addEventListener('click', () => {
+      const next = htmlEl.classList.contains('light-mode') ? 'dark' : 'light';
+      htmlEl.className = next + '-mode';
+      localStorage.setItem('theme', next);
+      updateLabel();
+    });
   });
 </script>

@@ -1,0 +1,8 @@
+{
+  "secure_workflow": true,
+  "bulk_reset": false,
+  "custom_policy": true,
+  "min_length": 8,
+  "complexity": "low",
+  "reset_limit": 5
+}

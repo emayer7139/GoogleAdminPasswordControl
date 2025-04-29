@@ -82,9 +82,6 @@
         <li>Better Accept/Deny Reset-Password UI for teachers & admins.</li>
         <li>Secure approval workflow (Yes/No) for extra reset requests.</li>
         <li>Enhanced app security: 2FA, stricter session & CSP enforcement.</li>
-        <li>Bulk-reset capability & CSV import for large groups.</li>
-        <li>Customizable password policy settings (length, complexity).</li>
-        <li>Advanced analytics dashboard for usage & error tracking.</li>
       </ul>
       <p class="mt-2"><em>Stay tuned—coming soon!</em></p>
     </div>
@@ -92,9 +89,7 @@
     <div class="known-bugs">
       <h4>🐞 Known Bugs</h4>
       <ul class="mb-0">
-        <li>Searching for adding admin is "No staff found".</li>
-        <li>Filtering of existing admins.</li>
-        <li>Emailing admins for reset limits.</li>
+        <li>Searching for adding admin is not functionable.</li>
 
       </ul>
       <p class="mt-2"><em>We’re actively working on fixes.</em></p>
@@ -106,6 +101,46 @@
         🐞 Report a Bug
       </button>
     </div>
+
+    <!-- Version 1.1.0 -->
+<div class="mb-5">
+  <h2>📅 <span class="date-label">2025-04-29</span> Version 1.1.0</h2>
+  <ul class="list-group updates-list">
+    <li class="list-group-item">
+      📊 <strong>Paginated Logs</strong>: Audit and Login tabs now show 20 entries per page with next/prev controls for faster browsing.
+    </li>
+    <li class="list-group-item">
+      💾 <strong>CSV Export</strong>: One-click “Export CSV” buttons on Audit and Login logs—download filtered data instantly.
+    </li>
+    <li class="list-group-item">
+      👥 <strong>Admin Management</strong>: New “Manage Admins” panel—superadmins can add, remove, promote, or demote admins without leaving the tab.
+    </li>
+    <li class="list-group-item">
+      📈 <strong>Advanced Analytics Dashboard</strong>: Fresh Analytics tab with interactive charts of resets &amp; logins by day, plus quick-view recent errors.
+    </li>
+    <li class="list-group-item">
+      💬 <strong>Motivational Quotes</strong>: Dynamic daily inspiration on the home page—powered by a local quotes CSV (no external calls).
+    </li>
+    <li class="list-group-item">
+      🔒 <strong>Password Policy UI</strong>: Combined Settings &amp; Password Policy into one pane, showing current values inline; in-place editing with live placeholders.
+    </li>
+    <li class="list-group-item">
+      📋 <strong>Bulk-Reset Preview</strong>: CSV import now previews first 5 emails before processing to avoid mistakes.
+    </li>
+    <li class="list-group-item">
+      🌙 <strong>Dark/Light UI Polish</strong>: Ensured all new components honor theme—charts, tables, forms, and quote card now look seamless in both modes.
+    </li>
+    <li class="list-group-item">
+      🐞 <strong>Bug Fixes</strong>:
+      <ul>
+        <li>Fixed modal styling regression on confirmations.</li>
+        <li>Resolved flash-message overlap on long lists.</li>
+        <li>Restored persistent tab anchor on form submissions.</li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
 
     <!-- Version 1.0.8 -->
     <div class="mb-5">
@@ -264,3 +299,74 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+<!-- templates/partials/footer.html -->
+<style>
+  footer {
+    width: 100%;
+;
+  }
+  .footer-inner {
+    display: flex;
+    justify-content: center;
+    padding: .75rem 1rem;
+  }
+  .footer-inner .text-muted {
+    text-align: center;
+  }
+  /* Dark‐mode tweak */
+  html.dark-mode .footer-inner .text-muted {
+    color: #adb5bd !important;
+  }
+</style>Button -->
+  <button id="backToTop" class="btn btn-primary" title="Back to top">
+    <i class="bi bi-arrow-up-circle-fill"></i>
+  </button>
+
+  <style>
+    /* Back to Top styling */
+    #backToTop {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      display: none;
+      z-index: 1050;
+      border-radius: 50%;
+      width: 3rem;
+      height: 3rem;
+      padding: 0;
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+  </style>
+
+  <script>
+    // Show/hide button on scroll, and smooth-scroll back to top
+    (function() {
+      const btn = document.getElementById('backToTop');
+      window.addEventListener('scroll', () => {
+        if (window.pageYOffset > 300) {
+          btn.style.display = 'block';
+        } else {
+          btn.style.display = 'none';
+        }
+      });
+      btn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    })();
+  </script>
+
+
+<footer class="mt-auto bg-transparent w-100">
+  <div class="footer-inner">
+    <div class="text-muted small">
+      &copy; {{ current_year }} ResetApp. All Rights Reserved.
+      ResetApp is a product of Hart County Schools.
+      <a href="{{ url_for('static', filename='docs/privacy_policy.pdf') }}"
+         target="_blank" rel="noopener">Privacy Policy</a>
+      &amp;
+      <a href="{{ url_for('static', filename='docs/terms_of_service.pdf') }}"
+         target="_blank" rel="noopener">Terms of Service</a>.
+    </div>
+  </div>
+</footer>

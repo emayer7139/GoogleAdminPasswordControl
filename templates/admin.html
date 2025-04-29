@@ -1,262 +1,439 @@
 <!doctype html>
 <html lang="en" class="{% if session.get('dark_mode') %}dark-mode{% endif %}">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin Dashboard</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-..."
-      crossorigin="anonymous">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
-   rel="stylesheet"
-  />
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Dashboard • ResetApp</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        rel="stylesheet" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+        rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="d-flex flex-column min-vh-100">
+  {% include 'partials/navbar.html' %}
 
-  </head>
-  <body>
-    {% include 'partials/navbar.html' %}
-    <div class="container py-4">
-      <h1 class="mb-4">Admin Dashboard</h1>
+  <div class="container py-4 flex-grow-1">
+    <h1 class="mb-4">Admin Dashboard</h1>
 
-      {# Flash messages #}
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          {% for category, msg in messages %}
-            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-              {{ msg|safe }}
-              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-          {% endfor %}
-        {% endif %}
-      {% endwith %}
+    {# Flash messages #}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ msg|safe }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
-      {# Date filter #}
-      <form class="row g-2 mb-4" method="get">
-        <div class="col-auto">
-          <input type="date" name="start_date" class="form-control"
-                 value="{{ request.args.get('start_date','') }}">
-        </div>
-        <div class="col-auto">
-          <input type="date" name="end_date" class="form-control"
-                 value="{{ request.args.get('end_date','') }}">
-        </div>
-        <div class="col-auto">
-          <button class="btn btn-primary">Filter</button>
-        </div>
-      </form>
+    {# Tabs #}
+    <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+      <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#audit">Audit Logs</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#login">Login Logs</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#users">Users</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#requests">Reset Requests</button></li>
+      {% if get_admin_role(user.email)=='superadmin' %}
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#manage_admins">Manage Admins</button></li>
+       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#analytics">Analytics</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#settings">Settings</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#bulkreset">Bulk Reset</button></li>
+      {% endif %}
+    </ul>
 
-      {# Tabs #}
-      <ul class="nav nav-tabs" id="adminTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#audit">Audit Logs</button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#login">Login Logs</button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#users">Users</button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#adminmgmt">Admins</button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#requests">Reset Requests</button>
-        </li>
-      </ul>
+    <div class="tab-content pt-3">
 
-      <div class="tab-content pt-3">
-        <!-- Audit Logs -->
-        <div class="tab-pane fade show active" id="audit">
-          <input id="search-audit" class="form-control mb-2" placeholder="Search Audit…" />
-          <table class="table table-striped" id="tbl-audit">
-            <thead>
-              <tr><th>Timestamp</th><th>Admin</th><th>Action</th><th>Details</th></tr>
-            </thead>
-            <tbody>
-              {% for a in audit_logs %}
-                <tr>
-                  <td>{{ a.timestamp }}</td>
-                  <td>{{ a.admin }}</td>
-                  <td>{{ a.outcome }}</td>
-                  <td>{{ a.student }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Login Logs -->
-        <div class="tab-pane fade" id="login">
-          <input id="search-login" class="form-control mb-2" placeholder="Search Login…" />
-          <table class="table table-striped" id="tbl-login">
-            <thead>
-              <tr><th>Timestamp</th><th>User</th><th>Outcome</th></tr>
-            </thead>
-            <tbody>
-              {% for l in login_logs %}
-                <tr>
-                  <td>{{ l.timestamp }}</td>
-                  <td>{{ l.user }}</td>
-                  <td>{{ l.outcome or l.ip }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Users -->
-        <div class="tab-pane fade" id="users">
-          <input id="user-search" class="form-control mb-2" placeholder="Search Students…" />
-          <table class="table table-striped" id="tbl-users">
-            <thead>
-              <tr><th>Name</th><th>Email</th></tr>
-            </thead>
-            <tbody id="user-results"></tbody>
-          </table>
-        </div>
-
-        <!-- Admin Management -->
-        <div class="tab-pane fade" id="adminmgmt">
-          <h3>Manage Admins</h3>
-          <input id="search-admins" class="form-control mb-2" placeholder="Filter existing admins…" />
-          <ul class="list-group mb-3" id="list-admins">
-            {% for email in admin_users %}
-              <li class="list-group-item d-flex justify-content-between">
-                {{ email }}
-                {% if email != user.email %}
-                  <form method="post" action="{{ url_for('remove_admin') }}"
-                        onsubmit="return confirm('Remove {{ email }}?')">
-                    <input type="hidden" name="email" value="{{ email }}" />
-                    <button class="btn btn-sm btn-outline-danger">Remove</button>
-                  </form>
-                {% endif %}
-              </li>
+      <!-- Audit Logs -->
+      <div class="tab-pane fade show active" id="audit">
+        <form class="row g-2 mb-3" method="get" action="{{ url_for('admin_page') }}">
+          <div class="col-auto">
+            <input type="date" name="start_date" class="form-control"
+                   value="{{ request.args.get('start_date','') }}">
+          </div>
+          <div class="col-auto">
+            <input type="date" name="end_date" class="form-control"
+                   value="{{ request.args.get('end_date','') }}">
+          </div>
+          <div class="col-auto">
+            <button class="btn btn-secondary">Filter</button>
+          </div>
+          <div class="col-auto">
+            <a href="{{ url_for('export_audit') }}?start_date={{ request.args.get('start_date','') }}&end_date={{ request.args.get('end_date','') }}"
+               class="btn btn-outline-success">Export CSV</a>
+          </div>
+        </form>
+        <input id="search-audit" class="form-control mb-2" placeholder="Search Audit…" />
+        <table class="table table-striped" id="tbl-audit">
+          <thead>
+            <tr><th>Timestamp</th><th>Admin</th><th>Outcome</th><th>Student</th></tr>
+          </thead>
+          <tbody>
+            {% for a in audit_logs_paginated %}
+              <tr>
+                <td>{{ a.timestamp }}</td>
+                <td>{{ a.admin }}</td>
+                <td>{{ a.outcome }}</td>
+                <td>{{ a.student }}</td>
+              </tr>
             {% endfor %}
+          </tbody>
+        </table>
+        <nav>
+          <ul class="pagination">
+            <li class="page-item {% if audit_page <= 1 %}disabled{% endif %}">
+              <a class="page-link"
+                 href="{{ url_for('admin_page',
+                                  start_date=request.args.get('start_date'),
+                                  end_date=request.args.get('end_date'),
+                                  audit_page=audit_page-1) }}#audit">
+                Previous
+              </a>
+            </li>
+            {% for p in range(1, audit_total_pages+1) %}
+            <li class="page-item {% if p == audit_page %}active{% endif %}">
+              <a class="page-link"
+                 href="{{ url_for('admin_page',
+                                  start_date=request.args.get('start_date'),
+                                  end_date=request.args.get('end_date'),
+                                  audit_page=p) }}#audit">
+                {{ p }}
+              </a>
+            </li>
+            {% endfor %}
+            <li class="page-item {% if audit_page >= audit_total_pages %}disabled{% endif %}">
+              <a class="page-link"
+                 href="{{ url_for('admin_page',
+                                  start_date=request.args.get('start_date'),
+                                  end_date=request.args.get('end_date'),
+                                  audit_page=audit_page+1) }}#audit">
+                Next
+              </a>
+            </li>
           </ul>
-
-          <label class="form-label">Add Staff as Admin</label>
-          <input id="staff-search" class="form-control mb-1" placeholder="Type staff name or email…" />
-          <ul class="list-group mb-3" id="staff-suggestions"></ul>
-
-          <form id="add-admin-form" method="post" action="{{ url_for('add_admin') }}"
-                onsubmit="return confirm('Add ' + document.getElementById('new-admin-email').value + ' as admin?')">
-            <input type="hidden" id="new-admin-email" name="email" />
-            <button id="add-admin-btn" class="btn btn-success" disabled>Add Admin</button>
-          </form>
-        </div>
-
-        <!-- Reset Requests -->
-        <div class="tab-pane fade" id="requests">
-          <input id="search-requests" class="form-control mb-2" placeholder="Search Requests…" />
-          <table class="table table-striped" id="tbl-requests">
-            <thead>
-              <tr><th>ID</th><th>Email</th><th>Date</th><th>Status</th><th>Actions</th></tr>
-            </thead>
-            <tbody>
-              {% for r in requests_list %}
-                <tr>
-                  <td>{{ r.id }}</td>
-                  <td>{{ r.email }}</td>
-                  <td>{{ r.date }}</td>
-                  <td>{{ r.status }}</td>
-                  <td>
-                    {% if r.status=='Pending' %}
-                      <form class="d-inline" method="post" action="{{ url_for('approve_request') }}">
-                        <input type="hidden" name="id" value="{{ r.id }}" />
-                        <button class="btn btn-sm btn-primary">Approve</button>
-                      </form>
-                      <form class="d-inline" method="post" action="{{ url_for('deny_request') }}">
-                        <input type="hidden" name="id" value="{{ r.id }}" />
-                        <button class="btn btn-sm btn-secondary">Deny</button>
-                      </form>
-                    {% endif %}
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+        </nav>
       </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-..." crossorigin="anonymous"></script>
-    <script>
-      // generic search filter
-      function makeSearch(inpId, tableOrListId) {
-        const inp = document.getElementById(inpId);
-        const container = document.getElementById(tableOrListId);
-        inp.addEventListener('input', () => {
-          const q = inp.value.toLowerCase();
-          Array.from(container.children).forEach(row => {
-            row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+      <!-- Login Logs -->
+      <div class="tab-pane fade" id="login">
+        <form class="row g-2 mb-3" method="get" action="{{ url_for('admin_page') }}">
+          <div class="col-auto">
+            <input type="date" name="start_date" class="form-control"
+                   value="{{ request.args.get('start_date','') }}">
+          </div>
+          <div class="col-auto">
+            <input type="date" name="end_date" class="form-control"
+                   value="{{ request.args.get('end_date','') }}">
+          </div>
+          <div class="col-auto">
+            <button class="btn btn-secondary">Filter</button>
+          </div>
+          <div class="col-auto">
+            <a href="{{ url_for('export_login') }}?start_date={{ request.args.get('start_date','') }}&end_date={{ request.args.get('end_date','') }}"
+               class="btn btn-outline-success">Export CSV</a>
+          </div>
+        </form>
+        <input id="search-login" class="form-control mb-2" placeholder="Search Login…" />
+        <table class="table table-striped" id="tbl-login">
+          <thead>
+            <tr><th>Timestamp</th><th>User</th><th>Outcome</th></tr>
+          </thead>
+          <tbody>
+            {% for l in login_logs_paginated %}
+              <tr>
+                <td>{{ l.timestamp }}</td>
+                <td>{{ l.user }}</td>
+                <td>{{ l.outcome }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <nav>
+          <ul class="pagination">
+            <li class="page-item {% if login_page <= 1 %}disabled{% endif %}">
+              <a class="page-link"
+                 href="{{ url_for('admin_page',
+                                  start_date=request.args.get('start_date'),
+                                  end_date=request.args.get('end_date'),
+                                  login_page=login_page-1) }}#login">
+                Previous
+              </a>
+            </li>
+            {% for p in range(1, login_total_pages+1) %}
+            <li class="page-item {% if p == login_page %}active{% endif %}">
+              <a class="page-link"
+                 href="{{ url_for('admin_page',
+                                  start_date=request.args.get('start_date'),
+                                  end_date=request.args.get('end_date'),
+                                  login_page=p) }}#login">
+                {{ p }}
+              </a>
+            </li>
+            {% endfor %}
+            <li class="page-item {% if login_page >= login_total_pages %}disabled{% endif %}">
+              <a class="page-link"
+                 href="{{ url_for('admin_page',
+                                  start_date=request.args.get('start_date'),
+                                  end_date=request.args.get('end_date'),
+                                  login_page=login_page+1) }}#login">
+                Next
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+
+      <!-- Users -->
+      <div class="tab-pane fade" id="users">
+        <input id="user-search" class="form-control mb-2" placeholder="Search Students…" />
+        <table class="table table-striped" id="tbl-users">
+          <thead><tr><th>Name</th><th>Email</th></tr></thead>
+          <tbody id="user-results"></tbody>
+        </table>
+      </div>
+
+      <!-- Reset Requests -->
+      <div class="tab-pane fade" id="requests">
+        <input id="search-requests" class="form-control mb-2" placeholder="Search Requests…" />
+        <table class="table table-striped" id="tbl-requests">
+          <thead><tr><th>ID</th><th>Email</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            {% for r in requests_list %}
+              <tr>
+                <td>{{ r.id }}</td>
+                <td>{{ r.email }}</td>
+                <td>{{ r.date }}</td>
+                <td>{{ r.status }}</td>
+                <td>
+                  {% if r.status == 'Pending' %}
+                    <form class="d-inline" method="post" action="{{ url_for('approve_request') }}">
+                      <input type="hidden" name="id" value="{{ r.id }}">
+                      <button class="btn btn-sm btn-primary">Approve</button>
+                    </form>
+                    <form class="d-inline" method="post" action="{{ url_for('deny_request') }}">
+                      <input type="hidden" name="id" value="{{ r.id }}">
+                      <button class="btn btn-sm btn-secondary">Deny</button>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>{# Manage Admins tab – only visible to superadmins #}
+{% if get_admin_role(user.email)=='superadmin' %}
+  <div class="tab-pane fade" id="manage_admins">
+    <h3 class="mb-4">Manage Admin Users</h3>
+
+    <!-- Search box -->
+    <input id="search-admins" class="form-control mb-3" placeholder="Search Admins…" />
+
+    <!-- Admins table -->
+    <table id="tbl-manage-admins" class="table table-striped mb-4">
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in admin_users %}
+        <tr>
+          <td>{{ u.email }}</td>
+          <td>{{ u.role }}</td>
+          <td>
+            {% if u.email != user.email %}
+              {# Promote/Demote form #}
+              <form class="d-inline" method="post" action="{{ url_for('change_admin_role') }}">
+                <input type="hidden" name="email" value="{{ u.email }}">
+                {% if u.role == 'admin' %}
+                  <input type="hidden" name="role" value="superadmin">
+                  <button class="btn btn-sm btn-warning">Promote to Superadmin</button>
+                {% else %}
+                  <input type="hidden" name="role" value="admin">
+                  <button class="btn btn-sm btn-secondary">Demote to Admin</button>
+                {% endif %}
+              </form>
+              {# Remove form #}
+              <form class="d-inline" method="post" action="{{ url_for('remove_admin') }}">
+                <input type="hidden" name="email" value="{{ u.email }}">
+                <button class="btn btn-sm btn-danger">Remove</button>
+              </form>
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <hr>
+
+    <!-- Add New Admin form -->
+    <h4 class="mt-4">Add New Admin</h4>
+    <form class="row g-2 align-items-end" method="post" action="{{ url_for('add_admin') }}">
+      <div class="col-auto">
+        <label for="newAdminEmail" class="form-label visually-hidden">Email</label>
+        <input type="email" class="form-control" id="newAdminEmail" name="email"
+               placeholder="user@example.com" required>
+      </div>
+      <div class="col-auto">
+        <label for="newAdminRole" class="form-label visually-hidden">Role</label>
+        <select class="form-select" id="newAdminRole" name="role">
+          <option value="admin">Admin</option>
+          <option value="superadmin">Superadmin</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Add Admin</button>
+      </div>
+    </form>
+  </div>
+
+
+{# Include this in your global scripts block to enable client‐side filtering: #}
+<script>
+  function makeSearch(inpId, tableId) {
+    const inp = document.getElementById(inpId),
+          tbl = document.getElementById(tableId);
+    inp.addEventListener('input', () => {
+      const q = inp.value.toLowerCase();
+      Array.from(tbl.tBodies[0].rows).forEach(r =>
+        r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none'
+      );
+    });
+  }
+  // Call after page load
+  document.addEventListener('DOMContentLoaded', () => {
+    makeSearch('search-admins', 'tbl-manage-admins');
+  });
+</script>
+      <!-- Analytics -->
+      <div class="tab-pane fade" id="analytics">
+        {% include 'analytics.html' %}
+      </div>
+
+
+      <!-- Settings & Password Policy -->
+      <div class="tab-pane fade" id="settings">
+        <h3>Super-Admin Settings & Password Policy</h3>
+        <form method="post" action="{{ url_for('save_settings') }}">
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="chkSecure" name="secure_workflow"
+                   {% if policy.secure_workflow %}checked{% endif %}>
+            <label class="form-check-label" for="chkSecure">
+              Require secure approval workflow
+            </label>
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="chkBulk" name="bulk_reset"
+                   {% if policy.bulk_reset %}checked{% endif %}>
+            <label class="form-check-label" for="chkBulk">
+              Enable bulk-reset via CSV
+            </label>
+          </div>
+          <div class="form-check mb-4">
+            <input class="form-check-input" type="checkbox" id="chkCustom" name="custom_policy"
+                   {% if policy.custom_policy %}checked{% endif %}>
+            <label class="form-check-label" for="chkCustom">
+              Allow custom password length & complexity
+            </label>
+          </div>
+
+          <h5>Password Policy Details</h5>
+          <p id="currentLen" class="text-muted">
+            Current minimum length: <strong>{{ policy.min_length }}</strong>
+          </p>
+          <div class="mb-3">
+            <label for="minLength" class="form-label">Minimum Length</label>
+            <input type="number" class="form-control" id="minLength" name="min_length"
+                   placeholder="{{ policy.min_length }}">
+          </div>
+          <div class="mb-3">
+            <label for="complexity" class="form-label">Complexity</label>
+            <select class="form-select" id="complexity" name="complexity">
+              <option value="low"  {% if policy.complexity=='low'  %}selected{% endif %}>Low</option>
+              <option value="med"  {% if policy.complexity=='med'  %}selected{% endif %}>Medium</option>
+              <option value="high" {% if policy.complexity=='high' %}selected{% endif %}>High</option>
+            </select>
+          </div>
+
+          <h5>Daily Reset Limit</h5>
+          <p id="currentLimit" class="text-muted">
+            Currently: <strong>{{ policy.reset_limit }}</strong> resets per day
+          </p>
+          <div class="mb-3">
+            <label for="resetLimit" class="form-label">New Daily Limit</label>
+            <input type="number" class="form-control" id="resetLimit" name="reset_limit"
+                   placeholder="{{ policy.reset_limit }}">
+          </div>
+
+          <button type="submit" class="btn btn-primary">Save All Settings</button>
+        </form>
+        <script>
+          document.getElementById('minLength').addEventListener('focus', () => {
+            document.getElementById('currentLen').style.display = 'none';
           });
-        });
-      }
+          document.getElementById('resetLimit').addEventListener('focus', () => {
+            document.getElementById('currentLimit').style.display = 'none';
+          });
+        </script>
+      </div>
 
-      makeSearch('search-audit','tbl-audit');
-      makeSearch('search-login','tbl-login');
-      makeSearch('search-admins','list-admins');
-      makeSearch('search-requests','tbl-requests');
+      <!-- Bulk Reset -->
+      <div class="tab-pane fade" id="bulkreset">
+        <h3>Bulk-Reset & CSV Import</h3>
+        <p>
+          Upload a CSV with one email per line.
+          <a href="{{ url_for('download_example_csv') }}">Download template</a>
+        </p>
+        <form method="post" action="{{ url_for('bulk_reset') }}" enctype="multipart/form-data">
+          <div class="mb-3">
+            <input class="form-control" type="file" id="csvFile" name="csv_file" accept=".csv">
+          </div>
+          <button class="btn btn-warning">Process Bulk Reset</button>
+        </form>
+        <div id="bulkPreview" class="mt-3"></div>
+        <script>
+          document.getElementById('csvFile').addEventListener('change', e => {
+            const file = e.target.files[0]; if (!file) return;
+            const rdr = new FileReader();
+            rdr.onload = () => {
+              const lines = rdr.result.trim().split('\n').slice(0,5);
+              const rows  = lines.map(l => `<tr><td>${l}</td></tr>`).join('');
+              document.getElementById('bulkPreview').innerHTML =
+                `<table class="table table-sm">
+                   <thead><tr><th>Email</th></tr></thead>
+                   <tbody>${rows}</tbody>
+                 </table>`;
+            };
+            rdr.readAsText(file);
+          });
+        </script>
+      </div>
+      {% endif %}
 
-      // student live search
-      let debounce;
-      document.getElementById('user-search').addEventListener('input', () => {
-        clearTimeout(debounce);
-        const q = document.getElementById('user-search').value.trim();
-        const tbody = document.getElementById('user-results');
-        if (!q) return tbody.innerHTML = '';
-        debounce = setTimeout(async () => {
-          tbody.innerHTML = '<tr><td colspan="2">Searching…</td></tr>';
-          try {
-            const res = await fetch(`/search_users?q=${encodeURIComponent(q)}`);
-            const users = await res.json();
-            tbody.innerHTML = users.length
-              ? users.map(u => `<tr><td>${u.label}</td><td>${u.value}</td></tr>`).join('')
-              : '<tr><td colspan="2">No students found</td></tr>';
-          } catch {
-            tbody.innerHTML = '<tr><td colspan="2">Error</td></tr>';
-          }
-        }, 300);
+    </div>
+  </div>
+
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+          crossorigin="anonymous"></script>
+  <script>
+    function makeSearch(inpId, tableId) {
+      const inp = document.getElementById(inpId), tbl = document.getElementById(tableId);
+      inp.addEventListener('input', () => {
+        const q = inp.value.toLowerCase();
+        Array.from(tbl.tBodies[0].rows)
+             .forEach(r => r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none');
       });
-
-      // staff live search for adding admins
-      document.getElementById('staff-search').addEventListener('input', () => {
-        clearTimeout(debounce);
-        const q = document.getElementById('staff-search').value.trim();
-        const sugg = document.getElementById('staff-suggestions');
-        const addBtn = document.getElementById('add-admin-btn');
-        const hidden = document.getElementById('new-admin-email');
-        addBtn.disabled = true; hidden.value = '';
-        if (!q) return sugg.innerHTML = '';
-        debounce = setTimeout(async () => {
-          sugg.innerHTML = '<li class="list-group-item">Searching…</li>';
-          try {
-            const res = await fetch(`/search_staff?q=${encodeURIComponent(q)}`);
-            const list = await res.json();
-            sugg.innerHTML = list.length
-              ? list.map(u =>
-                  `<li class="list-group-item list-group-item-action"
-                       onclick="selectStaff('${u.value}','${u.label.replace(/'/g,"\\'")}')">
-                     ${u.label}
-                   </li>`
-                ).join('')
-              : '<li class="list-group-item">No staff found</li>';
-          } catch {
-            sugg.innerHTML = '<li class="list-group-item text-danger">Error</li>';
-          }
-        }, 300);
-      });
-
-      function selectStaff(email, label) {
-        document.getElementById('staff-search').value = label;
-        document.getElementById('new-admin-email').value = email;
-        document.getElementById('add-admin-btn').disabled = false;
-        document.getElementById('staff-suggestions').innerHTML = '';
-      }
-    </script>
-  </body>
+    }
+    makeSearch('search-audit', 'tbl-audit');
+    makeSearch('search-login', 'tbl-login');
+    makeSearch('search-requests', 'tbl-requests');
+  </script>
+</body>
 </html>

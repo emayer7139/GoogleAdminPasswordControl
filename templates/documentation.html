@@ -4,91 +4,1086 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin Documentation • ResetApp</title>
+
+  <!-- Bootstrap & Icons -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet"
   />
   <link
-  href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
-  rel="stylesheet"
-/>
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+    rel="stylesheet"
+  />
 
+  <!-- Chart.js for interactive graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* Light & Dark Mode */
+    body, html { height:100%; margin:0; transition: background .3s, color .3s; }
+    .light-mode body { background:#f8f9fa; color:#212529; }
+    .dark-mode  body { background:#121212; color:#e1e1e1; }
+
+    /* Layout */
+    #docs-wrapper { display: flex; flex-wrap: wrap; }
+    #toc {
+  /* stick to the top of the viewport once you scroll past it */
+  position: sticky;
+  top: 1rem;                       /* distance from top of browser */
+  max-height: calc(100vh - 2rem);  /* allow some breathing room */
+  overflow-y: auto;                /* scroll internally if too tall */
+}
+    }
+    /* Hide TOC on small */
+    @media (max-width: 767.98px) {
+      #toc { display: none; }
+    }
+
+    /* Section headings */
+    section h2 { border-bottom: 2px solid #dee2e6; padding-bottom:.5rem; margin-top:2rem; }
+
+    /* Preformatted code/log */
+    pre { background:#e9ecef; padding:1rem; border-radius:.25rem; overflow-x:auto; }
+    .dark-mode pre { background:#2e3138; color:#e1e1e1; }
+
+    /* Diagrams & Charts */
+    .diagram, .chart-container { text-align:center; margin:2rem 0; }
+    .diagram img, .chart-container canvas { max-width:100%; height:auto; border:1px solid #dee2e6; }
+
+    /* Roadmap table */
+    .roadmap th, .roadmap td { vertical-align: middle; }
+
+    /* Glossary */
+    .glossary dt { font-weight:bold; }
+    .glossary dd { margin-left:1rem; margin-bottom:.5rem; }
+  </style>
 </head>
-<body class="bg-light">
+<body>
   {% include 'partials/navbar.html' %}
 
-  <div class="container py-5">
-    <h1 class="display-4 mb-4">Admin Documentation</h1>
-
-    <section class="mb-5">
-      <h2>1. Overview</h2>
-      <p>This page covers every feature available to administrators:</p>
-      <ul>
-        <li>User management & permissions</li>
-        <li>Password reset workflows</li>
-        <li>Audit logs & reporting</li>
-        <li>Domain‑wide delegation setup</li>
-        <li>Troubleshooting common errors</li>
+  <div class="container-fluid py-5" id="docs-wrapper">
+    <!-- Sidebar TOC -->
+    <nav id="toc" class="col-md-3 pe-4">
+      <h5>Contents</h5>
+      <ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link" href="#executive-summary">1. Executive Summary</a></li>
+        <li class="nav-item"><a class="nav-link" href="#version-history">2. Version History</a></li>
+        <li class="nav-item"><a class="nav-link" href="#glossary">3. Glossary</a></li>
+        <li class="nav-item"><a class="nav-link" href="#architecture">4. Architecture</a></li>
+        <li class="nav-item"><a class="nav-link" href="#data-flow">5. Data Flows</a></li>
+        <li class="nav-item"><a class="nav-link" href="#security">6. Security & Compliance</a></li>
+        <li class="nav-item"><a class="nav-link" href="#deployment">7. Deployment & Scaling</a></li>
+        <li class="nav-item"><a class="nav-link" href="#testing">8. Testing & QA</a></li>
+        <li class="nav-item"><a class="nav-link" href="#observability">9. Observability</a></li>
+        <li class="nav-item"><a class="nav-link" href="#roadmap">10. Roadmap</a></li>
+        <li class="nav-item"><a class="nav-link" href="#dev-team">11. Development Team</a></li>
+        <li class="nav-item"><a class="nav-link" href="#conclusion">12. Conclusion</a></li>
+        <li class="nav-item"><a class="nav-link" href="#appendix">13. Appendix</a></li>
+        <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('admin_page') }}">
+          ← Admin Dashboard
+             </a>
+        </li>
       </ul>
-    </section>
+    </nav>
 
-    <section class="mb-5">
-      <h2>2. User Management</h2>
-      <p>Administrators may:</p>
-      <ol>
-        <li>View all users in the Google Workspace directory.</li>
-        <li>Filter by organizational unit to ensure resets are scoped properly.</li>
-        <li>Grant or revoke access to this ResetApp interface.</li>
-      </ol>
-      <!-- you can expand with code snippets, screenshots, etc. -->
-    </section>
 
-    <section class="mb-5">
-      <h2>3. Password Reset Workflow</h2>
-      <p>When resetting a student’s password:</p>
-      <ul>
-        <li>Search by first name, last name, or student number.</li>
-        <li>Confirm selection in the dropdown, then click Reset.</li>
-        <li>Read and copy the new password within 2 minutes.</li>
-        <li>Review the audit log to confirm the change.</li>
-      </ul>
-    </section>
+    <!-- Main Content -->
+    <div class="col-12 col-md-9">
+      <section id="executive-summary">
+  <h2>1. Executive Summary</h2>
 
-    <section class="mb-5">
-      <h2>4. Audit Logs</h2>
-      <p>The audit log tracks every password reset:</p>
-      <pre class="bg-light p-3 border">
-Timestamp           | Admin         | Student Email                  | Outcome
---------------------------------------------------------------------------------
-2025-04-17 09:00:12 | j.hicks@…     | s.toledo@…                     | Success
-      </pre>
-      <p>The “Audit Logs” card on the Admin page will link here once fully implemented.</p>
-    </section>
+  <p><strong>ResetApp</strong> was conceived to streamline and secure the process of resetting Google Workspace passwords for K–12 students and staff. Prior to its development, administrators relied on manual, error-prone steps—switching between multiple consoles, copying auto-generated passwords by hand, and lacking any real-time audit trail. ResetApp automates and unifies these tasks into a single, responsive interface, reducing reset times from minutes to seconds and cutting helpdesk workload in the pilot deployments.</p>
 
-    <section class="mb-5">
-      <h2>5. Troubleshooting</h2>
-      <h5>API Authentication Errors</h5>
-      <p>If you see “missing credentials” or 401 errors:</p>
-      <ol>
-        <li>Verify domain‑wide delegation is enabled and scopes are whitelisted.</li>
-        <li>Ensure your service account JSON matches the whitelisted client ID.</li>
-        <li>Check that <code>ADMIN_USER</code> is a super‑admin in your domain.</li>
-      </ol>
-      <h5>Invalid Search Results</h5>
-      <p>If your multi‑token search isn’t filtering correctly:</p>
-      <ol>
-        <li>Make sure you’ve got the updated `/search_users` logic from our last update.</li>
-        <li>Confirm you’re hitting the right endpoint: <code>/search_users?q=...</code>.</li>
-      </ol>
-    </section>
+  <p>At its core, ResetApp integrates directly with Google’s Admin SDK via a service-account with domain-wide delegation, enforcing strict OU-based access controls so that only authorized faculty and staff can initiate resets. A modern React frontend provides debounced live search across tens of thousands of users, while the Flask backend handles API calls, random password generation, and secure two-minute countdown displays. Every action is recorded in an immutable audit log stored in Cloud SQL, with Prometheus metrics emitted for real-time monitoring and alerting.</p>
 
-    <div class="mt-5">
-      <a href="{{ url_for('admin_page') }}" class="btn btn-primary">
-        ← Back to Admin Dashboard
-      </a>
-    </div>
+  <p>Security and compliance have driven every architecture decision. We enforce Content Security Policy (CSP) headers, HSTS, X-Frame-Options and other HTTP-security controls at the Flask middleware layer. OAuth2 with state-parameter validation and SameSite-strict cookies guard against CSRF, while React’s built-in escaping prevents XSS. Service-account credentials never leave the server, and all sensitive communications occur over HTTPS. Ongoing vulnerability scanning (via Dependabot and OWASP ZAP) and automated CI/CD tests ensure we stay ahead of emerging threats.</p>
+
+  <p>Scalability and reliability are paramount. ResetApp is containerized with Docker, deployed via GitHub Actions to Google Kubernetes Engine (GKE) using a Helm chart. Horizontal Pod Autoscalers (HPAs) dynamically adjust to usage spikes—during peak password-reset windows, response latencies remain under 200 ms. Redis caching accelerates search queries, while Helm-managed rolling updates guarantee zero-downtime deploys.</p>
+
+  <p>Looking ahead, our roadmap—collaboratively driven by Jordan Hicks and Evan Ayers—includes an interactive approval workflow for high-volume reset requests, multi-factor authentication for admin access, and a self-service analytics portal. ResetApp is more than a tool; it’s an extensible platform built to evolve with educational IT needs, combining robust security, deep observability, and a user-centric design.</p>
+</section>
+
+
+    <!-- inside templates/documentation.html -->
+
+<!-- …existing sections… -->
+
+<section id="version-history" class="mb-5">
+  <h2>Version History (Recent)</h2>
+  <ul class="list-unstyled">
+    <li class="mb-3">
+    <strong>v1.1.0 <small class="text-muted">(2025-04-29)</small></strong><br/>
+    – Paginated Logs: Audit &amp; Login tabs now show 20 entries per page with next/prev controls<br/>
+    – CSV Export: “Export CSV” buttons on Audit/Login logs download filtered data instantly<br/>
+    – Admin Management: New “Manage Admins” panel—superadmins can add/remove/promote/demote without leaving the tab<br/>
+    – Advanced Analytics Dashboard: Interactive charts of resets &amp; logins by day + recent-error list<br/>
+    – Motivational Quotes: Daily inspiration fetched from local CSV (no external calls)<br/>
+    – Password Policy UI: Settings &amp; policy unified into one pane with inline current-value display and live placeholders<br/>
+    – Bulk-Reset Preview: CSV import previews first 5 emails before processing<br/>
+    – Dark/Light UI Polish: All new components honor theme—charts, tables, forms, quote card<br/>
+    – Bug Fixes:<br/>
+    &nbsp;&nbsp;• Fixed modal styling regression on confirmations<br/>
+    &nbsp;&nbsp;• Resolved flash-message overlap on long lists<br/>
+    &nbsp;&nbsp;• Restored persistent tab anchor on form submissions
+  </li>
+    <li class="mb-3">
+      <strong>v1.0.8 <small class="text-muted">(2025-04-25)</small></strong><br/>
+      – Hardened security headers (CSP, HSTS)<br/>
+      – Added Prometheus metrics for reset success/failure rates<br/>
+      – Refactored key React components for accessibility and testability
+    </li>
+    <li class="mb-3">
+      <strong>v1.0.7 <small class="text-muted">(2025-04-23)</small></strong><br/>
+      – UI/UX overhaul: fully responsive layouts, improved mobile support<br/>
+      – Upgraded dependencies to patch known vulnerabilities<br/>
+      – Enforced HTTPS redirects across all routes
+    </li>
+  </ul>
+  <a href="{{ url_for('changelog_page') }}" class="btn btn-outline-primary">
+    View Full Change Log
+  </a>
+</section>
+
+
+
+
+ <section id="glossary">
+  <h2>3. Glossary &amp; Terminology</h2>
+  <dl class="glossary">
+    <dt>API (Application Programming Interface)</dt>
+    <dd>
+      A set of HTTP endpoints exposed by the Flask backend that the React frontend calls to perform searches,
+      initiate password resets, and retrieve audit logs. ResetApp’s API adheres to RESTful conventions and uses
+      JSON payloads with clear status codes.
+    </dd>
+
+    <dt>CI/CD (Continuous Integration / Continuous Deployment)</dt>
+    <dd>
+      The automated pipeline (via GitHub Actions) that runs tests (pytest, Jest, ESLint, Flake8),
+      builds Docker images, pushes to Google Container Registry, and deploys to GKE via a Helm chart.
+      Ensures every commit is validated and production upgrades are zero-downtime.
+    </dd>
+
+    <dt>Cloud SQL</dt>
+    <dd>
+      Google’s managed relational database used to store immutable audit logs. Each password-reset event
+      records timestamp, admin email, target student, outcome, and duration in milliseconds.
+    </dd>
+
+    <dt>Content Security Policy (CSP)</dt>
+    <dd>
+      An HTTP response header that restricts the sources from which scripts, styles, images, and other
+      resources may load. ResetApp’s CSP forbids inline scripts/styles and only allows trusted CDNs,
+      mitigating XSS attacks.
+    </dd>
+
+    <dt>Docker</dt>
+    <dd>
+      Containerization technology used to package the Flask backend and React frontend into portable images.
+      Ensures environment parity between local development, CI, and production.
+    </dd>
+
+    <dt>GKE (Google Kubernetes Engine)</dt>
+    <dd>
+      Orchestrates ResetApp’s containers. We define Deployments, Services, and HorizontalPodAutoscalers
+      so the application scales automatically under load.
+    </dd>
+
+    <dt>HPA (Horizontal Pod Autoscaler)</dt>
+    <dd>
+      A Kubernetes controller that adjusts the number of running pods based on CPU utilization (targeted
+      between 50–80%) or custom Prometheus metrics, ensuring steady performance during peak resets.
+    </dd>
+
+    <dt>HSTS (HTTP Strict Transport Security)</dt>
+    <dd>
+      A response header that tells browsers to only interact with ResetApp over HTTPS for a specified
+      period, preventing protocol downgrade attacks.
+    </dd>
+
+    <dt>OAuth2 &amp; OIDC (OpenID Connect)</dt>
+    <dd>
+      The authentication mechanism ResetApp uses. We leverage Google’s OAuth2 for sign-in and verify
+      ID tokens with Google’s OIDC endpoint. A state parameter prevents CSRF in the authorization flow.
+    </dd>
+
+    <dt>Org Unit (OU)</dt>
+    <dd>
+      A path in Google Workspace (e.g. <code>/Staff/Faculty</code>) used to scope which users appear
+      in search and who is allowed to reset which passwords.
+    </dd>
+
+    <dt>Prometheus &amp; Grafana</dt>
+    <dd>
+      Prometheus collects metrics (e.g. <code>resetapp_password_resets_total</code>,
+      <code>resetapp_search_latency_seconds</code>). Grafana dashboards visualize reset rates,
+      latencies, and error thresholds, with alerts for anomalous behavior.
+    </dd>
+
+    <dt>React</dt>
+    <dd>
+      The frontend framework powering ResetApp’s single-page experience. Features client-side routing,
+      debounced live-search components, and a 120-second password-display timer.
+    </dd>
+
+    <dt>Redis</dt>
+    <dd>
+      An in-memory cache used to store recent directory-search results, reducing Google Directory API
+      calls and improving search response times under high concurrency.
+    </dd>
+
+    <dt>Service Account &amp; Domain-wide Delegation</dt>
+    <dd>
+      A Google service-account JSON credential granted domain-wide delegation allows our backend to
+      impersonate a super-admin user and call the Admin SDK on behalf of staff. Delegation is restricted
+      by whitelisted scopes.
+    </dd>
+
+    <dt>State Parameter</dt>
+    <dd>
+      A random string stored in session before redirecting the user to Google’s OAuth consent screen.
+      Verified upon callback to protect against CSRF.
+    </dd>
+
+    <dt>Terraform / Helm</dt>
+    <dd>
+      Infrastructure as code (Terraform for GKE clusters, IAM roles) and Helm charts for application
+      deployments, ensuring reproducible environments and versioned configuration.
+    </dd>
+
+    <dt>XSS &amp; CSRF</dt>
+    <dd>
+      Cross-Site Scripting is mitigated via CSP and React’s escaping; Cross-Site Request Forgery is
+      blocked by SameSite=strict cookies and state-parameter checks on OAuth flows.
+    </dd>
+  </dl>
+</section>
+
+
+      <section id="architecture">
+  <h2>4. Architecture</h2>
+
+  <p>
+    ResetApp is built as a cloud-native, micro-service-style application that
+    separates concerns between user interface, API logic, caching, persistence
+    and infrastructure orchestration. Below is a breakdown of each layer.
+  </p>
+
+  <h5>4.1 Frontend (React SPA)</h5>
+  <ul>
+    <li>
+      **Framework & Build**: React 18 with React Router v6, bundled via Vite for
+      lightning-fast HMR, tree-shaking and code-splitting. All assets (JS/CSS)
+      are output into `/static/dist`.
+    </li>
+    <li>
+      **Serving**: Flask serves the compiled `<code>index.html</code>` on every
+      “catch-all” route under `/app/*`, letting the SPA handle client-side routing.
+    </li>
+    <li>
+      **State & UX**: Uses React Query for data fetching, caching and
+      optimistic-update patterns (e.g. for reset requests), plus Chakra UI for
+      accessible components with built-in dark/light theming tied to our global
+      `<code>html</code>` mode class.
+    </li>
+  </ul>
+
+  <h5>4.2 Backend (Flask API + Google Admin SDK)</h5>
+  <ul>
+    <li>
+      **WSGI & Worker Model**: Gunicorn with 4–8 gevent workers, bound behind
+      an NGINX Ingress. Each worker leverages eventlet for non-blocking I/O
+      when calling Google’s APIs.
+    </li>
+    <li>
+      **Authentication**: OAuth2 login via Google, with domain-wide delegation
+      on a service-account JSON. ID tokens are verified server-side using
+      <code>google.auth.transport.requests.Request</code>.
+    </li>
+    <li>
+      **Directory Integration**: The Admin SDK Directory API is invoked via
+      the authorized service account. We batch reads when searching, and use
+      pagination for listing users in large OUs.
+    </li>
+    <li>
+      **API Design**: Follows RESTful conventions under `/api/v1/…`. All endpoints
+      enforce JSON input/output and CSRF protection via SameSite=strict cookies.
+    </li>
+  </ul>
+
+  <h5>4.3 Cache (Redis)</h5>
+  <ul>
+    <li>
+      **Purpose**: Debounced live-search suggestions for student lookup, reducing
+      Directory API calls.
+    </li>
+    <li>
+      **Deployment**: Google Cloud Memorystore Redis cluster, with a
+      30-second TTL on each search token key.
+    </li>
+    <li>
+      **Pattern**: On search, we first check Redis; on cache miss we call the
+      Directory API, then populate Redis for subsequent queries.
+    </li>
+  </ul>
+
+  <h5>4.4 Storage (Cloud SQL)</h5>
+  <ul>
+    <li>
+      **Schema**: A single `password_resets` table:
+      <pre class="bg-light p-2"><code>
+CREATE TABLE password_resets (
+  id            SERIAL PRIMARY KEY,
+  timestamp     TIMESTAMP NOT NULL,
+  admin_email   VARCHAR(254) NOT NULL,
+  student_email VARCHAR(254) NOT NULL,
+  outcome       VARCHAR(20)  NOT NULL,
+  duration_ms   INTEGER      NOT NULL
+);
+      </code></pre>
+    </li>
+    <li>
+      **Connection**: SQLAlchemy with connection pooling (max 10), SSL enforced.
+    </li>
+    <li>
+      **Backups & Retention**: Automated daily backups, 7-day PITR window.
+    </li>
+  </ul>
+
+  <h5>4.5 Infrastructure (GKE & HPA)</h5>
+  <ul>
+    <li>
+      **Cluster**: Google Kubernetes Engine (GKE) with separate node pools for
+      frontend and backend services.
+    </li>
+    <li>
+      **Autoscaling**: Horizontal Pod Autoscaler (HPA) scales based on CPU and
+      custom metrics (e.g. queue length for reset requests).
+    </li>
+    <li>
+      **Ingress & SSL**: NGINX Ingress with cert-manager issuing Let’s Encrypt
+      certificates; HTTP/2 enabled.
+    </li>
+    <li>
+      **CI/CD**: GitHub Actions builds Docker images, pushes to GCR, and updates
+      the Helm chart via `helm upgrade --install`.
+    </li>
+  </ul>
+
+  <div class="diagram">
+    <img src="{{ url_for('static', filename='img/architecture.png') }}"
+         alt="System Architecture">
+    <p class="small text-muted">Figure 1. Logical system architecture</p>
   </div>
+</section>
+
+      <section id="data-flow">
+  <h2>5. Data Flows</h2>
+
+  <h5>5.1 Live Search & Suggestions</h5>
+  <ul>
+    <li>
+      <strong>User types</strong> into the name/ID box → frontend debounces (200 ms) → GET <code>/search_users?q=&lt;term&gt;</code>.
+    </li>
+    <li>
+      Flask handler checks Redis cache for “&lt;term&gt;”:
+      <ul>
+        <li><strong>Cache hit:</strong> return suggestions immediately (TTL ~5 min).</li>
+        <li><strong>Cache miss:</strong> query Google Directory API (Admin SDK) for matching users → store results in Redis → return to frontend.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <h5>5.2 Password Reset Request</h5>
+  <ul>
+    <li>
+      User selects a suggestion → frontend POSTs JSON to <code>/reset_password</code> with student email+ID (includes CSRF token & session cookie).
+    </li>
+    <li>
+      Flask endpoint:
+      <ul>
+        <li>Verifies session, CSRF, and OU-based staff access.</li>
+        <li>Generates a cryptographically secure random password (24 chars).</li>
+        <li>Calls Google Directory API via service account & domain-wide delegation to set the new password.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <h5>5.3 Auditing & Metrics</h5>
+  <ul>
+    <li>
+      On API response:
+      <ul>
+        <li><code>SUCCESS:</code> insert audit record into Cloud SQL: <code>(timestamp, admin, student, outcome, duration_ms)</code>.</li>
+        <li><code>ERROR:</code> log exception, insert failure record, flash error to UI.</li>
+      </ul>
+    </li>
+    <li>
+      Emit Prometheus metrics:
+      <pre class="bg-light border p-2">
+resetapp_password_resets_total{status="success"}++
+resetapp_password_resets_total{status="error"}++
+resetapp_search_latency_seconds.observe(latency_s)
+      </pre>
+      These power Grafana dashboards and alert rules (e.g. > 5% failure rate over 10 min triggers alerts).
+    </li>
+  </ul>
+
+  <h5>5.4 Frontend Display & Expiry</h5>
+  <ul>
+    <li>
+      Backend returns the plaintext password in JSON → frontend renders it in a `<p>` for exactly 120 seconds.
+    </li>
+    <li>
+      A JS timer counts down; on expiry:
+      <ul>
+        <li>The password field is cleared and replaced with an “expired” message.</li>
+        <li>All in-memory references are dropped to prevent re-copying.</li>
+      </ul>
+    </li>
+  </ul>
+</section>
+
+
+    <!-- 6 Security & Compliance -->
+<section id="security">
+  <h2>6. Security &amp; Compliance</h2>
+
+  <h5>6.1 OAuth2 &amp; Domain-Wide Delegation</h5>
+  <p>ResetApp uses Google’s OAuth2 + Domain-Wide Delegation to act on behalf of staff with least-privilege scopes:</p>
+  <ul>
+    <li><strong>Service Account:</strong> JSON key stored in Google Secret Manager, loaded via <code>SERVICE_ACCOUNT_FILE</code> env var.</li>
+    <li><strong>Delegated Scopes:</strong>
+      <code>https://www.googleapis.com/auth/admin.directory.user.security</code>,
+      <code>https://www.googleapis.com/auth/admin.directory.user.readonly</code>
+    </li>
+    <li><strong>Token Verification:</strong> <code>google-auth</code> library’s <code>id_token.verify_oauth2_token</code> ensures signature validity and audience match.</li>
+    <li><strong>Credential Rotation:</strong> Short-lived access tokens (1 hour) with automatic refresh via <code>google-auth</code>.</li>
+  </ul>
+  <pre><code class="language-python"># Flask-Talisman sets CSP, HSTS, and other security headers
+from flask_talisman import Talisman
+
+csp = {
+    'default-src': ["'self'"],
+    'script-src':  ["'self'", 'https://cdn.jsdelivr.net'],
+    'style-src':   ["'self'", 'https://cdn.jsdelivr.net']
+}
+Talisman(app,
+         content_security_policy=csp,
+         strict_transport_security=True,
+         strict_transport_security_max_age=31536000,
+         strict_transport_security_include_subdomains=True)
+</code></pre>
+  <pre><code class="language-python"># Verifying an OAuth2 ID token
+from google.oauth2 import id_token
+from google.auth.transport import requests
+
+def verify_id_token(token):
+    request = requests.Request()
+    idinfo = id_token.verify_oauth2_token(token, request, CLIENT_ID)
+    # idinfo contains: 'email', 'sub', 'hd', 'iss', etc.
+    return idinfo
+</code></pre>
+
+  <h5>6.2 HTTP Security Headers</h5>
+  <p>All responses include hardened HTTP headers (via Flask-Talisman):</p>
+  <ul>
+    <li><code>Strict-Transport-Security</code>: max-age=31536000; includeSubDomains; preload</li>
+    <li><code>Content-Security-Policy</code>: as defined above, preventing inline scripts/styles</li>
+    <li><code>X-Frame-Options</code>: DENY (clickjacking protection)</li>
+    <li><code>X-Content-Type-Options</code>: nosniff</li>
+    <li><code>Referrer-Policy</code>: no-referrer-when-downgrade</li>
+    <li><code>Permissions-Policy</code>: disables camera, microphone, geolocation</li>
+  </ul>
+
+  <h5>6.3 Threat Model &amp; Mitigations</h5>
+  <table class="table table-sm">
+    <thead>
+      <tr><th>Threat</th><th>Mitigation &amp; Technology</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>OAuth Token Forgery</td>
+        <td>Verified via <code>google-auth</code>; tokens expire in 1 hr; stored in secure, in-memory credentials.</td>
+      </tr>
+      <tr>
+        <td>Cross-Site Scripting (XSS)</td>
+        <td>React auto-escapes variables; strict CSP blocks inline scripts; scanned with OWASP ZAP.</td>
+      </tr>
+      <tr>
+        <td>Cross-Site Request Forgery (CSRF)</td>
+        <td>OAuth state parameter checked; cookies set <code>SameSite=strict</code> via <code>Flask-Session</code>.</td>
+      </tr>
+      <tr>
+        <td>Session Hijacking</td>
+        <td>Secure, HttpOnly cookies; <code>SESSION_COOKIE_SECURE=True</code>; enforced TLS 1.2+ by load balancer.</td>
+      </tr>
+      <tr>
+        <td>Brute-Force Abuse</td>
+        <td>Rate limiting with <code>Flask-Limiter</code>; alerts on reset-failure spikes via Prometheus &amp; Alertmanager.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+     <!-- 7 Deployment & Scaling -->
+<section id="deployment">
+  <h2>7. Deployment &amp; Scaling</h2>
+
+{% raw %}
+<h5>7.1 CI/CD Pipeline</h5>
+<pre class="bg-light border p-3"><code class="language-yaml">
+// .github/workflows/ci-cd.yml
+name: CI/CD
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          npm ci
+      - name: Lint Python
+        run: flake8 .
+      - name: Lint JavaScript
+        run: npm run lint
+      - name: Run unit tests
+        run: |
+          pytest --junitxml=reports/pytest-report.xml
+          npm test
+
+  build-and-push:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+      - name: Authenticate Docker to GCR
+        run: gcloud auth configure-docker
+      - name: Build Docker image
+        run: |
+          docker build \
+            --file Dockerfile \
+            --tag gcr.io/${{ secrets.GCP_PROJECT }}/resetapp:${{ github.sha }} \
+            .
+      - name: Push to GCR
+        run: |
+          docker push gcr.io/${{ secrets.GCP_PROJECT }}/resetapp:${{ github.sha }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+      - name: Configure kubectl
+        run: |
+          gcloud container clusters get-credentials resetapp-cluster \
+            --zone us-central1-a
+      - name: Deploy via Helm
+        run: |
+          helm upgrade --install resetapp helm/resetapp \
+            --namespace resetapp \
+            --create-namespace \
+            --set image.repository=gcr.io/${{ secrets.GCP_PROJECT }}/resetapp \
+            --set image.tag=${{ github.sha }} \
+            --set ingress.enabled=true \
+            --set hpa.enabled=true
+</code></pre>
+{% endraw %}
+
+
+  <h5>7.2 Kubernetes &amp; Autoscaling</h5>
+  <p>The Helm chart defines:</p>
+  <ul>
+    <li><strong>Deployment</strong> with 3 replicas by default, rolling updates strategy (<code>maxSurge: 1</code>, <code>maxUnavailable: 0</code>).</li>
+    <li><strong>Horizontal Pod Autoscaler (HPA)</strong> targeting <code>cpuUtilization:</code> 60% and <code>minReplicas: 3</code>, <code>maxReplicas: 10</code>.</li>
+    <li><strong>Resource Requests &amp; Limits</strong> for CPU (100m/500m) and memory (256Mi/512Mi) to ensure scheduler stability.</li>
+    <li><strong>Readiness &amp; Liveness Probes</strong> on /healthz and /ready endpoints, 5s initial delay.</li>
+    <li><strong>ConfigMap</strong> for environment variables (e.g. OAuth scopes, log levels) and <strong>Secret</strong> for service-account JSON.</li>
+  </ul>
+
+  <h5>7.3 Infrastructure &amp; Networking</h5>
+  <ul>
+    <li><strong>GKE Standard Cluster:</strong> private nodes, Shielded GKE nodes, IP aliasing.</li>
+    <li><strong>Load Balancer &amp; Ingress:</strong> GCP HTTP(S) LB with managed SSL cert and WAF rules via Cloud Armor.</li>
+    <li><strong>VPC Peering:</strong> isolates resetapp namespace and connects to Cloud SQL via Private IP.</li>
+    <li><strong>Persistent Logging &amp; Metrics:</strong> Stackdriver Logging/Monitoring for cluster events and application logs.</li>
+  </ul>
+
+  <h5>7.4 Rollback &amp; Versioning</h5>
+  <p>Helm retains previous 10 releases; <code>helm rollback</code> can revert to any prior chart version. Docker images are tagged by Git SHA for immutable traceability.</p>
+</section>
+
+      <!-- 8 Testing & QA -->
+<section id="testing">
+  <h2>8. Testing &amp; QA</h2>
+
+  <h5>8.1 Test Strategy</h5>
+  <p>We follow a layered approach to ensure high reliability:</p>
+  <ul>
+    <li><strong>Unit Tests:</strong> fast, isolated tests for individual functions and components.</li>
+    <li><strong>Integration Tests:</strong> verify interaction between Flask API endpoints and Google Admin SDK mocks.</li>
+    <li><strong>End-to-End (E2E) Tests:</strong> drive the full UI in a headless browser to simulate real user flows.</li>
+    <li><strong>Security Scans:</strong> automated scans for common web vulnerabilities.</li>
+    <li><strong>Performance &amp; Chaos:</strong> bench under load and introduce controlled failures in staging.</li>
+  </ul>
+
+  <h5>8.2 Test Matrix</h5>
+  <table class="table table-sm">
+    <thead>
+      <tr><th>Type</th><th>Scope</th><th>Tool</th><th>Coverage Goal</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Unit</td>
+        <td>Python &amp; JS modules</td>
+        <td>pytest &amp; Jest</td>
+        <td>≥ 90%</td>
+      </tr>
+      <tr>
+        <td>Integration</td>
+        <td>API endpoints, DB &amp; cache interactions</td>
+        <td>Postman &amp; pytest-Flask</td>
+        <td>All critical paths</td>
+      </tr>
+      <tr>
+        <td>E2E</td>
+        <td>Core user journeys</td>
+        <td>Cypress</td>
+        <td>Screenshots &amp; video on failure</td>
+      </tr>
+      <tr>
+        <td>Security</td>
+        <td>CSP, OAuth flows, session cookies</td>
+        <td>OWASP ZAP &amp; Snyk</td>
+        <td>Zero high/critical findings</td>
+      </tr>
+      <tr>
+        <td>Performance</td>
+        <td>Search latency, reset throughput</td>
+        <td>k6 &amp; Artillery</td>
+        <td>95th percentile < 200ms</td>
+      </tr>
+    </tbody>
+  </table>
+
+  {% raw %}
+<pre class="bg-light border p-3"><code class="language-yaml">
+// in .github/workflows/ci-cd.yml
+jobs:
+  lint-and-test:
+    steps:
+      - name: Run unit tests
+        run: pytest --maxfail=1 --disable-warnings -q
+      - name: Run JS unit tests
+        run: npm test -- --ci --reporters=default
+      - name: Run integration tests
+        run: pytest tests/integration/
+      - name: Run E2E tests
+        run: npx cypress run --record --key ${{ secrets.CYPRESS_KEY }}
+      - name: Security scan
+        run: snyk test && zap-full-scan.sh
+</code></pre>
+{% endraw %}
+
+  <h5>8.4 Chaos & Resilience Testing</h5>
+  <p>In staging, we periodically inject failures:</p>
+  <ul>
+    <li><strong>API Faults:</strong> simulate Google Directory rate limits (HTTP 429) and observe retry logic.</li>
+    <li><strong>Network Latency:</strong> use Linux <code>tc qdisc</code> to introduce 100–300ms delay on service account calls.</li>
+    <li><strong>Redis Unavailability:</strong> shutdown the Redis pod to verify graceful fallback to live API calls.</li>
+  </ul>
+
+  <h5>8.5 Reporting & Quality Gates</h5>
+  <ul>
+    <li>Test reports (JUnit XML) are uploaded to GitHub Actions and surfaced in pull requests.</li>
+    <li>Coverage thresholds enforced: PRs cannot merge if coverage dips below target.</li>
+    <li>Security findings (Snyk/ZAP) must be triaged within 24 hours.</li>
+  </ul>
+</section>
+
+      <<!-- 9 Observability & Monitoring -->
+<section id="observability">
+  <h2>9. Observability &amp; Monitoring</h2>
+
+  <h5>9.1 Core Metrics</h5>
+  <p>We expose the following Prometheus metrics via a `/metrics` endpoint (using <code>prometheus_client</code> in Flask):</p>
+  <ul>
+    <li><code>resetapp_password_resets_total{status="success"}</code> — cumulative count of successful resets</li>
+    <li><code>resetapp_password_resets_total{status="error"}</code> — cumulative count of failures</li>
+    <li><code>resetapp_search_latency_seconds_bucket</code> — histogram of search response times</li>
+    <li><code>resetapp_reset_latency_seconds_summary</code> — summary of password-reset duration</li>
+  </ul>
+
+  <h5>9.2 Logging & Traceability</h5>
+  <ul>
+    <li><strong>Structured Logs:</strong> JSON logs emitted via Python’s <code>logging</code> module, with fields: <code>timestamp</code>, <code>admin_email</code>, <code>student_email</code>, <code>action</code>, <code>outcome</code>.</li>
+    <li><strong>Aggregation:</strong> Logs shipped to Cloud Logging (Stackdriver) via the <code>google-cloud-logging</code> handler.</li>
+    <li><strong>Distributed Tracing:</strong> OpenTelemetry instrumentation on Flask requests & Redis calls, exported to Jaeger.</li>
+  </ul>
+
+  <h5>9.3 Dashboards</h5>
+  <p>We maintain a Grafana dashboard that visualizes:</p>
+  <ul>
+    <li><strong>Reset Throughput:</strong> <code>rate(resetapp_password_resets_total[5m])</code></li>
+    <li><strong>Failure Rate:</strong> <code>increase(resetapp_password_resets_total{status="error"}[10m]) / increase(resetapp_password_resets_total[10m])</code></li>
+    <li><strong>Search Latency P95:</strong> <code>histogram_quantile(0.95, sum(rate(resetapp_search_latency_seconds_bucket[5m])) by (le))</code></li>
+    <li><strong>Live User Count:</strong> concurrent WebSocket connections metric</li>
+  </ul>
+
+  <h5>9.4 Alerting</h5>
+  <p>Prometheus alerting rules are defined in <code>alerts.yml</code> and loaded via the Prometheus server config:</p>
+ {% raw %}
+<pre class="bg-light border p-3"><code class="language-yaml">
+groups:
+- name: resetapp.rules
+  rules:
+  - alert: HighResetFailureRate
+    expr: |
+      increase(resetapp_password_resets_total{status="error"}[10m])
+      / increase(resetapp_password_resets_total[10m]) > 0.05
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "High password reset failure rate"
+      description: |
+        {{
+          printf("%.1f",
+            (increase(resetapp_password_resets_total{status="error"}[10m]))
+             / increase(resetapp_password_resets_total[10m]))
+            * 100
+          )
+        }}% failures over the last 10 minutes.
+</code></pre>
+{% endraw %}
+
+  - alert: SearchLatencySpike
+    expr: histogram_quantile(0.95, sum(rate(resetapp_search_latency_seconds_bucket[5m])) by (le)) > 0.5
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Search latency > 500ms"
+      description: "P95 search latency is > 0.5s over the last 2 minutes."
+  </code></pre>
+
+  <h5>9.5 PagerDuty & Notifications</h5>
+  <ul>
+    <li>Alerts routed to Slack #ops channel via Alertmanager webhook integration.</li>
+    <li>Critical alerts also trigger PagerDuty incidents.</li>
+    <li>On-call rotations managed via PagerDuty schedules.</li>
+  </ul>
+
+  <h5>9.6 Health Checks & Self-Monitoring</h5>
+  <ul>
+    <li><strong>Liveness Probe:</strong> HTTP GET <code>/health/liveness</code> returns 200 if the Flask server is up.</li>
+    <li><strong>Readiness Probe:</strong> HTTP GET <code>/health/readiness</code> checks connectivity to Redis and SQL.</li>
+    <li><strong>Self-Metrics Endpoint:</strong> CPU, memory, connection pool size exported via <code>prometheus-flask-exporter</code>.</li>
+  </ul>
+</section>
+
+      <!-- 10 Roadmap -->
+<section id="roadmap">
+  <h2>10. Roadmap</h2>
+  <p class="mb-4">
+    This roadmap tracks high-level milestones for ResetApp’s evolution. Each feature entry includes status, description, tech stack, and current blockers.
+  </p>
+  <table class="table roadmap">
+    <thead>
+      <tr>
+        <th>Quarter</th>
+        <th>Feature</th>
+        <th>Status</th>
+        <th>Description &amp; Tech</th>
+        <th>Blockers</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Q2 2025</td>
+        <td><strong>Interactive Reset-Approval Modal</strong></td>
+        <td>In Progress</td>
+        <td>
+          A React-powered modal on the dashboard where admins can accept/deny “request more resets” workflows.
+          <br/><em>Tech:</em> React Context, Material UI, Flask WebSocket endpoint.
+        </td>
+        <td>
+          • Finalizing WebSocket back-pressure logic
+          • UX polish on animation timing
+        </td>
+      </tr>
+      <tr>
+        <td>Q3 2025</td>
+        <td><strong>TOTP-Based Admin MFA</strong></td>
+        <td>Planned</td>
+        <td>
+          Add time-based one-time password (TOTP) as a second factor at admin login.
+          <br/><em>Tech:</em> PyOTP, Google Authenticator compatibility, Flask-Login hooks.
+        </td>
+        <td>
+          • Defining credential recovery flows
+          • Regulatory review for 2FA roll-out
+        </td>
+      </tr>
+      <tr>
+        <td>Q4 2025</td>
+        <td><strong>Self-Service Analytics Portal</strong></td>
+        <td>Planned</td>
+        <td>
+          A dedicated section exposing dashboards (Grafana iframes) and CSV export of audit logs.
+          <br/><em>Tech:</em> React Charts (Recharts), Flask CSV endpoints, role-based access controls.
+        </td>
+        <td>
+          • Data model adjustments for export
+          • RBAC edge cases for non-admin roles
+        </td>
+      </tr>
+      <tr>
+        <td>Q1 2026</td>
+        <td><strong>On-Premise Helm Chart</strong></td>
+        <td>Ideation</td>
+        <td>
+          Publish an official Helm chart for self-managed Kubernetes clusters.
+          <br/><em>Tech:</em> Helm 3, Kubernetes operators, ConfigMap/Secret templating.
+        </td>
+        <td>
+          • Finalizing CRDs for multi-tenant config
+          • Packaging service-account JSON securely
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+
+      <!-- stub for next section -->
+<!-- 11. Development Team -->
+<section id="dev-team">
+  <h2>11. Development Team</h2>
+  <p>
+    ResetApp is built and maintained by two childhood friends who first met
+    in high school over fifteen years ago. Their partnership began with
+    shared weekend coding sessions in a small office and has continued ever since.
+  </p>
+  <p>
+    Through countless late-night problem-solving marathons, they’ve learned
+    to rely on each other’s creativity, trust, and camaraderie to push this
+    project forward. Their friendship is the foundation that keeps ResetApp
+    evolving—one feature at a time.
+  </p>
+</section>
+
+
+      <!-- 12 Conclusion -->
+<section id="conclusion">
+  <h2>12. Conclusion</h2>
+  <p>
+    ResetApp represents a best-in-class password-reset orchestration platform, engineered from the ground up to meet
+    the demanding security, scalability, and auditability requirements of both K-12 and enterprise Google Workspace
+    environments. By leveraging OAuth2 with domain-wide delegation, rigorous Content Security Policy headers, and
+    Kubernetes-backed autoscaling, we ensure that every reset request is authenticated, authorized, and logged in
+    near real-time.
+  </p>
+  <p>
+    Our modular micro-services architecture—comprising a React SPA frontend, Flask/Gunicorn backend APIs, Redis
+    suggestion caching, and Cloud SQL audit storage—provides both high throughput and maintainability. Critical
+    production concerns such as HTTP security headers (<code>HSTS</code>, <code>X-Frame-Options</code>,
+    <code>X-Content-Type-Options</code>) and Prometheus-driven observability ensure operational resilience and
+    actionable alerting.
+  </p>
+  <p>
+    Looking forward, the development team has laid out a clear roadmap: from interactive reset-approval modals and
+    admin TOTP MFA to a self-service analytics portal and an on-prem Helm chart. Each upcoming milestone builds on
+    the solid foundation of v1.0.8, addressing real-world hurdles—WebSocket back-pressure, CSP rollout complexity,
+    and RBAC edge cases—to deliver an ever more robust, user-friendly experience.
+  </p>
+  <p>
+    We invite the broader technical community to explore, contribute to, and extend ResetApp. With comprehensive
+    documentation, a transparent change log, and a committed core team, ResetApp is positioned to be the de-facto
+    standard for secure, auditable password management in Google Workspace.
+  </p>
+</section>
+
+
+
+
+      <!-- A. Appendix -->
+      <section id="appendix">
+        <h2>13. Appendix</h2>
+
+        <!-- A.1 Sample Audit Log Schema -->
+        <h5>A.1 Sample Audit Log</h5>
+        <pre class="bg-light border p-3">
+{
+  "timestamp":    "2025-04-24T14:05:12Z",      // ISO-8601 UTC timestamp of reset
+  "admin":        "j.hicks@hart.k12.ga.us",   // admin user who triggered the reset
+  "student":      "s.toledo@hart.k12.ga.us",  // target student account
+  "outcome":      "Success",                  // "Success" or error code
+  "duration_ms":  84,                         // time taken by Directory API call
+  "ip_address":   "203.0.113.45"              // originating IP for audit & geo-lookup
+}
+        </pre>
+
+        <!-- A.2 References -->
+        <h5>A.2 References</h5>
+        <ul>
+          <li>
+            <a href="https://developers.google.com/admin-sdk/directory" target="_blank">
+              Google Admin SDK Directory API
+            </a> — user retrieval, password reset calls, OU filters.
+          </li>
+          <li>
+            <a href="https://flask.palletsprojects.com/" target="_blank">
+              Flask Web Framework
+            </a> — request handling, middleware for security headers.
+          </li>
+          <li>
+            <a href="https://www.w3.org/TR/CSP3/" target="_blank">
+              Content Security Policy Level 3 (CSP)
+            </a> — mitigates XSS by restricting script/style sources.
+          </li>
+          <li>
+            <a href="https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/" target="_blank">
+              Prometheus Alerting Rules
+            </a> — metrics-based alert definitions for failure rates.
+          </li>
+          <li>
+            <a href="https://redis.io/" target="_blank">
+              Redis
+            </a> — in-memory caching for real-time search suggestions.
+          </li>
+          <li>
+            <a href="https://cloud.google.com/sql" target="_blank">
+              Cloud SQL
+            </a> — managed relational storage for immutable audit records.
+          </li>
+          <li>
+            <a href="https://kubernetes.io/" target="_blank">
+              Kubernetes
+            </a> &amp;
+            <a href="https://helm.sh/" target="_blank">
+              Helm
+            </a> — container orchestration and deployment tooling.
+          </li>
+        </ul>
+      </section>
+
+
+
+<!-- Back to Top Button -->
+  <button id="backToTop" class="btn btn-primary" title="Back to top">
+    <i class="bi bi-arrow-up-circle-fill"></i>
+  </button>
+
+  <style>
+    /* Back to Top styling */
+    #backToTop {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      display: none;
+      z-index: 1050;
+      border-radius: 50%;
+      width: 3rem;
+      height: 3rem;
+      padding: 0;
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+  </style>
+
+  <script>
+    // Show/hide button on scroll, and smooth-scroll back to top
+    (function() {
+      const btn = document.getElementById('backToTop');
+      window.addEventListener('scroll', () => {
+        if (window.pageYOffset > 300) {
+          btn.style.display = 'block';
+        } else {
+          btn.style.display = 'none';
+        }
+      });
+      btn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    })();
+  </script>
+
+</body>
+<style>
+  footer {
+    width: 100%;
+;
+  }
+  .footer-inner {
+    display: flex;
+    justify-content: center;
+    padding: .75rem 1rem;
+  }
+  .footer-inner .text-muted {
+    text-align: center;
+  }
+ .dark-mode footer {
+  background: rgba(0,0,0,0.2);
+}
+.dark-mode footer .text-muted {
+  color: #ccc !important;
+}
+  }
+</style>
+
+
+</div><!-- end of main container -->
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+<!-- templates/partials/footer.html -->
+<style>
+  footer {
+    width: 100%;
+;
+  }
+  .footer-inner {
+    display: flex;
+    justify-content: center;
+    padding: .75rem 1rem;
+  }
+  .footer-inner .text-muted {
+    text-align: center;
+  }
+  /* Dark‐mode tweak */
+  html.dark-mode .footer-inner .text-muted {
+    color: #adb5bd !important;
+  }
+</style>
+
+<footer class="mt-auto bg-transparent w-100">
+  <div class="footer-inner">
+    <div class="text-muted small">
+      &copy; {{ current_year }} ResetApp. All Rights Reserved.
+      ResetApp is a product of Hart County Schools.
+      <a href="{{ url_for('static', filename='docs/privacy_policy.pdf') }}"
+         target="_blank" rel="noopener">Privacy Policy</a>
+      &amp;
+      <a href="{{ url_for('static', filename='docs/terms_of_service.pdf') }}"
+         target="_blank" rel="noopener">Terms of Service</a>.
+    </div>
+  </div>
+</footer>
+

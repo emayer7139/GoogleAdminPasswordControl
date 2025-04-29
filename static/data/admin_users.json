@@ -1,0 +1,14 @@
+[
+  {
+    "email": "jordan.hicks@hart.k12.ga.us",
+    "role": "superadmin"
+  },
+  {
+    "email": "evan.ayers@hart.k12.ga.us",
+    "role": "superadmin"
+  },
+  {
+    "email": "dev@local",
+    "role": "superadmin"
+  }
+]

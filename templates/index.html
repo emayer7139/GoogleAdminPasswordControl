@@ -26,102 +26,29 @@
     rel="stylesheet"
     href="{{ url_for('static', filename='css/style.css') }}"
   />
-  <link
-  href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
-  rel="stylesheet"
-/>
-
 
   <style>
     /* Light & dark backgrounds */
-    body, html {
-      height: 100%;
-      margin: 0;
-      transition: background 0.3s, color 0.3s;
-    }
-    .light-mode body {
-      background: #f8f9fa;
-      color: #212529;
-    }
-    .dark-mode body {
-      background: #121212;
-      color: #e1e1e1;
-    }
-
-    /* Navbar flex adjustments */
-    .navbar-nav {
-      display: flex;
-      align-items: center;
-    }
-    /* Welcome text grows to push the icon right */
-    .welcome-text {
-      flex: 1;
-      font-size: 1.75rem;
-      font-weight: 500;
-      padding-left: 1rem;
-    }
-
-    /* Remove default dropdown caret */
-    .dropdown-toggle::after {
-      display: none;
-    }
-
-    /* Hamburger icon: always black, rotates on open */
-    #menuIcon {
-      font-size: 2rem;
-      color: #212529 !important;
-      transition: transform 0.3s ease;
-    }
-    .dark-mode #menuIcon {
-      color: #212529 !important;
-    }
-    #userMenu.show #menuIcon {
-      transform: rotate(90deg);
-    }
-
-    /* Enlarge dropdown menu by 50% */
-    .dropdown-menu {
-      transform: scale(1.5);
-      transform-origin: top right;
-    }
+    body, html { height: 100%; margin: 0; transition: background .3s, color .3s; }
+    .light-mode body { background: #f8f9fa; color: #212529; }
+    .dark-mode  body { background: #121212; color: #e1e1e1; }
 
     /* Suggestion dropdown */
-    .suggestions {
-      position: absolute;
-      width: 100%;
-      top: 100%;
-      z-index: 1000;
-      max-height: 200px;
-      overflow-y: auto;
-    }
-    .suggestions .list-group-item {
-      cursor: pointer;
-    }
+    .suggestions { position: absolute; width: 100%; top: 100%; z-index: 1000; max-height: 200px; overflow-y: auto; }
+    .suggestions .list-group-item { cursor: pointer; }
 
-    /* Truncate input, scroll on hover */
-    #student_email {
-      white-space: nowrap;
-      overflow-x: hidden;
-      text-overflow: ellipsis;
-      transition: overflow 0.2s;
-    }
-    #student_email:hover {
-      overflow-x: auto;
-    }
-    #student_email::-webkit-scrollbar {
-      height: 6px;
-    }
-    #student_email::-webkit-scrollbar-thumb {
-      background-color: rgba(0,0,0,0.2);
-      border-radius: 3px;
-    }
+    /* Password display & skip */
+    #password-display { position: relative; }
+    #skipTimerBtn   { position: absolute; top: .5rem; right: .5rem; }
+
+    /* Validation alert */
+    #selectionAlert { display: none; }
   </style>
 </head>
-<body>
 
+<body>
   {% include 'partials/navbar.html' %}
 
-  <!-- Main Content -->
   <div class="container py-4">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -137,13 +64,17 @@
     {% if not user %}
       <div class="text-center mt-5">
         <h1 class="display-5">Welcome!</h1>
-        <p class="lead">
-          Please <a href="{{ url_for('login_page') }}">sign in with Google</a> to continue.
-        </p>
+        <p class="lead">Please <a href="{{ url_for('login_page') }}">sign in with Google</a> to continue.</p>
       </div>
     {% else %}
-      <div class="card mx-auto shadow-sm p-4" style="max-width: 900px; width:90%;">
+      <div class="card mx-auto shadow-sm p-4" style="max-width:900px;">
         <h4 class="card-title mb-3">Reset Student Password</h4>
+
+        <!-- selection warning -->
+        <div id="selectionAlert" class="alert alert-warning">
+          Please select a student from the dropdown before resetting.
+        </div>
+
         <form id="resetForm" method="POST" autocomplete="off">
           <div class="mb-3 position-relative">
             <label for="student_email" class="form-label">Student Name or #</label>
@@ -155,14 +86,31 @@
               placeholder="Type name or student #"
               required
             />
-            <div id="suggestion-list" class="list-group suggestions d-none"></div>
-            <input type="hidden" name="student_name" id="student_name" />
+            <div id="suggestion-list" class="list-group suggestions"></div>
+            <input type="hidden" name="student_name" id="student_name"/>
           </div>
-          <button type="submit" class="btn btn-danger w-100 btn-lg">Reset Password</button>
+
+          <!-- disabled until a student is chosen -->
+          <button
+            type="button"
+            id="openConfirmBtn"
+            class="btn btn-danger w-100 btn-lg"
+            disabled
+            data-bs-toggle="modal"
+            data-bs-target="#confirmModal"
+          >
+            Reset Password
+          </button>
         </form>
 
         {% if new_password %}
-        <div id="password-display" class="mt-4 text-center animate__animated animate__fadeInDown">
+        <div
+          id="password-display"
+          class="mt-4 text-center animate__animated animate__fadeInDown"
+        >
+          <button id="skipTimerBtn" class="btn btn-sm btn-outline-secondary">
+            Hide Now
+          </button>
           <h5>New Password for {{ student_name }}:</h5>
           <p id="new-password" class="fs-4 fw-bold">{{ new_password }}</p>
           <p>This password disappears in <span id="timer">120</span> seconds.</p>
@@ -174,76 +122,144 @@
 
   <canvas id="confetti-canvas"></canvas>
 
+  <!-- Confirmation Modal -->
+  <div
+    class="modal fade"
+    id="confirmModal"
+    tabindex="-1"
+    aria-labelledby="confirmModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="confirmModalLabel">Confirm Reset</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to reset the password for</p>
+          <p class="fw-bold" id="confirmStudent"></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            Cancel
+          </button>
+          <button type="button" class="btn btn-danger" id="confirmResetBtn">
+            Yes, Reset
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% if quote_content %}
+  <div class="mt-4">
+    <blockquote class="blockquote mb-0 text-center">
+      <p class="fs-2 fst-italic">“{{ quote_content }}”</p>
+        <cite class="fs-3">{{ quote_author }}</cite>
 
-  <!-- Scripts -->
+    </blockquote>
+  </div>
+{% endif %}
+
+  {% include 'partials/footer.html' %}
+
+  <!-- Help Button (bottom-right) -->
+  <button
+    class="btn btn-info position-fixed bottom-0 end-0 me-3 mb-3 rounded-circle shadow-lg"
+    type="button"
+    data-bs-toggle="offcanvas"
+    data-bs-target="#helpDrawer"
+    aria-controls="helpDrawer"
+    aria-label="Open help drawer"
+    style="width:3.5rem; height:3.5rem; font-size:1.5rem; z-index:1050;"
+  >
+    <i class="bi bi-question-circle-fill"></i>
+  </button>
+
+  <!-- Help Offcanvas Drawer -->
+  <div
+    class="offcanvas offcanvas-end"
+    tabindex="-1"
+    id="helpDrawer"
+    aria-labelledby="helpDrawerLabel"
+  >
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title" id="helpDrawerLabel">ResetApp Quick Help</h5>
+      <button
+        type="button"
+        class="btn-close text-reset"
+        data-bs-dismiss="offcanvas"
+        aria-label="Close"
+      ></button>
+    </div>
+    <div class="offcanvas-body">
+      <!-- 1. Reset Flow -->
+      <section class="mb-4">
+        <h6><i class="bi bi-arrow-repeat me-1"></i> How to Reset</h6>
+        <ol class="ps-3">
+          <li>Begin typing at least <strong>two characters</strong> of the student’s name or ID.</li>
+          <li>Pick the correct entry from the dropdown. <em>(Hover to scroll if truncated.)</em></li>
+          <li>Click <code>Reset Password</code>. Confirm in the dialog to proceed.</li>
+          <li>Your new password will appear for 120 seconds—copy it before it auto-clears.</li>
+        </ol>
+      </section>
+      <!-- 2. Theme Toggle -->
+      <section class="mb-4">
+        <h6><i class="bi bi-moon-stars me-1"></i> Dark / Light Mode</h6>
+        <p>
+          Open the user menu via the <code><i class="bi bi-list"></i></code> icon, then click
+          <strong>Toggle Dark/Light Mode</strong>. Your choice is saved in your browser and applied on every page.
+        </p>
+      </section>
+      <!-- 3. Admin Dashboard -->
+      <section class="mb-4">
+        <h6><i class="bi bi-speedometer2 me-1"></i> Admin Dashboard</h6>
+        <ul class="ps-3 mb-0">
+          <li>Audit: View a live record of every reset (timestamp, admin, student, IP).</li>
+          <li>Students: Search & filter by organizational unit (OU).</li>
+          <li>Admins: Manage which staff have access to ResetApp.</li>
+          <li>Requests: Approve or deny extra-reset requests via our upcoming modal.</li>
+        </ul>
+      </section>
+      <!-- 4. Version History -->
+      <section class="mb-4">
+        <h6><i class="bi bi-journal-text me-1"></i> Version History</h6>
+        <p>
+          Click “Version History” in the footer to open the full changelog accordion.
+          Expand any version for full details on features, security hardening, and challenges.
+        </p>
+      </section>
+      <!-- 5. Troubleshooting -->
+      <section class="mb-4">
+        <h6><i class="bi bi-exclamation-triangle-fill me-1"></i> Common Issues</h6>
+        <ul class="ps-3 mb-0">
+          <li><strong>No search results?</strong> Check you typed at least two chars.</li>
+          <li><strong>Dark mode unreadable?</strong> Refresh or clear <code>localStorage</code>.</li>
+          <li><strong>Reset fails?</strong> Verify you have the “Staff” OU prefix or admin rights.</li>
+        </ul>
+      </section>
+      <!-- 6. Contact & Feedback -->
+      <section class="mb-0">
+        <h6><i class="bi bi-envelope-fill me-1"></i> Still Need Help?</h6>
+        <p class="mb-1">
+          • Submit a ticket: <a href="https://support.hart.k12.ga.us" target="_blank">support.hart.k12.ga.us</a><br>
+          Email:
+<a
+  href="https://mail.google.com/mail/?view=cm&fs=1&to=support@hart.k12.ga.us"
+  target="_blank"
+  rel="noopener"
+>
+  support@hart.k12.ga.us
+</a>
+        </p>
+      </section>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS (only once) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/party-js@1.0.2/bundle/party.min.js"></script>
+
+  <!-- Your main.js -->
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-  <script>
-
-    // SUGGESTION DROPDOWN
-    const input = document.getElementById('student_email');
-    const suggestionBox = document.getElementById('suggestion-list');
-    const hiddenName = document.getElementById('student_name');
-    let debounce;
-    input.addEventListener('input', () => {
-      const q = input.value.trim();
-      clearTimeout(debounce);
-      if (q.length < 1) {
-        suggestionBox.classList.add('d-none');
-        return;
-      }
-      debounce = setTimeout(() => {
-        fetch(`/search_users?q=${encodeURIComponent(q)}`)
-          .then(r => r.json())
-          .then(data => {
-            suggestionBox.innerHTML = '';
-            if (!data.length) {
-              suggestionBox.classList.add('d-none');
-              return;
-            }
-            data.forEach(item => {
-              const el = document.createElement('button');
-              el.type = 'button';
-              el.className = 'list-group-item list-group-item-action';
-              el.textContent = item.label;
-              el.addEventListener('click', () => {
-                input.value = `${item.value} (${item.label.split(',')[0]})`;
-                hiddenName.value = item.label.split(',')[0];
-                suggestionBox.classList.add('d-none');
-              });
-              suggestionBox.appendChild(el);
-            });
-            suggestionBox.classList.remove('d-none');
-          })
-          .catch(console.error);
-      }, 200);
-    });
-    document.addEventListener('click', e => {
-      if (!input.contains(e.target) && !suggestionBox.contains(e.target)) {
-        suggestionBox.classList.add('d-none');
-      }
-    });
-
-    // CONFIRM BEFORE RESET
-    document.getElementById('resetForm').addEventListener('submit', e => {
-      e.preventDefault();
-      const display = input.value;
-      if (confirm(`Are you sure you want to reset the password for ${display}?`)) {
-        e.target.submit();
-      }
-    });
-
-    // COUNTDOWN TIMER
-    {% if new_password %}
-      let timeLeft = 120;
-      const timerEl = document.getElementById('timer');
-      const countdown = setInterval(() => {
-        timeLeft--;
-        timerEl.textContent = timeLeft;
-        if (timeLeft <= 0) clearInterval(countdown);
-      }, 1000);
-    {% endif %}
-  </script>
 </body>
 </html>

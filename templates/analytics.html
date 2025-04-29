@@ -1,0 +1,136 @@
+
+{% block content %}
+<div class="analytics-dashboard bg-dark text-light p-4 rounded">
+  <!-- Header & Date Filters -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-bar-chart-fill me-2"></i>Advanced Analytics</h2>
+    <form id="analyticsFilters" class="d-flex" method="get" action="{{ url_for('analytics_page') }}">
+      <input type="date" id="start_date" name="start_date" class="form-control form-control-sm me-2"
+             value="{{ request.args.get('start_date','') }}" />
+      <input type="date" id="end_date" name="end_date" class="form-control form-control-sm me-2"
+             value="{{ request.args.get('end_date','') }}" />
+      <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+    </form>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row g-4 mb-5">
+    <div class="col-sm-6 col-lg-3">
+      <div class="card bg-secondary text-white h-100 shadow-sm">
+        <div class="card-body d-flex align-items-center">
+          <i class="bi bi-check2-circle fa-2x me-3"></i>
+          <div>
+            <h6 class="card-title mb-1">Successful Resets</h6>
+            <p class="fs-3 mb-0">{{ reset_success|sum }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card bg-danger text-white h-100 shadow-sm">
+        <div class="card-body d-flex align-items-center">
+          <i class="bi bi-exclamation-triangle-fill fa-2x me-3"></i>
+          <div>
+            <h6 class="card-title mb-1">Reset Errors</h6>
+            <p class="fs-3 mb-0">{{ reset_error|sum }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card bg-success text-white h-100 shadow-sm">
+        <div class="card-body d-flex align-items-center">
+          <i class="bi bi-box-arrow-in-right fa-2x me-3"></i>
+          <div>
+            <h6 class="card-title mb-1">Successful Logins</h6>
+            <p class="fs-3 mb-0">{{ login_success|sum }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card bg-warning text-dark h-100 shadow-sm">
+        <div class="card-body d-flex align-items-center">
+          <i class="bi bi-box-arrow-right fa-2x me-3"></i>
+          <div>
+            <h6 class="card-title mb-1">Login Failures</h6>
+            <p class="fs-3 mb-0">{{ login_error|sum }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="mb-5">
+    <div class="card bg-dark border-light shadow-sm mb-4">
+      <div class="card-header bg-secondary text-white">Resets Over Time</div>
+      <div class="card-body">
+        <canvas id="resetsChart" height="100"></canvas>
+      </div>
+    </div>
+    <div class="card bg-dark border-light shadow-sm">
+      <div class="card-header bg-secondary text-white">Logins Over Time</div>
+      <div class="card-body">
+        <canvas id="loginsChart" height="100"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const days = {{ days|tojson }};
+    const resetsCfg = {
+      type: 'line',
+      data: {
+        labels: days,
+        datasets: [
+          { label: 'Success', data: {{ reset_success|tojson }}, borderColor: '#28a745', backgroundColor: 'rgba(40,167,69,0.3)', tension: 0.4 },
+          { label: 'Error',   data: {{ reset_error|tojson }},   borderColor: '#dc3545', backgroundColor: 'rgba(220,53,69,0.3)', tension: 0.4 }
+        ]
+      },
+      options: {
+        plugins: { legend: { labels: { color: 'white' } } },
+        scales: {
+          x: { ticks: { color: 'white' }, grid: { color: '#444' } },
+          y: { ticks: { color: 'white' }, grid: { color: '#444' }, beginAtZero: true }
+        }
+      }
+    };
+    const loginsCfg = {
+      type: 'bar',
+      data: {
+        labels: days,
+        datasets: [
+          { label: 'Success', data: {{ login_success|tojson }}, backgroundColor: 'rgba(40,167,69,0.6)' },
+          { label: 'Error',   data: {{ login_error|tojson }},   backgroundColor: 'rgba(220,53,69,0.6)' }
+        ]
+      },
+      options: resetsCfg.options
+    };
+    new Chart(document.getElementById('resetsChart'), resetsCfg);
+    new Chart(document.getElementById('loginsChart'), loginsCfg);
+  </script>
+
+  <!-- Recent Errors -->
+  <div class="card bg-dark border-light shadow-sm">
+    <div class="card-header bg-secondary text-white">Recent Errors</div>
+    <div class="table-responsive">
+      <table class="table table-dark table-striped table-hover mb-0">
+        <thead><tr><th>Timestamp</th><th>Admin</th><th>Student</th><th>Error</th></tr></thead>
+        <tbody>
+          {% for e in error_logs %}
+          <tr>
+            <td>{{ e.timestamp }}</td>
+            <td>{{ e.admin }}</td>
+            <td>{{ e.student or '-' }}</td>
+            <td>{{ e.outcome }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

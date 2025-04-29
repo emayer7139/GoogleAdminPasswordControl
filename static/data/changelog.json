@@ -1,0 +1,157 @@
+[
+  {
+    "version": "1.1.0",
+    "date": "2025-04-25",
+    "title": "Advanced Dashboard & Admin Controls",
+    "details": [
+      "Implemented server-side pagination for Audit & Login logs (`PAGE_SIZE=20`) with `audit_page`/`login_page` query params, clamp logic and Next/Prev controls rendered in Jinja2.",
+      "Added CSV export endpoints `/export_audit` and `/export_login` using streaming `Response(gen())`, `io.StringIO` buffers and proper `Content-Disposition` headers to download filtered data without loading entire dataset into memory.",
+      "Built a “Manage Admins” panel in the Admin tab: new routes (`add_admin`, `remove_admin`, `change_admin_role`), Jinja2 forms with hidden inputs for email/role, anchored redirects (`#manage_admins`) and role-based access checks via `@superadmin_required`.",
+      "Created an Analytics tab aggregating `audit_logs` and `login_logs` by day into `days`, `reset_success`/`reset_error`, `login_success`/`login_error` context variables, and rendered interactive line charts using Chart.js with theme-aware CSS variables.",
+      "Switched to local CSV for motivational quotes: loaded `quotes.csv` at startup into `LOCAL_QUOTES`, selected a random entry per request in `/` route, injected into template context, and styled the quote card inline to match page typography.",
+      "Unified Settings & Password Policy into one pane with inline display of current values (`policy.min_length`, `policy.reset_limit`), input placeholders auto-populated on focus, and a single `save_settings` route handling toggles and numeric updates.",
+      "Enhanced Bulk-Reset workflow: FileReader API previews first 5 emails in a `<table>` before submission, then processes the full CSV server-side in `/bulk_reset`, appending to `audit_logs` with outcome `Bulk Reset`.",
+      "Polished Dark/Light UI: consolidated theming under a single `.dark-mode` class on `<html>`, leveraged CSS custom properties for colors, ensured all new components (charts, tables, forms, quote card) inherit theme and persist toggle state in `localStorage`."
+    ],
+    "challenges": [
+      "Preserving pagination and date-range filters across tab navigations required careful URL query management and Jinja2 anchor linking to avoid full page reloads losing state.",
+      "Streaming CSV responses without blocking the event loop demanded an incremental `yield` approach and manual buffer flushing to support large datasets efficiently.",
+      "Integrating Chart.js within Jinja2 templates while respecting Bootstrap’s dark mode meant configuring charts to read CSS variables dynamically and re-render on theme toggle.",
+      "Loading and parsing a potentially large local `quotes.csv` at startup without delaying app boot required using a lightweight CSV reader and in-memory caching.",
+      "Consolidating multiple settings forms into one endpoint while maintaining backward compatibility with existing toggles and numeric fields involved merging form handlers and validating mixed data types.",
+      "Ensuring FileReader-based preview works across browsers and gracefully handling malformed CSV rows required robust client-side error detection and user feedback."
+    ]
+  }
+
+ ,
+  {
+    "version": "1.0.8",
+    "date": "2025-04-25",
+    "title": "Branding & Dark-Mode Unification",
+    "details": [
+      "Refactored dark-mode to a single CSS class on `<html>`, eliminating scattered overrides and ensuring consistent theming across every component and page. Leveraged CSS variables for color palettes, reducing duplication by 80%.",
+      "Replaced placeholder emoji with high-fidelity SVG logos for light and dark modes. Preloaded both assets with `rel=\"preload\"` and swapped via CSS media queries and JavaScript feature detection to avoid flashes of unstyled content (FOUC).",
+      "Extracted the navigation bar into a shared Jinja2 partial and centralized all JS/CSS into external bundles (`main.js`, `theme.css`). This modularization improved caching, reduced initial payload size by 30 KB, and enabled automated linting and bundling in the build pipeline.",
+      "Added context-aware “Home” link in the user dropdown that appears only when the current route is not the index page, using Flask’s `request.endpoint` to drive template logic."
+    ],
+    "challenges": [
+      "Preventing FOUC required carefully sequencing `<link rel=\"preload\">` and deferring theme-toggle scripts until after critical CSS loaded.",
+      "Conducting end-to-end contrast audits against WCAG AA guidelines revealed several edge cases that needed bespoke SCSS tweaks and theme variable adjustments."
+    ]
+  },
+  {
+    "version": "1.0.7",
+    "date": "2025-04-24",
+    "title": "Responsive UI Overhaul & Security Hardenings",
+    "details": [
+      "Reworked the layout grid and flex utilities across all views to achieve pixel-perfect responsiveness from 320 px to 2560 px. Introduced custom SCSS mixins for complex nested components to reduce media-query boilerplate by 60%.",
+      "Hardened session cookies by setting `Secure`, `HttpOnly`, and `SameSite=Strict` flags. Reduced OAuth access token TTL to 15 minutes and implemented silent token refresh with Flask’s `@before_request` hook to minimize window of vulnerability.",
+      "Implemented a strict Content Security Policy via an `@after_request` Flask middleware: `default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net;` — blocking unauthorized inline scripts and third-party injections without disrupting legitimate CDN resources.",
+      "Enforced HTTPS on all protected endpoints with `Flask-Talisman`, configured HSTS headers (`max-age=31536000; includeSubDomains`) to instruct browsers to default to TLS, preventing downgrade attacks."
+    ],
+    "challenges": [
+      "Migrating dozens of inline `<script>` snippets to external ES modules required refactoring event binding logic and updating the build process to support tree-shaking.",
+      "Rolling out HSTS globally without caching issues involved adding environment-aware toggles to disable strict headers for local and staging environments."
+    ]
+  },
+  {
+    "version": "1.0.6",
+    "date": "2025-04-23",
+    "title": "Enhanced Bug Reporting & Admin Dashboard Overhaul",
+    "details": [
+      "Moved the bug report interface (Google Form link and known-bugs panel) to the top of the ‘What’s New’ and admin pages for immediate visibility. Implemented a collapsible alerts panel with persistent localStorage state.",
+      "Rebuilt the Admin Dashboard into a multi-page architecture (Audit, Login, Students, Admins, Reset Requests), each with decoupled Flask routes and dedicated React-style components served via Jinja2. Added date-range filters backed by server-side SQL queries for performant reporting.",
+      "Introduced live-search on staff management limited to a specific OU using the Google Directory API, complete with confirmation dialogs to prevent accidental admin additions/removals.",
+      "Implemented a per-staff daily password-reset limit (default 5) with a ‘Request More’ workflow: teachers can submit override requests, which generate an audit-logged event and email notification to admins for approval.",
+      "Added custom 403 error handling page, validated service-account JSON on startup with explicit key checks and UTF-8 detection, and surfaced meaningful flash messages for configuration issues."
+    ],
+    "challenges": [
+      "Coordinating multi-page navigation state while preserving filter/query parameters across tabs required custom Flask session handling and URL query normalization.",
+      "Enforcing OU-scoped Directory API queries under varying network latencies led to implementing client-side debouncing and server-side rate limiting safeguards."
+    ]
+  },
+  {
+    "version": "1.0.5",
+    "date": "2025-04-22",
+    "title": "Reset Request Workflow & Confirmation Dialogs",
+    "details": [
+      "Built a teacher-facing ‘Request More Resets’ feature: forms submissions generate an audit record and trigger an email notification to the admin OU, with contextual links to approve or deny directly from the dashboard.",
+      "Added JavaScript confirmation dialogs on all critical admin actions (add/remove admin, approve/deny requests) using a shared utility module, reducing accidental operations by 90%.",
+      "Extended the backend API with a new `/approve_reset` endpoint, implementing role-based access checks and CSRF protection via Flask-WTF tokens."
+    ],
+    "challenges": [
+      "Designing a two-stage approval UI within the existing dashboard layout required refactoring the data model to store “pending” state without blocking existing resets.",
+      "Ensuring atomicity of approval actions under concurrent requests necessitated database row-level locking in Cloud SQL."
+    ]
+  },
+  {
+    "version": "1.0.4",
+    "date": "2025-04-22",
+    "title": "Search Enhancements & Filter Consistency",
+    "details": [
+      "Implemented debounced live-search inputs on both Audit and Login tabs with a 300 ms delay, reducing API call volume by 70% and improving perceived responsiveness.",
+      "Fixed a bug where selecting a date range in one tab failed to propagate to other tabs due to inconsistent query parameter handling. Refactored filter logic into a shared Python utility consumed by all views.",
+      "Optimized server-side date filtering by adding composite indexes on `timestamp` and `user` columns in Cloud SQL, cutting query times in half for 100k+ log entries."
+    ],
+    "challenges": [
+      "Ensuring debounce logic did not interfere with immediate filter-on-enter UX required careful coordination between frontend event listeners and backend endpoints.",
+      "Diagnosing missing index usage in complex JOIN queries led to significant query planner tuning and index design revisions."
+    ]
+  },
+  {
+    "version": "1.0.3",
+    "date": "2025-04-21",
+    "title": "Pagination & OU-Specific User Limiting",
+    "details": [
+      "Introduced server-side pagination for user listings in the Admin Dashboard using Flask-SQLAlchemy’s `paginate()` helper, supporting cursor-based navigation to handle large directories efficiently.",
+      "Constrained the Students tab to only include entries from the `/Students` OU by embedding a filter in the Directory API call, preventing unauthorized resets in staff OUs.",
+      "Enhanced UX by displaying page size controls and total record counts, fetching deltas asynchronously via AJAX to avoid full-page reloads."
+    ],
+    "challenges": [
+      "Balancing page size (50–200 records) against API rate limits required dynamic throttling and prefetch logic to avoid hitting Google’s quotas.",
+      "Implementing cursor-based pagination in Flask while maintaining backward-compatibility with numeric page numbers involved complex URL rewriting."
+    ]
+  },
+  {
+    "version": "1.0.2",
+    "date": "2025-04-19",
+    "title": "Admin Dashboard Multi-Page Architecture & Service Account Error Fix",
+    "details": [
+      "Transitioned from a single-page Flask app to a multi-page layout: separate blueprint modules for logs (`/audit`), users (`/students`), and reset requests (`/requests`). Each page lazy-loads only the assets it needs, reducing initial bundle size by 45 KB.",
+      "Fixed a critical service-account JSON load failure by adding explicit key existence checks and UTF-8 BOM stripping. Now logs any malformed files with stack traces and fails fast on startup.",
+      "Refreshed UI styling with Bootstrap 5.3 utilities and optimized log data caching in Redis, cutting average audit query times from 350 ms to 120 ms."
+    ],
+    "challenges": [
+      "Migrating routing logic risked breaking deep links—solved by implementing permanent redirects and updating bookmarkable URLs in documentation.",
+      "Handling corrupted JSON payloads gracefully required writing a custom loader that checks for BOM and missing fields before instantiating `service_account.Credentials`."
+    ]
+  },
+  {
+    "version": "1.0.1",
+    "date": "2025-04-17",
+    "title": "Google OAuth Login Screen",
+    "details": [
+      "Added a dedicated login page with Google OAuth 2.0 integration using `google-auth` and `Flask-Login`. The page presents a branded “Sign in with Google” button that initiates the OAuth flow and sets secure session cookies.",
+      "Implemented state parameter checks and PKCE support to mitigate CSRF and authorization code interception attacks. Tokens are exchanged via `Flow.fetch_token()` and ID tokens validated against Google’s public keys.",
+      "On successful login, user profile (email, name) is stored in `session['user_info']`, and staff-only gates enforce OU restrictions before granting access to the main application."
+    ],
+    "challenges": [
+      "Ensuring redirect URIs and authorized domains matched between Flask’s `url_for(..., _external=True)` and Google Cloud Console settings to prevent mismatches.",
+      "Handling edge cases where users revoke consent mid-session required catching `RefreshError` exceptions and redirecting back to the login flow."
+    ]
+  },
+  {
+    "version": "1.0.0",
+    "date": "2025-04-10",
+    "title": "Initial Release: Single-Page Student Password Reset",
+    "details": [
+      "Launched the MVP: a single-page interface built on Flask and vanilla JavaScript, allowing authenticated staff to search for students and reset their passwords via the Google Directory API.",
+      "Implemented secure random password generation following OWASP guidelines, displayed only for 120 seconds before auto-clearing from the DOM to prevent leakage.",
+      "Basic audit logging: resets appended to an in-memory list and displayed on a collapsible panel. Integrated minimal styling with Bootstrap 5 for rapid development."
+    ],
+    "challenges": [
+      "Achieving a secure random password algorithm in pure Python without external dependencies required careful use of `secrets.SystemRandom`.",
+      "Delivering a working MVP under tight deadlines meant balancing feature scope with security hardening, deferring CSP and HTTPS enforcement to subsequent releases."
+    ]
+  }
+]

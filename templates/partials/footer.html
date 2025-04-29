@@ -1,0 +1,36 @@
+<!-- templates/partials/footer.html -->
+<style>
+  footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+;
+  }
+  .footer-inner {
+    display: flex;
+    justify-content: center;
+    padding: .75rem 1rem;
+  }
+  .footer-inner .text-muted {
+    text-align: center;
+  }
+  /* Dark‐mode tweak */
+  html.dark-mode .footer-inner .text-muted {
+    color: #adb5bd !important;
+  }
+</style>
+
+<footer class="mt-auto bg-transparent w-100">
+  <div class="footer-inner">
+    <div class="text-muted small">
+      &copy; {{ current_year }} ResetApp. All Rights Reserved.
+      ResetApp is a product of Hart County Schools.
+      <a href="{{ url_for('static', filename='docs/privacy_policy.pdf') }}"
+         target="_blank" rel="noopener">Privacy Policy</a>
+      &amp;
+      <a href="{{ url_for('static', filename='docs/terms_of_service.pdf') }}"
+         target="_blank" rel="noopener">Terms of Service</a>.
+    </div>
+  </div>
+</footer>
