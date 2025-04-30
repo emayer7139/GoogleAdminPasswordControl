@@ -1073,17 +1073,6 @@ groups:
   }
 </style>
 
-<footer class="mt-auto bg-transparent w-100">
-  <div class="footer-inner">
-    <div class="text-muted small">
-      &copy; {{ current_year }} ResetApp. All Rights Reserved.
-      ResetApp is a product of Hart County Schools.
-      <a href="{{ url_for('static', filename='docs/privacy_policy.pdf') }}"
-         target="_blank" rel="noopener">Privacy Policy</a>
-      &amp;
-      <a href="{{ url_for('static', filename='docs/terms_of_service.pdf') }}"
-         target="_blank" rel="noopener">Terms of Service</a>.
-    </div>
-  </div>
-</footer>
+    {% include 'partials/footer.html' %}
+
 

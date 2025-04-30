@@ -118,9 +118,20 @@
         {% endif %}
       </div>
     {% endif %}
-  </div>
 
-  <canvas id="confetti-canvas"></canvas>
+{% if quote_content %}
+  <div class="mt-4">
+    <blockquote class="blockquote mb-0 text-center">
+      <p class="fs-2 fst-italic">“{{ quote_content }}”</p>
+        <cite class="fs-3">{{ quote_author }}</cite>
+
+    </blockquote>
+  </div>
+{% endif %}
+
+
+
+
 
   <!-- Confirmation Modal -->
   <div
@@ -151,17 +162,6 @@
       </div>
     </div>
   </div>
-{% if quote_content %}
-  <div class="mt-4">
-    <blockquote class="blockquote mb-0 text-center">
-      <p class="fs-2 fst-italic">“{{ quote_content }}”</p>
-        <cite class="fs-3">{{ quote_author }}</cite>
-
-    </blockquote>
-  </div>
-{% endif %}
-
-  {% include 'partials/footer.html' %}
 
   <!-- Help Button (bottom-right) -->
   <button
@@ -253,6 +253,8 @@
 </a>
         </p>
       </section>
+          {% include 'partials/footer.html' %}
+
     </div>
   </div>
 
@@ -261,5 +263,12 @@
 
   <!-- Your main.js -->
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
 </body>
 </html>
+
+<footer class="footer">
+    <div class="container text-center">
+      {% include 'partials/footer.html' %}
+    </div>
+</footer>

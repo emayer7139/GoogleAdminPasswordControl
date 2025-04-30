@@ -129,3 +129,10 @@ html.dark-mode .navbar-toggler-icon {
 html.dark-mode #mobileIcon {
   color: #f8f9fa !important;
 }
+}
+
+.footer {
+    background-color: #f8f9fa;
+    padding: 10px 0;
+    text-align: center;
+}
