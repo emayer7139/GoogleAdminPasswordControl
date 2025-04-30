@@ -1,0 +1,102 @@
+/* Login page specific styles */
+.login-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.login-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.login-container::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, #f3f4f6 25%, transparent 25%, transparent 75%, #f3f4f6 75%),
+                linear-gradient(45deg, #f3f4f6 25%, transparent 25%, transparent 75%, #f3f4f6 75%);
+    background-size: 60px 60px;
+    background-position: 0 0, 30px 30px;
+    opacity: 0.5;
+    z-index: -1;
+    animation: pattern-slide 20s linear infinite;
+}
+
+@keyframes pattern-slide {
+    0% { transform: translateX(0) translateY(0); }
+    100% { transform: translateX(-60px) translateY(-60px); }
+}
+
+/* Theme toggle button */
+#toggleTheme {
+    transition: transform 0.3s ease;
+}
+
+#toggleTheme:hover {
+    transform: scale(1.1);
+}
+
+#toggleTheme:active {
+    transform: scale(0.9);
+}
+
+.theme-toggle {
+    color: #212529;
+    transition: color 0.3s ease;
+}
+
+.theme-toggle:hover {
+    color: #000000;
+}
+
+/* Google Sign-in button hover effect */
+.login-button {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.login-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.login-button:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* Dark mode overrides */
+html.dark-mode .login-card {
+    background: rgba(33, 37, 41, 0.95);
+}
+
+html.dark-mode .login-container::before {
+    background: linear-gradient(45deg, #2c3034 25%, transparent 25%, transparent 75%, #2c3034 75%),
+                linear-gradient(45deg, #2c3034 25%, transparent 25%, transparent 75%, #2c3034 75%);
+}
+
+html.dark-mode .theme-toggle {
+    color: #e1e1e1;
+}
+
+html.dark-mode .theme-toggle:hover {
+    color: #ffffff;
+}
+
+/* Logo container */
+.logo-container {
+    transition: transform 0.3s ease;
+}
+
+.logo-container:hover {
+    transform: scale(1.02);
+}
+
+/* Logo image */
+.logo-image {
+    max-width: 400px;
+} 

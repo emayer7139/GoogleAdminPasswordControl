@@ -1,88 +1,45 @@
-<!DOCTYPE html>
-<html lang="en" class="light-mode">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Need Help Signing In?</title>
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-  />
-  <style>
-    body, html {
-      height: 100%;
-      margin: 0;
-      transition: background 0.3s, color 0.3s;
-    }
-    .dark-mode body {
-      background: #121212;
-      color: #e1e1e1;
-    }
-    .light-mode body {
-      background: #f8f9fa;
-      color: #212529;
-    }
-    .card {
-      border-radius: 1rem;
-    }
-    .theme-toggle {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      z-index: 1000;
-    }
-  </style>
-</head>
-<body>
-  <!-- Dark/light toggle -->
-  <div class="theme-toggle">
-    <button class="btn btn-sm" id="toggleTheme">🌓</button>
-    </button>
-  </div>
+{% extends "base_login.html" %}
 
-  <div class="d-flex justify-content-center align-items-center" style="height:100vh">
-    <div class="card shadow-lg p-5 text-center" style="max-width:700px; width:90%;">
-      <h1 class="display-4 mb-4">Need Help Signing In?</h1>
+{% block title %}Need Help Signing In?{% endblock %}
 
-      <p class="lead mb-4">
-        If you’re having trouble with Google sign‑in, try these first:
-      </p>
+{% block content %}
+<div class="center-container">
+    <div class="card shadow-lg p-5 text-center content-card">
+        <h1 class="display-4 mb-4">Need Help Signing In?</h1>
 
-      <ul class="text-start mb-5 fs-5">
-        <li>Use your Hart County email (<code>@hart.k12.ga.us</code>).</li>
-        <li>Clear cookies for <code>localhost:5000</code> or <code>127.0.0.1:5000</code>, then retry.</li>
-        <li>Ensure pop‑ups are allowed—Google’s consent screen may open in a new window.</li>
-        <li>Always click the “Sign in with Google” button—don’t use browser navigation.</li>
-      </ul>
+        <p class="lead mb-4">
+            If you're having trouble with Google sign-in, try these first:
+        </p>
 
-      <p class="fs-5 mb-1">
-        Still stuck?
-      </p>
-      <p class="fs-5 mb-4">
-        Email us at
-        <a href="mailto:support@hart.k12.ga.us">support@hart.k12.ga.us</a><br/>
-        Or submit a ticket:
-        <a href="https://support.hart.k12.ga.us" target="_blank">support.hart.k12.ga.us</a>
-      </p>
+        <ul class="text-start mb-5 fs-5">
+            <li>Use your Hart County email (<code>@hart.k12.ga.us</code>).</li>
+            <li>Clear cookies and cache for <code>https://resetapp.hart.k12.ga.us</code>, then retry.
+                <a href="https://support.google.com/accounts/answer/32050?hl=en&co=GENIE.Platform%3DDesktop"
+                   target="_blank">
+                    How to clear cookies &amp; cache
+                </a>
+            </li>
+            <li>Ensure pop-ups are allowed—Google's consent screen may open in a new window.</li>
+            <li>Always click the "Sign in with Google" button—don't use browser navigation.</li>
+        </ul>
 
-      <a href="{{ url_for('login_page') }}"
-         class="btn btn-primary btn-lg px-4 py-2 fs-5">
-        ← Back to Sign In
-      </a>
+        <p class="fs-5 mb-1">
+            Still stuck?
+        </p>
+        <p class="fs-5 mb-4">
+            Email us at
+            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=support@hart.k12.ga.us" target="_blank">
+                support@hart.k12.ga.us
+            </a><br/>
+            Or submit a ticket:
+            <a href="https://support.hart.k12.ga.us" target="_blank">
+                support.hart.k12.ga.us
+            </a>
+        </p>
+
+        <a href="{{ url_for('login_page') }}" class="btn btn-primary btn-lg px-4 py-2 fs-5">
+            ← Back to Sign In
+        </a>
     </div>
-  </div>
-
-  <script>
-    // Dark/light mode persistence
-    const html = document.documentElement;
-    const toggle = document.getElementById('toggleTheme');
-    const saved = localStorage.getItem('theme') || 'light';
-    html.className = saved + '-mode';
-    toggle.onclick = () => {
-      const next = html.classList.contains('light-mode') ? 'dark' : 'light';
-      html.className = next + '-mode';
-      localStorage.setItem('theme', next);
-    };
-  </script>
-</body>
-</html>
+</div>
+{% endblock %}

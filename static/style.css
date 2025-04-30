@@ -1,161 +1,336 @@
-/* ─── LOGIN PAGE STYLES ─────────────────────────────────────────── */
-
-/* full‐height flex container */
-.full-height {
-  height: 100vh;
+/* Base styles */
+body {
+    min-height: 100vh;
+    background-color: #ffffff;
+    transition: background-color 0.3s ease;
 }
 
-/* the white card */
-.login-card {
-  max-width: 600px;
-  width: 90%;
-  padding: 2rem;
-  border-radius: 1rem;
-  background-color: #fff;
-}
-
-/* Logo sizing for both light & dark modes */
-.logo-img {
-  display: block;                /* so margin auto works */
-  margin: 0 auto 1.5rem auto;   /* centers & bottom gap */
-  width: 400px;                  /* fixed width */
-  max-width: 90%;                /* shrinks on small screens */
-  height: auto;                  /* preserve aspect ratio */
-  object-fit: contain;
-}
-
-/* Default (light‐mode) Google button: light grey with dark text */
-.google-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f2f2f2 !important;
-  color:            #1f1f1f !important;
-  border:           none !important;
-  padding:          0.75rem 1rem !important;
-  font-size:        1.1rem !important;
-  width:            100%;
-  transition:       box-shadow 0.2s ease !important;
-}
-
-/* Hover lift for any button */
-.google-btn:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
-}
-
-/* Google icon inside button */
-.google-icon {
-  height: 24px;
-  width: auto;
-  margin-right: 0.5rem;
-}
-
-/* ─── DARK-MODE OVERRIDES (LOGIN) ───────────────────────────────── */
-
-html.dark-mode .login-card {
-  background-color: #2e3138;
-  color:            #e0e0e0;
-}
-
-html.dark-mode .google-btn {
-  background-color: #3a3f47 !important;
-  color:            #e0e0e0 !important;
-  border:           1px solid #4f555f !important;
-}
-
-html.dark-mode .google-btn:hover {
-  background-color: #4f555f !important;
-}
-/* ─── REST OF YOUR SITE’S EXISTING STYLES BELOW ──────────────── */
-
-/* Base (light-mode) navbar */
-#mainNavbar {
-  background-color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-/* Welcome text sizing */
-.welcome-text {
-  font-size: 1.5rem;
-  font-weight: 500;
-  flex: 1;
-  padding-left: 1rem;
-}
-
-/* Dropdown icon rotation */
-#menuIcon {
-  font-size: 1.75rem;
-  transition: transform 0.3s ease;
-}
-#userMenu.show #menuIcon {
-  transform: rotate(90deg);
-}
-
-/* Dark-mode overrides */
+/* Dark mode styles */
 html.dark-mode body {
-  background-color: #20232a;
-  color:            #c0c0c0;
+    background-color: #212529;
+    color: #e1e1e1;
 }
 
-/* Dark-mode navbar */
-html.dark-mode #mainNavbar {
-  background-color: #2b2e33 !important;
-  box-shadow: none;
-}
-html.dark-mode .navbar,
-html.dark-mode .navbar.navbar-expand-lg {
-  background-color: #2b2e33 !important;
-  border-bottom: 1px solid #3a3f47;
-}
-#mainNavbar .navbar-brand,
-#mainNavbar .nav-link,
-.dark-mode #mainNavbar .navbar-brand,
-.dark-mode #mainNavbar .nav-link,
-.dark-mode .welcome-text,
-.dark-mode #toggleText,
-.dark-mode #menuIcon {
-  color: #f8f9fa !important;
+html.dark-mode .card {
+    background-color: #2c3034;
+    color: #e1e1e1;
 }
 
-/* Dark-mode dropdown */
-.dark-mode .dropdown-menu {
-  background-color: #2b2e33;
-}
-.dark-mode .dropdown-item {
-  color: #f8f9fa;
-}
-.dark-mode .dropdown-item:hover,
-.dark-mode .dropdown-item:focus {
-  background-color: #3a3f47;
+html.dark-mode .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
 }
 
-/* Dark-mode input fields */
+/* Alert styles */
+.alert {
+    margin-bottom: 1rem;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.alert.fade {
+    opacity: 0;
+}
+
+.alert.show {
+    opacity: 1;
+}
+
+/* Theme styles */
+html.light-mode body {
+    background: #f8f9fa;
+    color: #212529;
+}
+
+/* Common styles */
+body, html {
+    height: 100%;
+    margin: 0;
+    transition: background 0.3s, color 0.3s;
+}
+
+/* Navbar styles */
+.navbar {
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar-nav {
+    display: flex;
+    align-items: center;
+}
+
+.welcome-text {
+    flex: 1;
+    font-size: 1.1rem;
+    font-weight: 500;
+    padding-left: 1rem;
+    margin-right: 0.5rem;
+}
+
+.dropdown-toggle::after {
+    display: none;
+}
+
+#mobileIcon,
+#menuIcon {
+    font-size: 1.5rem;
+    transition: transform 0.3s, color 0.3s;
+    color: #212529;
+}
+
+.navbar-toggler:not(.collapsed) #mobileIcon {
+    transform: rotate(90deg);
+}
+
+#userMenu.show #menuIcon {
+    transform: rotate(90deg);
+}
+
+.navbar-brand img {
+    height: 32px;
+    width: auto;
+    margin-left: 0.5rem;
+}
+
+.navbar-toggler {
+    border: none;
+    padding: 0.5rem;
+}
+
+.navbar-toggler:focus {
+    box-shadow: none;
+}
+
+.dropdown-menu {
+    min-width: 200px;
+    padding: 0.5rem;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+.dropdown-divider {
+    margin: 0.5rem 0;
+}
+
+/* Card styles */
+.card {
+    border-radius: 1rem;
+}
+
+/* Form styles */
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+/* Button styles */
+.btn-outline-primary {
+    color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-outline-primary:hover {
+    color: #fff;
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+/* Table styles */
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    border-top: none;
+}
+
+/* Modal styles */
+.modal-content {
+    border-radius: 1rem;
+}
+
+/* Loading spinner */
+.spinner-border {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.2em;
+}
+
+/* Dark mode overrides */
+html.dark-mode .navbar {
+    background-color: #212529 !important;
+}
+
+html.dark-mode .navbar-brand img {
+    filter: brightness(0) invert(1);
+}
+
+html.dark-mode #mobileIcon,
+html.dark-mode #menuIcon {
+    color: #e1e1e1;
+}
+
+html.dark-mode .welcome-text {
+    color: #e1e1e1;
+}
+
+html.dark-mode .dropdown-menu {
+    background-color: #212529;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+html.dark-mode .dropdown-item {
+    color: #e1e1e1;
+}
+
+html.dark-mode .dropdown-item:hover {
+    background-color: #2c3034;
+}
+
+html.dark-mode .dropdown-divider {
+    border-color: #2c3034;
+}
+
 html.dark-mode .form-control {
-  background-color: #3a3f47;
-  color:            #e0e0e0;
-  border:           1px solid #4e535d;
-}
-html.dark-mode .form-control::placeholder {
-  color: #b2b8c2;
+    background-color: #2c3034;
+    border-color: #495057;
+    color: #e1e1e1;
 }
 
-/* Dark-mode cards & modals */
+html.dark-mode .form-control:focus {
+    background-color: #2c3034;
+    border-color: #80bdff;
+    color: #e1e1e1;
+}
+
+html.dark-mode .form-label {
+    color: #e1e1e1;
+}
+
+html.dark-mode .text-muted {
+    color: #adb5bd !important;
+}
+
+html.dark-mode .alert-success {
+    background-color: #1a472a;
+    border-color: #2d6a3f;
+    color: #e1e1e1;
+}
+
+html.dark-mode code {
+    background-color: #2c3034;
+    color: #e1e1e1;
+    padding: 0.2em 0.4em;
+    border-radius: 0.25rem;
+}
+
+html.dark-mode .theme-toggle {
+    cursor: pointer;
+}
+
+/* Login page specific styles */
+.login-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: none;
+}
+
+.login-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.login-container::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, #f3f4f6 25%, transparent 25%, transparent 75%, #f3f4f6 75%),
+                linear-gradient(45deg, #f3f4f6 25%, transparent 25%, transparent 75%, #f3f4f6 75%);
+    background-size: 60px 60px;
+    background-position: 0 0, 30px 30px;
+    opacity: 0.5;
+    z-index: -1;
+    animation: pattern-slide 20s linear infinite;
+}
+
+@keyframes pattern-slide {
+    0% { transform: translateX(0) translateY(0); }
+    100% { transform: translateX(-60px) translateY(-60px); }
+}
+
+/* Dark mode overrides */
+html.dark-mode .login-card {
+    background: rgba(33, 37, 41, 0.95);
+}
+
+html.dark-mode .login-container::before {
+    background: linear-gradient(45deg, #2c3034 25%, transparent 25%, transparent 75%, #2c3034 75%),
+                linear-gradient(45deg, #2c3034 25%, transparent 25%, transparent 75%, #2c3034 75%);
+}
+
+html.dark-mode .theme-toggle {
+    color: #e1e1e1;
+}
+
+html.dark-mode .theme-toggle:hover {
+    color: #ffffff;
+}
+
+/* Theme toggle button */
+.theme-toggle {
+    color: #212529;
+    transition: color 0.3s ease;
+}
+
+.theme-toggle:hover {
+    color: #000000;
+}
+
+/* Light mode navbar text & icons */
+html.light-mode #mainNavbar .navbar-brand,
+html.light-mode #mainNavbar .nav-link,
+html.light-mode #mainNavbar .dropdown-item,
+html.light-mode #mainNavbar .welcome-text,
+html.light-mode #mobileIcon,
+html.light-mode #menuIcon {
+    color: #212529 !important;
+}
+
+/* Dark mode navbar overrides */
+html.dark-mode #mainNavbar {
+    background: #1e1e1e !important;
+}
+
 html.dark-mode .card,
-html.dark-mode .modal-content {
-  background-color: #2e3138;
-  border-color:     #3a3f47;
-  color:            #e0e0e0;
+html.dark-mode .shadow-sm {
+    background: #1e1e1e !important;
+    color: #e1e1e1 !important;
 }
 
-/* Dark-mode theme toggle button */
-html.dark-mode .theme-toggle .btn {
-  background: #3a3f4b;
-  color:      #c0c0c0;
+html.dark-mode .dropdown-menu {
+    background: #343a40 !important;
 }
 
-/* even if you don’t swap classes, invert the SVG in dark mode */
-html.dark-mode #mainNavbar .navbar-toggler-icon {
-  /* make the bars white */
-  filter: invert(1) brightness(2) !important;
+html.dark-mode #mainNavbar .navbar-brand,
+html.dark-mode #mainNavbar .nav-link,
+html.dark-mode #mainNavbar .dropdown-item,
+html.dark-mode #mainNavbar .welcome-text,
+html.dark-mode #mobileIcon,
+html.dark-mode #menuIcon {
+    color: #e1e1e1 !important;
 }
 
+html.dark-mode .dropdown-item:hover {
+    background: #495057 !important;
+} 

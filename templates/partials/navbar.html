@@ -1,81 +1,54 @@
-<nav class="navbar navbar-expand-lg" id="mainNavbar">
-  <div class="container-fluid">
-    <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">🔐 ResetApp</a>
-    <button class="navbar-toggler" type="button"
-            data-bs-toggle="collapse" data-bs-target="#navbarsExample">
-      <span class="navbar-toggler-icon"></span>
+<!-- templates/partials/navbar.html -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light px-4">
+    <a class="navbar-brand" href="{{ url_for('index') }}">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="ResetApp">
+    </a>
+
+    <button class="navbar-toggler collapsed border-0" type="button" 
+            data-bs-toggle="collapse" data-bs-target="#navbarsExample"
+            aria-controls="navbarsExample" aria-expanded="false"
+            aria-label="Toggle navigation">
+        <i class="bi bi-list" id="mobileIcon"></i>
     </button>
+
     <div class="collapse navbar-collapse" id="navbarsExample">
-      <ul class="navbar-nav ms-auto align-items-center">
-        {% if user %}
-        <li class="nav-item dropdown d-flex align-items-center w-100">
-          <a class="nav-link dropdown-toggle d-flex align-items-center p-0 w-100"
-             href="#"
-             id="userMenu"
-             data-bs-toggle="dropdown">
-            <span class="welcome-text">Welcome, {{ user.name }}!</span>
-            <i class="bi bi-list" id="menuIcon"></i>
-          </a>
-          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-
-            {# Documentation on Admin page #}
-            {% if request.endpoint == 'admin_page' %}
-              <li>
-                <a class="dropdown-item" href="{{ url_for('documentation_page') }}">
-                  Documentation
+        <ul class="navbar-nav ms-auto align-items-center">
+            {% if user %}
+            <li class="nav-item dropdown d-flex align-items-center">
+                <a class="nav-link dropdown-toggle d-flex align-items-center p-0 w-100"
+                   href="#" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="welcome-text">Welcome, {{ user.name }}!</span>
+                    <i class="bi bi-list" id="menuIcon"></i>
                 </a>
-              </li>
-              <li>
-                <a class="dropdown-item" href="{{ url_for('updates_page') }}">
-                  What’s New
-                </a>
-              </li>
-            {% endif %}
-
-            {# Usage Instructions on all other pages except Help/Instructions/Admin #}
-            {% if request.endpoint not in ['help_page','instructions_page','admin_page'] %}
-              <li>
-                <a class="dropdown-item" href="{{ url_for('instructions_page') }}">
-                  Usage Instructions
-                </a>
-              </li>
-            {% endif %}
-
-            {# Admin link, hidden on Admin #}
-            {% if request.endpoint != 'admin_page' %}
-            <li>
-              <a class="dropdown-item" href="{{ url_for('admin_page') }}">
-                Admin Dashboard
-              </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    {% if request.endpoint != 'index' %}
+                    <li>
+                        <a class="dropdown-item" href="{{ url_for('index') }}">Home</a>
+                    </li>
+                    {% endif %}
+                    <li><a class="dropdown-item" href="{{ url_for('updates_page') }}">What's New</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('instructions_page') }}">Help</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('admin_page') }}">Admin Page</a></li>
+                    <li>
+                        <a class="dropdown-item" href="https://support.hart.k12.ga.us" target="_blank">
+                            Submit a Ticket
+                        </a>
+                    </li>
+                    <li>
+                        <button id="toggleTheme" class="dropdown-item d-flex align-items-center">
+                            <i class="bi bi-circle-half me-2"></i>
+                            <span id="toggleText">Toggle Dark Mode</span>
+                        </button>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
+                </ul>
+            </li>
+            {% else %}
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('login_page') }}">Sign In</a>
             </li>
             {% endif %}
-
-            <li>
-              <a class="dropdown-item"
-                 href="https://support.hart.k12.ga.us"
-                 target="_blank">
-                Submit a Ticket
-              </a>
-            </li>
-            <li>
-              <button id="toggleTheme" class="dropdown-item d-flex align-items-center">
-                <i class="bi bi-circle-half me-2"></i>
-                <span id="toggleText">Toggle Dark Mode</span>
-              </button>
-            </li>
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a>
-            </li>
-
-          </ul>
-        </li>
-        {% else %}
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('login_page') }}">Sign In</a>
-        </li>
-        {% endif %}
-      </ul>
+        </ul>
     </div>
-  </div>
 </nav>

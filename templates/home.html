@@ -12,31 +12,24 @@
     body, html { height:100%; margin:0; transition: background 0.3s, color 0.3s; }
     .dark-mode body { background:#121212; color:#e1e1e1; }
     .light-mode body { background:#f8f9fa; color:#212529; }
+    .navbar { border-bottom:1px solid rgba(0,0,0,0.1); }
     .card { border-radius:1rem; }
     .theme-toggle { cursor:pointer; }
   </style>
 </head>
 <body>
   <!-- Navbar -->
- 
-  <nav id="mainNavbar"
-       class="navbar navbar-expand-lg navbar-light bg-light px-4">
-    <a class="navbar-brand" href="{{ url_for('index') }}">
-      <img src="{{ url_for('static', filename='img/logo.png') }}"
-           height="32"
-           alt="ResetApp">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light px-4">
+    <a class="navbar-brand" href="#">
+      <img src="{{ url_for('static', filename='img/logo.png') }}" height="32" alt="ResetApp">
     </a>
     <div class="ms-auto d-flex align-items-center gap-3">
       <span class="me-3">Hello, {{ user.name }}!</span>
-      <button id="toggleTheme"
-            class="btn btn-sm btn-outline-secondary theme-toggle">🌓</button>
-      <a href="{{ url_for('help_page') }}"
-         class="btn btn-sm btn-outline-primary">Help</a>
-      <a href="{{ url_for('logout') }}"
-         class="btn btn-sm btn-outline-danger">Logout</a>
+      <button id="toggleTheme" class="btn btn-sm btn-outline-secondary theme-toggle">🌓</button>
+      <a href="{{ url_for('help_page') }}" class="btn btn-sm btn-outline-primary">Help</a>
+      <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-danger">Logout</a>
     </div>
   </nav>
-
 
   <!-- Main Content -->
   <div class="d-flex justify-content-center align-items-center" style="height:calc(100% - 56px);">
@@ -95,52 +88,30 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-  // Grab DOM elements
-  const html   = document.documentElement;
-  const toggle = document.getElementById('toggleTheme');
-  const nav    = document.getElementById('mainNavbar');
+    // Theme persistence
+    const html = document.documentElement;
+    const toggle = document.getElementById('toggleTheme');
+    html.className = (localStorage.getItem('theme') || 'light') + '-mode';
+    toggle.onclick = () => {
+      const next = html.classList.contains('light-mode') ? 'dark' : 'light';
+      html.className = next + '-mode';
+      localStorage.setItem('theme', next);
+    };
 
-  // Swap navbar classes so toggler & links invert color
-  function updateNavTheme() {
-    if (html.classList.contains('dark-mode')) {
-      nav.classList.remove('navbar-light', 'bg-light');
-      nav.classList.add   ('navbar-dark',  'bg-dark');
-    } else {
-      nav.classList.remove('navbar-dark',  'bg-dark');
-      nav.classList.add   ('navbar-light', 'bg-light');
-    }
-  }
+    // If new_password was generated, show modal + auto-hide
+    {% if new_password %}
+      const pwModal = new bootstrap.Modal(document.getElementById('pwModal'));
+      pwModal.show();
+      // Auto-dismiss after 2 minutes
+      setTimeout(() => pwModal.hide(), 120000);
+    {% endif %}
 
-  // Initialize theme + navbar on page load
-  const saved = localStorage.getItem('theme') || 'light';
-  html.className = saved + '-mode';
-  updateNavTheme();
-
-  // Toggle handler
-  toggle.onclick = () => {
-    const next = html.classList.contains('light-mode') ? 'dark' : 'light';
-    html.className = next + '-mode';
-    localStorage.setItem('theme', next);
-    updateNavTheme();
-  };
-
-  // If new_password was generated, show modal + auto-hide
-  {% if new_password %}
-    const pwModal = new bootstrap.Modal(document.getElementById('pwModal'));
-    pwModal.show();
-    setTimeout(() => pwModal.hide(), 120000);
-  {% endif %}
-
-  // Copy-to-clipboard for pwModal
-  const copyBtn = document.getElementById('copyBtn');
-  if (copyBtn) {
-    copyBtn.onclick = () => {
+    // Copy-to-clipboard
+    document.getElementById('copyBtn').onclick = () => {
       const inp = document.getElementById('newPw');
       inp.select();
       navigator.clipboard.writeText(inp.value);
     };
-  }
-</script>
-
+  </script>
 </body>
 </html>

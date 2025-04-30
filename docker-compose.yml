@@ -8,7 +8,18 @@ services:
       - "5000:5000"
     env_file:
       - .env
+    environment:
+      - FLASK_DEBUG=1
+      - FLASK_ENV=development
     volumes:
       - ./service_account.json:/app/service_account.json:ro
       - ./admin_users.json:/app/admin_users.json:rw
       - ./reset_requests.json:/app/reset_requests.json:rw
+      - ./templates:/app/templates:ro
+      - ./static:/app/static:ro
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G

@@ -1,110 +1,30 @@
-<!DOCTYPE html>
-<html lang="en" class="light-mode">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sign In • ResetApp</title>
+{% extends "base_login.html" %}
 
-  <!-- Bootstrap -->
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-  />
+{% block title %}Login - ResetApp{% endblock %}
 
-  <!-- Our shared styles (including dark-mode overrides) -->
-  <link
-    href="{{ url_for('static', filename='style.css') }}"
-    rel="stylesheet"
-  />
-</head>
-<body>
-  <!-- Dark/light toggle -->
-  <div class="theme-toggle">
-    <button class="btn btn-sm" id="toggleTheme">🌓</button>
-  </div>
-
-  <!-- Centered login card -->
-  <div class="d-flex justify-content-center align-items-center full-height">
-    <div class="login-card shadow-lg text-center">
-      <!-- Logo -->
-      <img
-        id="logoImg"
-        src="{{ url_for('static', filename='img/logo.png') }}"
-        alt="ResetApp Logo"
-        class="logo-img"
-      />
-
-      <h1 class="display-4 mb-3">Welcome Back!</h1>
-      <p class="lead mb-4">
-        Sign in with your Google account to reset student passwords.
-      </p>
-
-      <button id="googleSignIn" class="btn google-btn mb-3">
-        <img
-          src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-          alt=""
-          class="google-icon me-2"
-        />
-        <span id="btnText">Sign in with Google</span>
-        <div id="btnSpinner" class="spinner-border text-primary d-none" role="status"></div>
-      </button>
-
-      <p>
-        <a href="{{ url_for('help_page') }}">Need help signing in?</a>
-      </p>
+{% block content %}
+<div class="container login-container">
+    <div class="row justify-content-center align-items-center min-vh-100">
+        <div class="col-11 col-md-10 col-lg-8">
+            <div class="card shadow-lg login-card">
+                <div class="card-body text-center p-5">
+                    <div class="logo-container mb-5">
+                        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="ResetApp Logo" class="img-fluid logo-image">
+                    </div>
+                    <a href="{{ url_for('login_google') }}" class="btn btn-primary btn-lg d-inline-flex align-items-center gap-3 px-5 py-3 fs-5 login-button">
+                        <i class="bi bi-google fs-4"></i>
+                        <span>Sign in with Google</span>
+                    </a>
+                    <div class="mt-4">
+                        <a href="{{ url_for('help_page') }}" class="text-muted">
+                            <i class="bi bi-question-circle"></i>
+                            Need help signing in?
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-
-  <!-- Bootstrap bundle (for drop-downs, etc.) -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-  <script>
-    // DOM elements
-    const html       = document.documentElement;
-    const toggleBtn  = document.getElementById('toggleTheme');
-    const googleBtn  = document.getElementById('googleSignIn');
-    const btnText    = document.getElementById('btnText');
-    const btnSpinner = document.getElementById('btnSpinner');
-
-    // Logo File paths
-
-    const lightLogo = "{{ url_for('static', filename='img/logo.png') }}";
-    const darkLogo  = "{{ url_for('static', filename='img/dark_mode_logo.png') }}";
-
-    // Initialize theme from localStorage
-    function initTheme() {
-      const theme = localStorage.getItem('theme') || 'light';
-      html.className = theme + '-mode';
-    }
-
-    // Swap the logo based on current theme
-    function updateLogo() {
-      logoImg.src = html.classList.contains('dark-mode') ? darkLogo : lightLogo;
-    }
-
-    // Toggle dark/light and persist
-    function onToggle() {
-      const next = html.classList.contains('light-mode') ? 'dark' : 'light';
-      html.className = next + '-mode';
-      localStorage.setItem('theme', next);
-      updateLogo();
-    }
-
-    // Google-sign-in spinner
-    function onGoogleClick() {
-      googleBtn.disabled = true;
-      btnText.classList.add('d-none');
-      btnSpinner.classList.remove('d-none');
-      window.location = "{{ url_for('login_google') }}";
-    }
-
-    // Hooks
-    toggleBtn.addEventListener('click', onToggle);
-    googleBtn.addEventListener('click', onGoogleClick);
-
-    // Run on load
-    initTheme();
-  </script>
-</body>
-</html>
+</div>
+{% endblock %}
 

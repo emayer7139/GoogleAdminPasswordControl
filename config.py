@@ -7,7 +7,7 @@ load_dotenv(os.path.join(BASEDIR, '.env'))
 
 class Config:
     # Flask
-    SECRET_KEY = os.environ.get('FLASK_SECRET_KEY', 'development_secret_key')
+    SECRET_KEY = os.environ.get('FLASK_SECRET_KEY') or secrets.token_hex(16)
 
     # OAuth2 SSO
     GOOGLE_CLIENT_ID     = os.environ.get('GOOGLE_CLIENT_ID',     'your_google_client_id')
@@ -25,3 +25,8 @@ class Config:
 
     # Super‑admin for domain‑wide delegation
     ADMIN_USER = os.environ.get('ADMIN_USER', 'evan.ayers@hart.k12.ga.us')
+
+
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
