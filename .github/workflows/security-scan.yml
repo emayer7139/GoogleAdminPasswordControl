@@ -20,7 +20,7 @@ jobs:
         # Tag with commit SHA for immutability :contentReference[oaicite:4]{index=4}
 
       - name: Run Trivy scanner
-        uses: aquasecurity/trivy-action@v0                             # Official Trivy Action :contentReference[oaicite:5]{index=5}
+        uses: aquasecurity/trivy-action@v0.62.1                          # Official Trivy Action :contentReference[oaicite:5]{index=5}
         with:
           image-ref: 'google-admin-password-control:${{ github.sha }}'  
           format: 'sarif'                                              # SARIF for GitHub Security tab :contentReference[oaicite:6]{index=6}
