@@ -1,0 +1,35 @@
+name: Container Vulnerability Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  trivy-scan:
+    name: Scan Docker Image for CVEs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3                                   # Grab your repo code :contentReference[oaicite:3]{index=3}
+
+      - name: Build Docker image
+        run: docker build -t google-admin-password-control:${{ github.sha }} .  
+        # Tag with commit SHA for immutability :contentReference[oaicite:4]{index=4}
+
+      - name: Run Trivy scanner
+        uses: aquasecurity/trivy-action@v0                             # Official Trivy Action :contentReference[oaicite:5]{index=5}
+        with:
+          image-ref: 'google-admin-password-control:${{ github.sha }}'  
+          format: 'sarif'                                              # SARIF for GitHub Security tab :contentReference[oaicite:6]{index=6}
+          exit-code: '1'                                               # Fail on HIGH/CRITICAL :contentReference[oaicite:7]{index=7}
+          severity: 'CRITICAL,HIGH'                                    # Only block highest risks :contentReference[oaicite:8]{index=8}
+          output: 'trivy-report.sarif'                                 # Save report file :contentReference[oaicite:9]{index=9}
+          cache: 'true'                                                # Speed up scans with cache :contentReference[oaicite:10]{index=10}
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3                    # Populates the Security tab :contentReference[oaicite:11]{index=11}
+        with:
+          sarif_file: 'trivy-report.sarif'
