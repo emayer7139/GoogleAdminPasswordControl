@@ -1,0 +1,45 @@
+{% extends "base_login.html" %}
+
+{% block title %}Need Help Signing In?{% endblock %}
+
+{% block content %}
+<div class="center-container">
+    <div class="card shadow-lg p-5 text-center content-card">
+        <h1 class="display-4 mb-4">Need Help Signing In?</h1>
+
+        <p class="lead mb-4">
+            If you're having trouble with Google sign-in, try these first:
+        </p>
+
+        <ul class="text-start mb-5 fs-5">
+            <li>Use your Hart County email (<code>@hart.k12.ga.us</code>).</li>
+            <li>Clear cookies and cache for <code>https://resetapp.hart.k12.ga.us</code>, then retry.
+                <a href="https://support.google.com/accounts/answer/32050?hl=en&co=GENIE.Platform%3DDesktop"
+                   target="_blank">
+                    How to clear cookies &amp; cache
+                </a>
+            </li>
+            <li>Ensure pop-ups are allowed—Google's consent screen may open in a new window.</li>
+            <li>Always click the "Sign in with Google" button—don't use browser navigation.</li>
+        </ul>
+
+        <p class="fs-5 mb-1">
+            Still stuck?
+        </p>
+        <p class="fs-5 mb-4">
+            Email us at
+            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=support@hart.k12.ga.us" target="_blank">
+                support@hart.k12.ga.us
+            </a><br/>
+            Or submit a ticket:
+            <a href="https://support.hart.k12.ga.us" target="_blank">
+                support.hart.k12.ga.us
+            </a>
+        </p>
+
+        <a href="{{ url_for('login_page') }}" class="btn btn-primary btn-lg px-4 py-2 fs-5">
+            ← Back to Sign In
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" class="light-mode">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Documentation • ResetApp</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <link
+  href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+  rel="stylesheet"
+/>
+
+</head>
+<body class="bg-light">
+  {% include 'partials/navbar.html' %}
+
+  <div class="container py-5">
+    <h1 class="display-4 mb-4">Admin Documentation</h1>
+
+    <section class="mb-5">
+      <h2>1. Overview</h2>
+      <p>This page covers every feature available to administrators:</p>
+      <ul>
+        <li>User management & permissions</li>
+        <li>Password reset workflows</li>
+        <li>Audit logs & reporting</li>
+        <li>Domain‑wide delegation setup</li>
+        <li>Troubleshooting common errors</li>
+      </ul>
+    </section>
+
+    <section class="mb-5">
+      <h2>2. User Management</h2>
+      <p>Administrators may:</p>
+      <ol>
+        <li>View all users in the Google Workspace directory.</li>
+        <li>Filter by organizational unit to ensure resets are scoped properly.</li>
+        <li>Grant or revoke access to this ResetApp interface.</li>
+      </ol>
+      <!-- you can expand with code snippets, screenshots, etc. -->
+    </section>
+
+    <section class="mb-5">
+      <h2>3. Password Reset Workflow</h2>
+      <p>When resetting a student’s password:</p>
+      <ul>
+        <li>Search by first name, last name, or student number.</li>
+        <li>Confirm selection in the dropdown, then click Reset.</li>
+        <li>Read and copy the new password within 2 minutes.</li>
+        <li>Review the audit log to confirm the change.</li>
+      </ul>
+    </section>
+
+    <section class="mb-5">
+      <h2>4. Audit Logs</h2>
+      <p>The audit log tracks every password reset:</p>
+      <pre class="bg-light p-3 border">
+Timestamp           | Admin         | Student Email                  | Outcome
+--------------------------------------------------------------------------------
+2025-04-17 09:00:12 | j.hicks@…     | s.toledo@…                     | Success
+      </pre>
+      <p>The “Audit Logs” card on the Admin page will link here once fully implemented.</p>
+    </section>
+
+    <section class="mb-5">
+      <h2>5. Troubleshooting</h2>
+      <h5>API Authentication Errors</h5>
+      <p>If you see “missing credentials” or 401 errors:</p>
+      <ol>
+        <li>Verify domain‑wide delegation is enabled and scopes are whitelisted.</li>
+        <li>Ensure your service account JSON matches the whitelisted client ID.</li>
+        <li>Check that <code>ADMIN_USER</code> is a super‑admin in your domain.</li>
+      </ol>
+      <h5>Invalid Search Results</h5>
+      <p>If your multi‑token search isn’t filtering correctly:</p>
+      <ol>
+        <li>Make sure you’ve got the updated `/search_users` logic from our last update.</li>
+        <li>Confirm you’re hitting the right endpoint: <code>/search_users?q=...</code>.</li>
+      </ol>
+    </section>
+
+    <div class="mt-5">
+      <a href="{{ url_for('admin_page') }}" class="btn btn-primary">
+        ← Back to Admin Dashboard
+      </a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

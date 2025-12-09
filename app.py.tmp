@@ -1,0 +1,16 @@
+        me = admin_svc.users().get(userKey=email).execute()
+        ou_path  = me.get('orgUnitPath', '')
+        is_super = me.get('isAdmin', False)
+
+        # Modified staff check: Allow any OU under /Staff
+        is_staff = (
+            is_super or 
+            ou_path.startswith('/Staff/') or 
+            ou_path == '/Staff'
+        )
+        if not is_staff:
+            logger.warning("Access denied for %s with OU path: %s", email, ou_path)
+            flash('Only authorized staff may sign in.', 'danger')
+            session.clear()
+            return redirect(url_for('login_page'))
+        logger.info("Access granted for %s with OU path: %s", email, ou_path) 

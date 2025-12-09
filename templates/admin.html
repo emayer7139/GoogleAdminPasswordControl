@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en" class="{% if session.get('dark_mode') %}dark-mode{% endif %}">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Dashboard</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-..."
+      crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+   rel="stylesheet"
+  />
+
+  </head>
+  <body>
+    {% include 'partials/navbar.html' %}
+    <div class="container py-4">
+      <h1 class="mb-4">Admin Dashboard</h1>
+
+      {# Flash messages #}
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, msg in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+              {{ msg|safe }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      {# Date filter #}
+      <form class="row g-2 mb-4" method="get">
+        <div class="col-auto">
+          <input type="date" name="start_date" class="form-control"
+                 value="{{ request.args.get('start_date','') }}">
+        </div>
+        <div class="col-auto">
+          <input type="date" name="end_date" class="form-control"
+                 value="{{ request.args.get('end_date','') }}">
+        </div>
+        <div class="col-auto">
+          <button class="btn btn-primary">Filter</button>
+        </div>
+      </form>
+
+      {# Tabs #}
+      <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#audit">Audit Logs</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#login">Login Logs</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#users">Users</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#adminmgmt">Admins</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#requests">Reset Requests</button>
+        </li>
+      </ul>
+
+      <div class="tab-content pt-3">
+        <!-- Audit Logs -->
+        <div class="tab-pane fade show active" id="audit">
+          <input id="search-audit" class="form-control mb-2" placeholder="Search Audit…" />
+          <table class="table table-striped" id="tbl-audit">
+            <thead>
+              <tr><th>Timestamp</th><th>Admin</th><th>Action</th><th>Details</th></tr>
+            </thead>
+            <tbody>
+              {% for a in audit_logs %}
+                <tr>
+                  <td>{{ a.timestamp }}</td>
+                  <td>{{ a.admin }}</td>
+                  <td>{{ a.outcome }}</td>
+                  <td>{{ a.student }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Login Logs -->
+        <div class="tab-pane fade" id="login">
+          <input id="search-login" class="form-control mb-2" placeholder="Search Login…" />
+          <table class="table table-striped" id="tbl-login">
+            <thead>
+              <tr><th>Timestamp</th><th>User</th><th>Outcome/IP</th></tr>
+            </thead>
+            <tbody>
+              {% for l in login_logs %}
+                <tr>
+                  <td>{{ l.timestamp }}</td>
+                  <td>{{ l.user }}</td>
+                  <td>{{ l.outcome or l.ip }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Users -->
+        <div class="tab-pane fade" id="users">
+          <input id="user-search" class="form-control mb-2" placeholder="Search Students…" />
+          <table class="table table-striped" id="tbl-users">
+            <thead>
+              <tr><th>Name</th><th>Email</th></tr>
+            </thead>
+            <tbody id="user-results"></tbody>
+          </table>
+        </div>
+
+        <!-- Admin Management -->
+        <div class="tab-pane fade" id="adminmgmt">
+          <h3>Manage Admins</h3>
+          <input id="search-admins" class="form-control mb-2" placeholder="Filter existing admins…" />
+          <ul class="list-group mb-3" id="list-admins">
+            {% for email in admin_users %}
+              <li class="list-group-item d-flex justify-content-between">
+                {{ email }}
+                {% if email != user.email %}
+                  <form method="post" action="{{ url_for('remove_admin') }}"
+                        onsubmit="return confirm('Remove {{ email }}?')">
+                    <input type="hidden" name="email" value="{{ email }}" />
+                    <input type="hidden" name="csrf_token" value="{{ session['csrf_token'] }}" />
+                    <button class="btn btn-sm btn-outline-danger">Remove</button>
+                  </form>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+
+          <label class="form-label">Add Staff as Admin</label>
+          <input id="staff-search" class="form-control mb-1" placeholder="Type staff name or email…" />
+          <ul class="list-group mb-3" id="staff-suggestions"></ul>
+
+          <form id="add-admin-form" method="post" action="{{ url_for('add_admin') }}"
+                onsubmit="return confirm('Add ' + document.getElementById('new-admin-email').value + ' as admin?')">
+            <input type="hidden" id="new-admin-email" name="email" />
+            <input type="hidden" name="csrf_token" value="{{session['csrf_token'] }}" />
+            <button id="add-admin-btn" class="btn btn-success" disabled>Add Admin</button>
+          </form>
+        </div>
+
+        <!-- Reset Requests -->
+        <div class="tab-pane fade" id="requests">
+          <input id="search-requests" class="form-control mb-2" placeholder="Search Requests…" />
+          <table class="table table-striped" id="tbl-requests">
+            <thead>
+              <tr><th>ID</th><th>Email</th><th>Date</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              {% for r in requests_list %}
+                <tr>
+                  <td>{{ r.id }}</td>
+                  <td>{{ r.email }}</td>
+                  <td>{{ r.date }}</td>
+                  <td>{{ r.status }}</td>
+                  <td>
+                    {% if r.status=='Pending' %}
+                      <form class="d-inline" method="post" action="{{ url_for('approve_request') }}">
+                        <input type="hidden" name="id" value="{{ r.id }}" />
+                        <input type="hidden" name="csrf_token" value="{{ session['csrf_token'] }}" />
+                        <button class="btn btn-sm btn-primary">Approve</button>
+                      </form>
+                      <form class="d-inline" method="post" action="{{ url_for('deny_request') }}">
+                        <input type="hidden" name="id" value="{{ r.id }}" />
+                        <input type="hidden" name="csrf_token" value="{{ session['csrf_token'] }}" />
+                        <button class="btn btn-sm btn-secondary">Deny</button>
+                      </form>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-..." crossorigin="anonymous"></script>
+    <script>
+      // generic search filter
+      function makeSearch(inpId, tableOrListId) {
+        const inp = document.getElementById(inpId);
+        const container = document.getElementById(tableOrListId);
+        inp.addEventListener('input', () => {
+          const q = inp.value.toLowerCase();
+          Array.from(container.children).forEach(row => {
+            row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+          });
+        });
+      }
+
+      makeSearch('search-audit','tbl-audit');
+      makeSearch('search-login','tbl-login');
+      makeSearch('search-admins','list-admins');
+      makeSearch('search-requests','tbl-requests');
+
+      // student live search
+      let debounce;
+      document.getElementById('user-search').addEventListener('input', () => {
+        clearTimeout(debounce);
+        const q = document.getElementById('user-search').value.trim();
+        const tbody = document.getElementById('user-results');
+        if (!q) return tbody.innerHTML = '';
+        debounce = setTimeout(async () => {
+          tbody.innerHTML = '<tr><td colspan="2">Searching…</td></tr>';
+          try {
+            const res = await fetch(`/search_users?q=${encodeURIComponent(q)}`);
+            const users = await res.json();
+            tbody.innerHTML = users.length
+              ? users.map(u => `<tr><td>${u.label}</td><td>${u.value}</td></tr>`).join('')
+              : '<tr><td colspan="2">No students found</td></tr>';
+          } catch {
+            tbody.innerHTML = '<tr><td colspan="2">Error</td></tr>';
+          }
+        }, 300);
+      });
+
+      // staff live search for adding admins
+      document.getElementById('staff-search').addEventListener('input', () => {
+        clearTimeout(debounce);
+        const q = document.getElementById('staff-search').value.trim();
+        const sugg = document.getElementById('staff-suggestions');
+        const addBtn = document.getElementById('add-admin-btn');
+        const hidden = document.getElementById('new-admin-email');
+        addBtn.disabled = true; hidden.value = '';
+        if (!q) return sugg.innerHTML = '';
+        debounce = setTimeout(async () => {
+          sugg.innerHTML = '<li class="list-group-item">Searching…</li>';
+          try {
+            const res = await fetch(`/search_staff?q=${encodeURIComponent(q)}`);
+            const list = await res.json();
+            sugg.innerHTML = list.length
+              ? list.map(u =>
+                  `<li class="list-group-item list-group-item-action"
+                       onclick="selectStaff('${u.value}','${u.label.replace(/'/g,"\\'")}')">
+                     ${u.label}
+                   </li>`
+                ).join('')
+              : '<li class="list-group-item">No staff found</li>';
+          } catch {
+            sugg.innerHTML = '<li class="list-group-item text-danger">Error</li>';
+          }
+        }, 300);
+      });
+
+      function selectStaff(email, label) {
+        document.getElementById('staff-search').value = label;
+        document.getElementById('new-admin-email').value = email;
+        document.getElementById('add-admin-btn').disabled = false;
+        document.getElementById('staff-suggestions').innerHTML = '';
+      }
+    </script>
+  </body>
+</html>
