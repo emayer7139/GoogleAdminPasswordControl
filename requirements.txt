@@ -3,11 +3,11 @@ Flask-Limiter==3.12
 google-auth==2.21.0
 google-auth-oauthlib==0.5.3
 google-api-python-client==2.70.0
-requests==2.32.2
+requests==2.32.4
 Flask-Session==0.4.0
 python-dotenv
 cachetools==5.3.3
-cryptography==42.0.8
+cryptography==44.0.1
 SQLAlchemy==2.0.30
 psycopg[binary]==3.1.19
 gunicorn==22.0.0
