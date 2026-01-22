@@ -1,5 +1,5 @@
 Flask==2.2.5
-Flask-Limiter==3.12
+Flask-Limiter==3.11.0
 google-auth==2.21.0
 google-auth-oauthlib==0.5.3
 google-api-python-client==2.70.0
