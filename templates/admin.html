@@ -1382,8 +1382,7 @@
 
 
           const res = await fetch(`/search_users?q=${encodeURIComponent(q)}`);
-
-
+          if (!res.ok) throw new Error('Search failed');
           const users = await res.json();
 
 

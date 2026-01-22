@@ -83,7 +83,7 @@ def index():
             else:
                 try:
                     student = get_user(se)
-                    if not student.get('orgUnitPath', '').startswith('/Students'):
+                    if not _is_student_ou(student.get('orgUnitPath', '')):
                         flash('Only student OU.', 'danger')
                         outcome = 'Denied'
                     elif not _can_reset_student(role, student, user_info['email']):
@@ -245,7 +245,7 @@ def search_users_route():
         return jsonify([]), 500
 
     uniq = {u['primaryEmail']: u for u in candidates if u.get('primaryEmail')}
-    students = [u for u in uniq.values() if u.get('orgUnitPath', '').startswith('/Students')]
+    students = [u for u in uniq.values() if _is_student_ou(u.get('orgUnitPath', ''))]
 
     toks = q.split()
     if len(toks) > 1:
@@ -266,6 +266,16 @@ def search_users_route():
         }
         for u in students
     ])
+
+
+def _is_student_ou(ou_path):
+    if not ou_path:
+        return False
+    prefixes = current_app.config.get('STUDENT_OU_PREFIXES', [])
+    for prefix in prefixes:
+        if ou_path.startswith(prefix):
+            return True
+    return False
 
 
 def _can_reset_student(role, student, teacher_email):

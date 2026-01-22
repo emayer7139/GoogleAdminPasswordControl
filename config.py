@@ -45,6 +45,8 @@ class Config:
         )
     )
 
+    STUDENT_OU_PREFIXES = _split_csv(os.environ.get('STUDENT_OU_PREFIXES', '/Students'))
+
     SCHOOL_OU_SKIP_SEGMENTS = set(
         seg.lower() for seg in _split_csv(
             os.environ.get(

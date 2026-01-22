@@ -78,8 +78,26 @@
                     {% endif %}
                 </div>
             </div>
-        </div>
     </div>
+  </div>
+</div>
+<div class="modal fade" id="confirmResetModal" tabindex="-1" aria-labelledby="confirmResetLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmResetLabel">Confirm Password Reset</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-2">Reset password for <code id="confirm-reset-email">this student</code>?</p>
+        <p class="small text-muted mb-0">The student will be required to change the password on next login.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirm-reset-btn">Confirm Reset</button>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
@@ -123,12 +141,28 @@
     const form = document.querySelector('form.needs-validation');
     const role = "{{ role }}";
     if (!form || !role || (role !== 'admin' && role !== 'global_admin')) return;
+    const modalEl = document.getElementById('confirmResetModal');
+    const confirmEmail = document.getElementById('confirm-reset-email');
+    const confirmBtn = document.getElementById('confirm-reset-btn');
+    if (!modalEl || !confirmEmail || !confirmBtn) return;
+    const modal = new bootstrap.Modal(modalEl);
+
     form.addEventListener('submit', (event) => {
+      if (form.dataset.confirmed === 'true') return;
+      if (!form.checkValidity()) return;
+      event.preventDefault();
+      event.stopPropagation();
       const email = document.getElementById('student_email')?.value || '';
-      const ok = window.confirm(`Confirm reset for ${email}?`);
-      if (!ok) {
-        event.preventDefault();
-        event.stopPropagation();
+      confirmEmail.textContent = email || 'this student';
+      modal.show();
+    });
+
+    confirmBtn.addEventListener('click', () => {
+      form.dataset.confirmed = 'true';
+      if (form.requestSubmit) {
+        form.requestSubmit();
+      } else {
+        form.submit();
       }
     });
   });
