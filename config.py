@@ -46,6 +46,7 @@ class Config:
     )
 
     STUDENT_OU_PREFIXES = _split_csv(os.environ.get('STUDENT_OU_PREFIXES', '/Students'))
+    STUDENT_EMAIL_DOMAINS = _split_csv(os.environ.get('STUDENT_EMAIL_DOMAINS', ''))
 
     SCHOOL_OU_SKIP_SEGMENTS = set(
         seg.lower() for seg in _split_csv(

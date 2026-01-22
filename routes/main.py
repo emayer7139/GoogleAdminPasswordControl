@@ -83,8 +83,8 @@ def index():
             else:
                 try:
                     student = get_user(se)
-                    if not _is_student_ou(student.get('orgUnitPath', '')):
-                        flash('Only student OU.', 'danger')
+                    if not _is_student_account(student):
+                        flash('Only student accounts.', 'danger')
                         outcome = 'Denied'
                     elif not _can_reset_student(role, student, user_info['email']):
                         flash('No permission.', 'danger')
@@ -245,7 +245,7 @@ def search_users_route():
         return jsonify([]), 500
 
     uniq = {u['primaryEmail']: u for u in candidates if u.get('primaryEmail')}
-    students = [u for u in uniq.values() if _is_student_ou(u.get('orgUnitPath', ''))]
+    students = [u for u in uniq.values() if _is_student_account(u)]
 
     toks = q.split()
     if len(toks) > 1:
@@ -276,6 +276,24 @@ def _is_student_ou(ou_path):
         if ou_path.startswith(prefix):
             return True
     return False
+
+
+def _is_student_email(email):
+    email = (email or '').lower()
+    if not email:
+        return False
+    domains = current_app.config.get('STUDENT_EMAIL_DOMAINS', [])
+    for domain in domains:
+        domain = domain.lower().lstrip('@')
+        if email.endswith(f'@{domain}'):
+            return True
+    return False
+
+
+def _is_student_account(user):
+    if not user:
+        return False
+    return _is_student_ou(user.get('orgUnitPath', '')) or _is_student_email(user.get('primaryEmail', ''))
 
 
 def _can_reset_student(role, student, teacher_email):

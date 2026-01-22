@@ -57,7 +57,20 @@ def update_password(email, new_password):
 
 def search_users(query, max_results=50):
     svc = _get_service([READONLY_SCOPE])
-    toks = query.split()
+    raw = (query or '').strip()
+    if not raw:
+        return []
+    if '@' in raw:
+        try:
+            user = svc.users().get(userKey=raw).execute()
+            return [user]
+        except HttpError:
+            raw = raw.split('@', 1)[0].strip()
+            if not raw:
+                return []
+    toks = raw.split()
+    if not toks:
+        return []
     results = []
     for field in ('givenName', 'familyName', 'email'):
         resp = svc.users().list(
