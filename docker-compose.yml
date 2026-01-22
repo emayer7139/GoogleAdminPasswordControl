@@ -1,9 +1,23 @@
 services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: resetapp
+      POSTGRES_USER: resetapp
+      POSTGRES_PASSWORD: resetapp
+    volumes:
+      - resetapp_db:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
   app:
     build:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    depends_on:
+      - db
     ports:
       - "5000:5000"
     env_file:
@@ -11,6 +25,7 @@ services:
     environment:
       - FLASK_DEBUG=1
       - FLASK_ENV=development
+      - DATABASE_URL=postgresql+psycopg://resetapp:resetapp@db:5432/resetapp
     volumes:
       - ./service_account.json:/app/service_account.json:ro
       - ./admin_users.json:/app/admin_users.json:rw
@@ -23,3 +38,6 @@ services:
           memory: 4G
         reservations:
           memory: 2G
+
+volumes:
+  resetapp_db:
