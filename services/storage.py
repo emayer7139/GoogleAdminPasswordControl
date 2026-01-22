@@ -1,68 +1,86 @@
-import json
-import os
 from datetime import datetime
 
-from flask import current_app
-from sqlalchemy import select, delete
+from sqlalchemy import delete, select
 
 from services.db import (
     get_engine,
     audit_logs_table,
     bug_reports_table,
     known_issues_table,
-    login_logs_table
+    login_logs_table,
+    admin_users_table,
+    global_admins_table,
+    reset_requests_table,
+    theme_preferences_table,
+    classroom_sync_table,
 )
-
-ADMIN_FILE = 'admin_users.json'
-GLOBAL_ADMIN_FILE = 'global_admins.json'
-REQUESTS_FILE = 'reset_requests.json'
-AUDIT_LOG_FILE = 'audit_logs.json'
-LOGIN_LOG_FILE = 'login_logs.json'
-THEME_FILE = 'theme_preferences.json'
-BUG_REPORTS_FILE = 'bug_reports.json'
-CLASSROOM_SYNC_FILE = 'classroom_sync.json'
-KNOWN_ISSUES_FILE = 'known_issues.json'
-
-
-
-def _data_path(filename):
-    return os.path.join(current_app.root_path, filename)
-
-
-def load_json(path):
-    if not os.path.exists(path):
-        return []
-    with open(path, 'r') as f:
-        return json.load(f)
-
-
-def save_json(path, data):
-    with open(path, 'w') as f:
-        json.dump(data, f, indent=2)
 
 
 def load_admins():
-    return load_json(_data_path(ADMIN_FILE))
+    with get_engine().connect() as conn:
+        rows = conn.execute(
+            select(admin_users_table.c.email).order_by(admin_users_table.c.email)
+        ).scalars().all()
+    return list(rows)
 
 
 def save_admins(admins):
-    save_json(_data_path(ADMIN_FILE), admins)
+    unique = sorted({email.strip().lower() for email in admins if email})
+    with get_engine().begin() as conn:
+        conn.execute(delete(admin_users_table))
+        if unique:
+            conn.execute(
+                admin_users_table.insert(),
+                [{'email': email} for email in unique]
+            )
 
 
 def load_global_admins():
-    return load_json(_data_path(GLOBAL_ADMIN_FILE))
+    with get_engine().connect() as conn:
+        rows = conn.execute(
+            select(global_admins_table.c.email).order_by(global_admins_table.c.email)
+        ).scalars().all()
+    return list(rows)
 
 
 def save_global_admins(admins):
-    save_json(_data_path(GLOBAL_ADMIN_FILE), admins)
+    unique = sorted({email.strip().lower() for email in admins if email})
+    with get_engine().begin() as conn:
+        conn.execute(delete(global_admins_table))
+        if unique:
+            conn.execute(
+                global_admins_table.insert(),
+                [{'email': email} for email in unique]
+            )
 
 
 def load_requests():
-    return load_json(_data_path(REQUESTS_FILE))
+    with get_engine().connect() as conn:
+        rows = conn.execute(
+            select(reset_requests_table)
+            .order_by(reset_requests_table.c.date, reset_requests_table.c.id)
+        ).mappings().all()
+    return [dict(row) for row in rows]
 
 
 def save_requests(reqs):
-    save_json(_data_path(REQUESTS_FILE), reqs)
+    rows = []
+    seen = set()
+    for req in reqs:
+        rid = str(req.get('id', '')).strip()
+        if not rid or rid in seen:
+            continue
+        seen.add(rid)
+        rows.append({
+            'id': rid,
+            'email': (req.get('email', '') or '').strip().lower(),
+            'date': req.get('date', ''),
+            'status': req.get('status', 'Pending')
+        })
+    with get_engine().begin() as conn:
+        conn.execute(delete(reset_requests_table))
+        if rows:
+            conn.execute(reset_requests_table.insert(), rows)
 
 
 def append_audit_log(entry):
@@ -141,27 +159,30 @@ def log_failed_login(email, reason, ip=None):
     })
 
 
-def load_theme_preferences():
-    path = _data_path(THEME_FILE)
-    if not os.path.exists(path):
-        return {}
-    with open(path, 'r') as f:
-        return json.load(f)
-
-
-def save_theme_preferences(prefs):
-    save_json(_data_path(THEME_FILE), prefs)
-
-
 def get_theme_for_user(email):
-    prefs = load_theme_preferences()
-    return prefs.get(email.lower())
+    if not email:
+        return None
+    addr = email.lower()
+    with get_engine().connect() as conn:
+        row = conn.execute(
+            select(theme_preferences_table.c.theme)
+            .where(theme_preferences_table.c.email == addr)
+        ).scalar()
+    return row
 
 
 def set_theme_for_user(email, theme):
-    prefs = load_theme_preferences()
-    prefs[email.lower()] = theme
-    save_theme_preferences(prefs)
+    if not email:
+        return
+    addr = email.lower()
+    with get_engine().begin() as conn:
+        result = conn.execute(
+            theme_preferences_table.update()
+            .where(theme_preferences_table.c.email == addr)
+            .values(theme=theme)
+        )
+        if result.rowcount == 0:
+            conn.execute(theme_preferences_table.insert().values(email=addr, theme=theme))
 
 
 def load_bug_reports():
@@ -225,29 +246,50 @@ def update_bug_report(report_id, updates):
 
 
 def load_classroom_sync():
-    path = _data_path(CLASSROOM_SYNC_FILE)
-    if not os.path.exists(path):
-        return {}
-    with open(path, 'r') as f:
-        return json.load(f)
-
-
-def save_classroom_sync(sync_data):
-    save_json(_data_path(CLASSROOM_SYNC_FILE), sync_data)
+    with get_engine().connect() as conn:
+        rows = conn.execute(
+            select(classroom_sync_table)
+        ).mappings().all()
+    return {
+        row['email']: {
+            'count': row.get('count', 0),
+            'timestamp': row.get('timestamp', '')
+        }
+        for row in rows
+    }
 
 
 def get_classroom_sync(email):
-    sync_data = load_classroom_sync()
-    return sync_data.get(email.lower())
+    if not email:
+        return None
+    addr = email.lower()
+    with get_engine().connect() as conn:
+        row = conn.execute(
+            select(classroom_sync_table.c.count, classroom_sync_table.c.timestamp)
+            .where(classroom_sync_table.c.email == addr)
+        ).first()
+    if not row:
+        return None
+    return {'count': row[0], 'timestamp': row[1]}
 
 
 def set_classroom_sync(email, count):
-    sync_data = load_classroom_sync()
-    sync_data[email.lower()] = {
-        'count': count,
-        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    }
-    save_classroom_sync(sync_data)
+    if not email:
+        return
+    addr = email.lower()
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    with get_engine().begin() as conn:
+        result = conn.execute(
+            classroom_sync_table.update()
+            .where(classroom_sync_table.c.email == addr)
+            .values(count=int(count), timestamp=timestamp)
+        )
+        if result.rowcount == 0:
+            conn.execute(classroom_sync_table.insert().values(
+                email=addr,
+                count=int(count),
+                timestamp=timestamp
+            ))
 
 
 def load_known_issues():

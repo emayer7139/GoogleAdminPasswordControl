@@ -1,8 +1,8 @@
-from functools import wraps
-from datetime import datetime
 import time
+from datetime import datetime
+from functools import wraps
 
-from flask import session, redirect, url_for, flash, abort, request
+from flask import abort, flash, redirect, request, session, url_for
 
 from services.roles import ROLE_ADMIN, ROLE_GLOBAL_ADMIN
 from services.storage import log_failed_login

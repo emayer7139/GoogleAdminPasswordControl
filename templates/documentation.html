@@ -68,8 +68,8 @@
           <li><strong>Global Admin</strong>: full control over everything (isAdmin or listed as global).</li>
         </ul>
         <p class="mb-0">
-          Admin access to this console is controlled by <code>admin_users.json</code>. Global admins can
-          be set via <code>GLOBAL_ADMIN_EMAILS</code> or <code>global_admins.json</code>.
+          Admin access to this console is stored in the database table <code>admin_users</code>. Global admins can
+          be set via <code>GLOBAL_ADMIN_EMAILS</code> or the <code>global_admins</code> table.
         </p>
       </section>
 
@@ -83,7 +83,7 @@
             <tbody>
               <tr><td>Teacher</td><td>Students</td><td>Classroom roster only</td><td>Sync button updates roster cache.</td></tr>
               <tr><td>Media Specialist</td><td>Students</td><td>Same school OU segment</td><td>Based on OU path parsing.</td></tr>
-              <tr><td>Admin</td><td>Students</td><td>All schools</td><td>Listed in <code>admin_users.json</code>.</td></tr>
+              <tr><td>Admin</td><td>Students</td><td>All schools</td><td>Listed in <code>admin_users</code> table.</td></tr>
               <tr><td>Global Admin</td><td>Everything</td><td>Domain-wide</td><td>Super admin or global list.</td></tr>
             </tbody>
           </table>
@@ -160,7 +160,7 @@ Audit     Login   Students   Admins   Requests   Bugs
           optional page, and optional screenshot.
         </p>
         <ul class="fs-5">
-          <li>Reports are stored in <code>bug_reports.json</code>.</li>
+          <li>Reports are stored in the <code>bug_reports</code> table.</li>
           <li>Attachments are stored under <code>static/uploads/bug_reports</code>.</li>
           <li>Admins can close reports in the Admin Console.</li>
         </ul>
@@ -170,17 +170,17 @@ Audit     Login   Students   Admins   Requests   Bugs
         <h2 class="h4">6) Theme Preference</h2>
         <p class="fs-5">
           Theme preference is stored per user and persists across devices.
-          When a user toggles theme, the server saves it to <code>theme_preferences.json</code>.
+          When a user toggles theme, the server saves it to the <code>theme_preferences</code> table.
         </p>
       </section>
 
       <section id="retention" class="doc-section">
         <h2 class="h4">7) Data Retention</h2>
         <ul class="fs-5">
-          <li><strong>Audit logs</strong>: <code>audit_logs.json</code> (saved on shutdown).</li>
+          <li><strong>Audit logs</strong>: database table <code>audit_logs</code>.</li>
           <li><strong>Login logs</strong>: database table <code>login_logs</code>.</li>
-          <li><strong>Bug reports</strong>: <code>bug_reports.json</code>.</li>
-          <li><strong>Theme prefs</strong>: <code>theme_preferences.json</code>.</li>
+          <li><strong>Bug reports</strong>: database table <code>bug_reports</code>.</li>
+          <li><strong>Theme prefs</strong>: database table <code>theme_preferences</code>.</li>
           <li><strong>Uploads</strong>: <code>static/uploads/bug_reports</code>.</li>
         </ul>
       </section>

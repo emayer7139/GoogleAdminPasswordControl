@@ -46,6 +46,7 @@ student-password-manager-*.json
 # Logs and databases
 *.log
 *.sqlite3
+data/status_notifications.json
 
 # Unit test / coverage outputs
 htmlcov/

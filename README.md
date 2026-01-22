@@ -67,11 +67,8 @@ DEV_LOGIN_ROLE=global_admin
 DATABASE_URL=sqlite:///C:/path/to/GoogleAdminPasswordControl/data/resetapp.db
 ```
 
-You can also add global admins in `global_admins.json`:
-
-```json
-[]
-```
+Global admins can be set via `GLOBAL_ADMIN_EMAILS` or stored in the `global_admins` database table
+(seeded from the legacy JSON file on first run).
 
 ### 2a) Local SSL toggle
 
@@ -130,6 +127,34 @@ https://localhost:5000/login/dev?email=tester@yourdomain.com&role=admin
 ```
 
 Set `DEV_LOGIN_ENABLED=false` to disable.
+
+## Email notifications (optional)
+
+ResetApp can send outage emails when `/status/notify` is called (for example by a cron job or uptime monitor).
+
+Add to `.env`:
+
+```env
+STATUS_EMAIL_ENABLED=true
+STATUS_EMAIL_RECIPIENTS=alerts@yourdomain.com
+STATUS_EMAIL_COOLDOWN_MINUTES=30
+STATUS_EMAIL_NOTIFY_ON_RECOVERY=true
+STATUS_EMAIL_TOKEN=change-me
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USE_TLS=true
+SMTP_USER=alerts@yourdomain.com
+SMTP_PASSWORD=app-password-here
+SMTP_FROM=alerts@yourdomain.com
+```
+
+Then call:
+
+```
+https://your-host/status/notify?token=change-me
+```
+
+If you use Gmail, create an app password for the sending account.
 
 ## Notes
 

@@ -1,14 +1,22 @@
 import logging
+import os
 import secrets
-from datetime import datetime, date
+from datetime import date, datetime
 
 from flask import (
-    Blueprint, render_template, request, session, flash,
-    redirect, url_for, abort, jsonify, current_app
+    Blueprint,
+    abort,
+    current_app,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
 )
-from werkzeug.utils import secure_filename
-import os
 from googleapiclient.errors import HttpError
+from werkzeug.utils import secure_filename
 
 from auth import login_required, role_required
 from services.classroom import get_teacher_roster_emails

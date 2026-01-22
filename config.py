@@ -71,3 +71,16 @@ class Config:
         'DATABASE_URL',
         f"sqlite:///{os.path.join(BASEDIR, 'data', 'resetapp.db')}"
     )
+
+    SMTP_HOST = os.environ.get('SMTP_HOST', '')
+    SMTP_PORT = int(os.environ.get('SMTP_PORT', '587'))
+    SMTP_USER = os.environ.get('SMTP_USER', '')
+    SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
+    SMTP_FROM = os.environ.get('SMTP_FROM', '')
+    SMTP_USE_TLS = _env_truthy('SMTP_USE_TLS', 'true')
+
+    STATUS_EMAIL_ENABLED = _env_truthy('STATUS_EMAIL_ENABLED', 'false')
+    STATUS_EMAIL_RECIPIENTS = _split_csv(os.environ.get('STATUS_EMAIL_RECIPIENTS', ''))
+    STATUS_EMAIL_COOLDOWN_MINUTES = int(os.environ.get('STATUS_EMAIL_COOLDOWN_MINUTES', '30'))
+    STATUS_EMAIL_NOTIFY_ON_RECOVERY = _env_truthy('STATUS_EMAIL_NOTIFY_ON_RECOVERY', 'true')
+    STATUS_EMAIL_TOKEN = os.environ.get('STATUS_EMAIL_TOKEN', '')

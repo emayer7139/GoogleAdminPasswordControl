@@ -67,6 +67,42 @@ login_logs_table = Table(
     Column('ip', String(64), nullable=True),
 )
 
+admin_users_table = Table(
+    'admin_users',
+    metadata,
+    Column('email', String(255), primary_key=True),
+)
+
+global_admins_table = Table(
+    'global_admins',
+    metadata,
+    Column('email', String(255), primary_key=True),
+)
+
+reset_requests_table = Table(
+    'reset_requests',
+    metadata,
+    Column('id', String(32), primary_key=True),
+    Column('email', String(255), nullable=False),
+    Column('date', String(10), nullable=False),
+    Column('status', String(32), nullable=False),
+)
+
+theme_preferences_table = Table(
+    'theme_preferences',
+    metadata,
+    Column('email', String(255), primary_key=True),
+    Column('theme', String(16), nullable=False),
+)
+
+classroom_sync_table = Table(
+    'classroom_sync',
+    metadata,
+    Column('email', String(255), primary_key=True),
+    Column('count', Integer, nullable=False),
+    Column('timestamp', String(19), nullable=True),
+)
+
 
 def init_db(app):
     engine = create_engine(app.config['DATABASE_URL'], future=True)
@@ -88,62 +124,130 @@ def _migrate_json(engine, root_path):
     bug_path = os.path.join(root_path, 'bug_reports.json')
     known_path = os.path.join(root_path, 'known_issues.json')
     login_path = os.path.join(root_path, 'login_logs.json')
+    admin_path = os.path.join(root_path, 'admin_users.json')
+    global_path = os.path.join(root_path, 'global_admins.json')
+    requests_path = os.path.join(root_path, 'reset_requests.json')
+    theme_path = os.path.join(root_path, 'theme_preferences.json')
+    classroom_path = os.path.join(root_path, 'classroom_sync.json')
+
+    def load_json(path, default):
+        if not os.path.exists(path):
+            return default
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            return default
 
     with engine.begin() as conn:
         if conn.execute(select(audit_logs_table.c.id)).first() is None:
-            if os.path.exists(audit_path):
-                with open(audit_path, 'r') as f:
-                    for entry in json.load(f):
-                        conn.execute(audit_logs_table.insert().values(
-                            timestamp=entry.get('timestamp', ''),
-                            admin=entry.get('admin', ''),
-                            student=entry.get('student', ''),
-                            outcome=entry.get('outcome', ''),
-                            role=entry.get('role', ''),
-                            action_type=entry.get('action_type', ''),
-                            admin_ou=entry.get('admin_ou', ''),
-                            admin_school=entry.get('admin_school', '')
-                        ))
+            for entry in load_json(audit_path, []):
+                conn.execute(audit_logs_table.insert().values(
+                    timestamp=entry.get('timestamp', ''),
+                    admin=entry.get('admin', ''),
+                    student=entry.get('student', ''),
+                    outcome=entry.get('outcome', ''),
+                    role=entry.get('role', ''),
+                    action_type=entry.get('action_type', ''),
+                    admin_ou=entry.get('admin_ou', ''),
+                    admin_school=entry.get('admin_school', '')
+                ))
 
         if conn.execute(select(bug_reports_table.c.id)).first() is None:
-            if os.path.exists(bug_path):
-                with open(bug_path, 'r') as f:
-                    for entry in json.load(f):
-                        conn.execute(bug_reports_table.insert().values(
-                            id=entry.get('id', ''),
-                            timestamp=entry.get('timestamp', ''),
-                            reporter=entry.get('reporter', ''),
-                            title=entry.get('title', ''),
-                            description=entry.get('description', ''),
-                            severity=entry.get('severity', ''),
-                            page=entry.get('page', ''),
-                            status=entry.get('status', ''),
-                            attachment=entry.get('attachment', ''),
-                            notes=entry.get('notes', '')
-                        ))
+            for entry in load_json(bug_path, []):
+                conn.execute(bug_reports_table.insert().values(
+                    id=entry.get('id', ''),
+                    timestamp=entry.get('timestamp', ''),
+                    reporter=entry.get('reporter', ''),
+                    title=entry.get('title', ''),
+                    description=entry.get('description', ''),
+                    severity=entry.get('severity', ''),
+                    page=entry.get('page', ''),
+                    status=entry.get('status', ''),
+                    attachment=entry.get('attachment', ''),
+                    notes=entry.get('notes', '')
+                ))
 
         if conn.execute(select(known_issues_table.c.id)).first() is None:
-            if os.path.exists(known_path):
-                with open(known_path, 'r') as f:
-                    for entry in json.load(f):
-                        conn.execute(known_issues_table.insert().values(
-                            id=entry.get('id', ''),
-                            text=entry.get('text', ''),
-                            status=entry.get('status', ''),
-                            created_at=entry.get('created_at', ''),
-                            resolved_at=entry.get('resolved_at', ''),
-                            level=entry.get('level', 'support'),
-                            update_note=entry.get('update_note', ''),
-                            updated_at=entry.get('updated_at', '')
-                        ))
+            for entry in load_json(known_path, []):
+                conn.execute(known_issues_table.insert().values(
+                    id=entry.get('id', ''),
+                    text=entry.get('text', ''),
+                    status=entry.get('status', ''),
+                    created_at=entry.get('created_at', ''),
+                    resolved_at=entry.get('resolved_at', ''),
+                    level=entry.get('level', 'support'),
+                    update_note=entry.get('update_note', ''),
+                    updated_at=entry.get('updated_at', '')
+                ))
 
         if conn.execute(select(login_logs_table.c.id)).first() is None:
-            if os.path.exists(login_path):
-                with open(login_path, 'r') as f:
-                    for entry in json.load(f):
-                        conn.execute(login_logs_table.insert().values(
-                            timestamp=entry.get('timestamp', ''),
-                            user=entry.get('user', ''),
-                            outcome=entry.get('outcome', ''),
-                            ip=entry.get('ip', '')
+            for entry in load_json(login_path, []):
+                conn.execute(login_logs_table.insert().values(
+                    timestamp=entry.get('timestamp', ''),
+                    user=entry.get('user', ''),
+                    outcome=entry.get('outcome', ''),
+                    ip=entry.get('ip', '')
+                ))
+
+        if conn.execute(select(admin_users_table.c.email)).first() is None:
+            seen = set()
+            for email in load_json(admin_path, []):
+                addr = str(email).strip().lower()
+                if addr and addr not in seen:
+                    seen.add(addr)
+                    conn.execute(admin_users_table.insert().values(email=addr))
+
+        if conn.execute(select(global_admins_table.c.email)).first() is None:
+            seen = set()
+            for email in load_json(global_path, []):
+                addr = str(email).strip().lower()
+                if addr and addr not in seen:
+                    seen.add(addr)
+                    conn.execute(global_admins_table.insert().values(email=addr))
+
+        if conn.execute(select(reset_requests_table.c.id)).first() is None:
+            seen = set()
+            for entry in load_json(requests_path, []):
+                rid = str(entry.get('id', '')).strip()
+                email = str(entry.get('email', '')).strip().lower()
+                if not rid or rid in seen:
+                    continue
+                seen.add(rid)
+                conn.execute(reset_requests_table.insert().values(
+                    id=rid,
+                    email=email,
+                    date=entry.get('date', ''),
+                    status=entry.get('status', 'Pending')
+                ))
+
+        if conn.execute(select(theme_preferences_table.c.email)).first() is None:
+            prefs = load_json(theme_path, {})
+            if isinstance(prefs, dict):
+                for email, theme in prefs.items():
+                    addr = str(email).strip().lower()
+                    value = str(theme).strip()
+                    if addr and value:
+                        conn.execute(theme_preferences_table.insert().values(
+                            email=addr,
+                            theme=value
                         ))
+
+        if conn.execute(select(classroom_sync_table.c.email)).first() is None:
+            sync_data = load_json(classroom_path, {})
+            if isinstance(sync_data, dict):
+                for email, payload in sync_data.items():
+                    addr = str(email).strip().lower()
+                    if not addr:
+                        continue
+                    count = payload.get('count', 0) if isinstance(payload, dict) else 0
+                    timestamp = payload.get('timestamp', '') if isinstance(payload, dict) else ''
+                    try:
+                        count = int(count)
+                    except (TypeError, ValueError):
+                        count = 0
+                    conn.execute(classroom_sync_table.insert().values(
+                        email=addr,
+                        count=count,
+                        timestamp=timestamp
+                    ))

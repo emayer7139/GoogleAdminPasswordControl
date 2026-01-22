@@ -1,11 +1,11 @@
-import logging
-import secrets
 import io
 import json
+import logging
+import secrets
 import zipfile
 from datetime import datetime, timedelta
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, abort, current_app
+from flask import Blueprint, abort, current_app, flash, jsonify, redirect, render_template, request, session, url_for
 from googleapiclient.errors import HttpError
 
 from auth import login_required, admin_required
@@ -32,6 +32,42 @@ logger = logging.getLogger(__name__)
 bp = Blueprint('admin', __name__)
 
 
+def _in_date_range(ts, start, end):
+    dt = datetime.fromisoformat(ts)
+    if start and dt < datetime.fromisoformat(start):
+        return False
+    if end and dt > datetime.fromisoformat(end):
+        return False
+    return True
+
+
+def _audit_matches(entry, audit_role, audit_school, audit_ou):
+    if audit_role and entry.get('role') != audit_role:
+        return False
+    if audit_school and (entry.get('admin_school') or '').lower() != audit_school.lower():
+        return False
+    if audit_ou and audit_ou not in (entry.get('admin_ou') or ''):
+        return False
+    return True
+
+
+def _filter_audit_logs(start, end, audit_role, audit_school, audit_ou):
+    return [
+        entry
+        for entry in get_audit_logs()
+        if _in_date_range(entry['timestamp'], start, end)
+        and _audit_matches(entry, audit_role, audit_school, audit_ou)
+    ]
+
+
+def _filter_login_logs(start, end):
+    return [
+        entry
+        for entry in get_login_logs()
+        if _in_date_range(entry['timestamp'], start, end)
+    ]
+
+
 @bp.route('/admin')
 @login_required
 @admin_required
@@ -43,28 +79,14 @@ def admin_page():
     audit_school = request.args.get('audit_school', '').strip()
     audit_ou = request.args.get('audit_ou', '').strip()
 
-    def in_range(ts):
-        dt = datetime.fromisoformat(ts)
-        if start and dt < datetime.fromisoformat(start):
-            return False
-        if end and dt > datetime.fromisoformat(end):
-            return False
-        return True
-
-    def audit_matches(entry):
-        if audit_role and entry.get('role') != audit_role:
-            return False
-        if audit_school and (entry.get('admin_school') or '').lower() != audit_school.lower():
-            return False
-        if audit_ou and audit_ou not in (entry.get('admin_ou') or ''):
-            return False
-        return True
+    audit_logs = _filter_audit_logs(start, end, audit_role, audit_school, audit_ou)
+    login_logs = _filter_login_logs(start, end)
 
     return render_template(
         'admin.html',
         user=user,
-        audit_logs=[a for a in get_audit_logs() if in_range(a['timestamp']) and audit_matches(a)],
-        login_logs=[l for l in get_login_logs() if in_range(l['timestamp'])],
+        audit_logs=audit_logs,
+        login_logs=login_logs,
         admin_users=load_admins(),
         requests_list=load_requests(),
         bug_reports=load_bug_reports(),
@@ -81,25 +103,7 @@ def export_audit_csv():
     audit_role = request.args.get('audit_role', '').strip()
     audit_school = request.args.get('audit_school', '').strip()
     audit_ou = request.args.get('audit_ou', '').strip()
-
-    def in_range(ts):
-        dt = datetime.fromisoformat(ts)
-        if start and dt < datetime.fromisoformat(start):
-            return False
-        if end and dt > datetime.fromisoformat(end):
-            return False
-        return True
-
-    def audit_matches(entry):
-        if audit_role and entry.get('role') != audit_role:
-            return False
-        if audit_school and (entry.get('admin_school') or '').lower() != audit_school.lower():
-            return False
-        if audit_ou and audit_ou not in (entry.get('admin_ou') or ''):
-            return False
-        return True
-
-    rows = [a for a in get_audit_logs() if in_range(a['timestamp']) and audit_matches(a)]
+    rows = _filter_audit_logs(start, end, audit_role, audit_school, audit_ou)
     header = ['timestamp', 'admin', 'role', 'school', 'action', 'details', 'admin_ou']
     lines = [','.join(header)]
     for r in rows:

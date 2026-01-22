@@ -3,10 +3,10 @@ import secrets
 import time
 from datetime import datetime
 
-from flask import Blueprint, redirect, url_for, session, request, render_template, flash, current_app, abort
+from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, session, url_for
+from google.auth.transport.requests import Request as GoogleRequest
 from google.oauth2 import id_token
 from google_auth_oauthlib.flow import Flow
-from google.auth.transport.requests import Request as GoogleRequest
 from googleapiclient.errors import HttpError
 
 from extensions import limiter

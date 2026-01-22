@@ -3,33 +3,49 @@ import json
 import logging
 import os
 import platform
+import secrets
 import sys
 import time
 from datetime import datetime, timedelta
 
-from flask import Flask, render_template, session
+from flask import (
+    Flask,
+    abort,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 from google.auth.transport.requests import Request
 from google.oauth2 import service_account
+from sqlalchemy import func, select, text
+from sqlalchemy.engine import make_url
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from auth import admin_required, login_required
 from config import Config
 from extensions import limiter
-from services.storage import persist_audit_logs, load_known_issues, load_classroom_sync
-from services.db import (
-    init_db,
-    get_engine,
-    audit_logs_table,
-    bug_reports_table,
-    known_issues_table,
-    login_logs_table
-)
-from services.google_admin import get_user_summary, READONLY_SCOPE, WRITE_SCOPE
-from sqlalchemy import text, select, func
-from sqlalchemy.engine import make_url
-from auth import login_required, admin_required
+from routes.admin import bp as admin_bp
 from routes.auth import bp as auth_bp
 from routes.main import bp as main_bp
-from routes.admin import bp as admin_bp
+from services.db import (
+    admin_users_table,
+    audit_logs_table,
+    bug_reports_table,
+    classroom_sync_table,
+    get_engine,
+    global_admins_table,
+    init_db,
+    known_issues_table,
+    login_logs_table,
+    reset_requests_table,
+    theme_preferences_table,
+)
+from services.emailer import send_email
+from services.google_admin import READONLY_SCOPE, WRITE_SCOPE, get_user_summary
+from services.storage import load_classroom_sync, load_known_issues, persist_audit_logs
 
 logging.basicConfig(
     level=logging.INFO,
@@ -38,6 +54,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 START_TIME = time.monotonic()
+STATUS_NOTIFICATION_FILE = 'status_notifications.json'
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
@@ -72,6 +89,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(main_bp)
 app.register_blueprint(admin_bp)
 
+
 def _format_timestamp(ts):
     try:
         return datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
@@ -79,57 +97,120 @@ def _format_timestamp(ts):
         return 'unknown'
 
 
-@app.route('/help')
-def help_page():
-    return render_template('help.html')
-
-@app.route('/support')
-def support_page():
-    known_issues = load_known_issues()
-    global_issues = [
-        issue for issue in known_issues
-        if issue.get('status') == 'Active' and issue.get('level') == 'global'
-    ]
-    support_issues = [
-        issue for issue in known_issues
-        if issue.get('status') == 'Active' and issue.get('level') == 'support'
-    ]
-    return render_template(
-        'support.html',
-        known_issues=known_issues,
-        global_issues=global_issues,
-        support_issues=support_issues
-    )
-
-@app.route('/report-bug')
-@login_required
-def report_bug_page():
-    return redirect(url_for('main.report_bug'))
+def _load_status_notification_state(path):
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, 'r', encoding='utf-8') as handle:
+            data = json.load(handle)
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
 
 
-@app.route('/instructions')
-@login_required
-def instructions_page():
-    return render_template('instructions.html', user=session.get('user_info'))
+def _save_status_notification_state(path, state):
+    with open(path, 'w', encoding='utf-8') as handle:
+        json.dump(state, handle, indent=2)
 
 
-@app.route('/documentation')
-@login_required
-@admin_required
-def documentation_page():
-    return render_template('documentation.html', user=session.get('user_info'))
+def _build_status_issues(db_status, google_status, google_token, config_checks, storage_checks):
+    issues = []
+    if not db_status.get('ok'):
+        issues.append(f"Database: {db_status.get('detail', 'error')}")
+    if not google_status.get('ok'):
+        issues.append(f"Google Admin SDK: {google_status.get('detail', 'error')}")
+    if not google_token.get('ok'):
+        issues.append(f"Google token: {google_token.get('detail', 'error')}")
+    for item in config_checks:
+        if item.get('ok') is False:
+            issues.append(f"Config {item.get('name')}: {item.get('detail')}")
+    for item in storage_checks:
+        if item.get('ok') is False:
+            issues.append(f"Storage {item.get('name')}: {item.get('detail')}")
+    return issues
 
 
-@app.route('/updates')
-@login_required
-def updates_page():
-    return render_template('updates.html', user=session.get('user_info'), known_issues=load_known_issues())
+def _email_config_ready():
+    recipients = app.config.get('STATUS_EMAIL_RECIPIENTS', [])
+    host = app.config.get('SMTP_HOST')
+    sender = app.config.get('SMTP_FROM') or app.config.get('SMTP_USER')
+    if not host or not sender or not recipients:
+        return False
+    if app.config.get('SMTP_USER') and not app.config.get('SMTP_PASSWORD'):
+        return False
+    return True
 
 
-@app.route('/status')
-@login_required
-@admin_required
-def status_page():
+def _maybe_send_status_email(db_status, google_status, google_token, config_checks, storage_checks):
+    if not app.config.get('STATUS_EMAIL_ENABLED'):
+        return
+    if not _email_config_ready():
+        return
+
+    recipients = app.config.get('STATUS_EMAIL_RECIPIENTS', [])
+    issues = _build_status_issues(db_status, google_status, google_token, config_checks, storage_checks)
+    state_path = os.path.join(app.root_path, 'data', STATUS_NOTIFICATION_FILE)
+    state = _load_status_notification_state(state_path)
+    last_status = state.get('last_status', 'ok')
+    last_signature = state.get('last_issue_signature', '')
+    last_sent_at = float(state.get('last_sent_at', 0) or 0)
+
+    cooldown_minutes = app.config.get('STATUS_EMAIL_COOLDOWN_MINUTES', 30)
+    cooldown_seconds = max(0, int(cooldown_minutes) * 60)
+    now_ts = time.time()
+    base_url = app.config.get('BASE_URL') or 'ResetApp'
+    timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+
+    if issues:
+        signature = '|'.join(sorted(issues))
+        should_send = signature != last_signature or (now_ts - last_sent_at) >= cooldown_seconds
+        if not should_send:
+            return
+        subject = '[ResetApp] OUTAGE detected'
+        body_lines = [
+            f"ResetApp status check at {timestamp}",
+            f"Base URL: {base_url}",
+            "",
+            "Detected issues:",
+        ]
+        body_lines.extend([f"- {issue}" for issue in issues])
+        if app.config.get('BASE_URL'):
+            body_lines.extend(["", f"Status page: {app.config.get('BASE_URL').rstrip('/')}/status"])
+        body = "\n".join(body_lines)
+        try:
+            send_email(subject, body, recipients)
+        except Exception:
+            logger.exception('Status email send failed')
+            return
+        state['last_status'] = 'fail'
+        state['last_issue_signature'] = signature
+        state['last_sent_at'] = now_ts
+        _save_status_notification_state(state_path, state)
+        return
+
+    if last_status == 'fail':
+        if app.config.get('STATUS_EMAIL_NOTIFY_ON_RECOVERY', True):
+            subject = '[ResetApp] RECOVERY'
+            body_lines = [
+                f"ResetApp status check at {timestamp}",
+                f"Base URL: {base_url}",
+                "",
+                "All checks are passing.",
+            ]
+            if app.config.get('BASE_URL'):
+                body_lines.extend(["", f"Status page: {app.config.get('BASE_URL').rstrip('/')}/status"])
+            body = "\n".join(body_lines)
+            try:
+                send_email(subject, body, recipients)
+            except Exception:
+                logger.exception('Status email send failed')
+                return
+        state['last_status'] = 'ok'
+        state['last_issue_signature'] = ''
+        _save_status_notification_state(state_path, state)
+
+
+def _collect_status_data():
     db_status = {'ok': False, 'detail': ''}
     db_details = []
     db_counts = []
@@ -140,9 +221,14 @@ def status_page():
             conn.execute(text('SELECT 1'))
             tables = [
                 ('audit_logs', audit_logs_table),
+                ('admin_users', admin_users_table),
                 ('bug_reports', bug_reports_table),
+                ('classroom_sync', classroom_sync_table),
+                ('global_admins', global_admins_table),
                 ('known_issues', known_issues_table),
                 ('login_logs', login_logs_table),
+                ('reset_requests', reset_requests_table),
+                ('theme_preferences', theme_preferences_table),
             ]
             for name, table in tables:
                 count = conn.execute(
@@ -237,6 +323,24 @@ def status_page():
         },
     ]
 
+    email_enabled = app.config.get('STATUS_EMAIL_ENABLED', False)
+    email_ready = _email_config_ready()
+    recipients = app.config.get('STATUS_EMAIL_RECIPIENTS', [])
+    if not email_enabled:
+        email_detail = 'disabled'
+        email_ok = True
+    elif email_ready:
+        email_detail = ', '.join(recipients) if recipients else 'configured'
+        email_ok = True
+    else:
+        email_detail = 'missing SMTP config/recipients'
+        email_ok = False
+    config_checks.append({
+        'name': 'Status email',
+        'detail': email_detail,
+        'ok': email_ok,
+    })
+
     data_dir = os.path.join(app.root_path, 'data')
     upload_dir = app.config.get('UPLOAD_FOLDER')
     storage_checks = [
@@ -251,39 +355,6 @@ def status_page():
             'ok': bool(upload_dir) and os.path.isdir(upload_dir) and os.access(upload_dir, os.W_OK),
         },
     ]
-    json_files = [
-        'admin_users.json',
-        'global_admins.json',
-        'reset_requests.json',
-        'audit_logs.json',
-        'bug_reports.json',
-        'known_issues.json',
-        'login_logs.json',
-        'theme_preferences.json',
-    ]
-    for filename in json_files:
-        path = os.path.join(app.root_path, filename)
-        if not os.path.exists(path):
-            storage_checks.append({
-                'name': filename,
-                'detail': 'missing',
-                'ok': False,
-            })
-            continue
-        try:
-            with open(path, 'r', encoding='utf-8') as handle:
-                json.load(handle)
-            storage_checks.append({
-                'name': filename,
-                'detail': 'ok',
-                'ok': True,
-            })
-        except Exception:
-            storage_checks.append({
-                'name': filename,
-                'detail': 'invalid json',
-                'ok': False,
-            })
 
     db_url = app.config.get('DATABASE_URL', '')
     db_engine = 'unknown'
@@ -347,21 +418,106 @@ def status_page():
         memory_detail = 'unknown'
     runtime_details.append({'name': 'Memory (RSS)', 'detail': memory_detail})
 
+    return {
+        'db_status': db_status,
+        'google_status': google_status,
+        'google_token': google_token,
+        'classroom_sync_count': len(sync_data),
+        'classroom_last_sync': last_sync,
+        'app_info': app_info,
+        'config_checks': config_checks,
+        'storage_checks': storage_checks,
+        'db_details': db_details,
+        'db_counts': db_counts,
+        'google_details': google_details,
+        'runtime_details': runtime_details,
+    }
+
+
+@app.route('/help')
+def help_page():
+    return render_template('help.html')
+
+@app.route('/support')
+def support_page():
+    known_issues = load_known_issues()
+    global_issues = [
+        issue for issue in known_issues
+        if issue.get('status') == 'Active' and issue.get('level') == 'global'
+    ]
+    support_issues = [
+        issue for issue in known_issues
+        if issue.get('status') == 'Active' and issue.get('level') == 'support'
+    ]
     return render_template(
-        'status.html',
-        user=session.get('user_info'),
-        db_status=db_status,
-        google_status=google_status,
-        classroom_sync_count=len(sync_data),
-        classroom_last_sync=last_sync,
-        app_info=app_info,
-        config_checks=config_checks,
-        storage_checks=storage_checks,
-        db_details=db_details,
-        db_counts=db_counts,
-        google_details=google_details,
-        runtime_details=runtime_details
+        'support.html',
+        known_issues=known_issues,
+        global_issues=global_issues,
+        support_issues=support_issues
     )
+
+@app.route('/report-bug')
+@login_required
+def report_bug_page():
+    return redirect(url_for('main.report_bug'))
+
+
+@app.route('/instructions')
+@login_required
+def instructions_page():
+    return render_template('instructions.html', user=session.get('user_info'))
+
+
+@app.route('/documentation')
+@login_required
+@admin_required
+def documentation_page():
+    return render_template('documentation.html', user=session.get('user_info'))
+
+
+@app.route('/updates')
+@login_required
+def updates_page():
+    return render_template('updates.html', user=session.get('user_info'), known_issues=load_known_issues())
+
+
+@app.route('/status')
+@login_required
+@admin_required
+def status_page():
+    data = _collect_status_data()
+    _maybe_send_status_email(
+        data['db_status'],
+        data['google_status'],
+        data['google_token'],
+        data['config_checks'],
+        data['storage_checks']
+    )
+    return render_template('status.html', user=session.get('user_info'), **data)
+
+
+@app.route('/status/notify')
+def status_notify():
+    token = request.args.get('token') or request.headers.get('X-Status-Token', '')
+    expected = app.config.get('STATUS_EMAIL_TOKEN', '')
+    if not expected or not token or not secrets.compare_digest(token, expected):
+        abort(404)
+    data = _collect_status_data()
+    _maybe_send_status_email(
+        data['db_status'],
+        data['google_status'],
+        data['google_token'],
+        data['config_checks'],
+        data['storage_checks']
+    )
+    issues = _build_status_issues(
+        data['db_status'],
+        data['google_status'],
+        data['google_token'],
+        data['config_checks'],
+        data['storage_checks']
+    )
+    return jsonify({'ok': not issues, 'issues': len(issues)})
 
 
 @app.errorhandler(403)

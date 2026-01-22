@@ -1,5 +1,4 @@
 import time
-import logging
 
 from flask import current_app
 from google.oauth2 import service_account
@@ -7,9 +6,6 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 from services.cache import admin_api_cache
-
-logger = logging.getLogger(__name__)
-
 
 READONLY_SCOPE = 'https://www.googleapis.com/auth/admin.directory.user.readonly'
 WRITE_SCOPE = 'https://www.googleapis.com/auth/admin.directory.user'
