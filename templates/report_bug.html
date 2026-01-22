@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Report a Bug - ResetApp{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="card shadow-lg p-5">
+        <h1 class="display-6 mb-3">Report a Bug</h1>
+        <p class="lead mb-4">Help us fix issues faster. Use the form below and include as much detail as you can.</p>
+
+        <form method="post" enctype="multipart/form-data" class="row g-4 bug-form" id="bugForm">
+            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+            <div class="col-12 col-lg-6">
+                <label class="form-label">Title</label>
+                <input class="form-control" name="title" id="bugTitle" placeholder="Short summary" maxlength="120" required>
+                <div class="form-text"><span id="titleCount">0</span>/120 characters</div>
+            </div>
+            <div class="col-12 col-lg-3">
+                <label class="form-label">Severity</label>
+                <select class="form-select" name="severity">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                </select>
+            </div>
+            <div class="col-12 col-lg-3">
+                <label class="form-label">Page (optional)</label>
+                <input class="form-control" name="page" id="bugPage" placeholder="/admin or /login">
+            </div>
+            <div class="col-12">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" name="description" id="bugDescription" rows="6" maxlength="2000" required></textarea>
+                <div class="form-text"><span id="descCount">0</span>/2000 characters</div>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Screenshot (optional)</label>
+                <input class="form-control" type="file" name="screenshot" id="bugScreenshot" accept="image/png,image/jpeg,image/gif,image/webp">
+                <div class="form-text" id="uploadHelp">PNG, JPG, GIF, or WEBP up to 5MB.</div>
+            </div>
+            <div class="col-12 d-flex flex-wrap gap-2">
+                <button class="btn btn-danger btn-lg" id="bugSubmit">Submit Report</button>
+                <a class="btn btn-outline-secondary btn-lg" href="{{ url_for('support_page') }}">Need Support?</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const title = document.getElementById('bugTitle');
+  const desc = document.getElementById('bugDescription');
+  const titleCount = document.getElementById('titleCount');
+  const descCount = document.getElementById('descCount');
+  const upload = document.getElementById('bugScreenshot');
+  const uploadHelp = document.getElementById('uploadHelp');
+  const submitBtn = document.getElementById('bugSubmit');
+
+  const updateCounts = () => {
+    titleCount.textContent = title.value.length;
+    descCount.textContent = desc.value.length;
+  };
+
+  const maxSize = 5 * 1024 * 1024;
+  const updateUpload = () => {
+    if (!upload.files || !upload.files.length) {
+      uploadHelp.textContent = 'PNG, JPG, GIF, or WEBP up to 5MB.';
+      uploadHelp.classList.remove('text-danger');
+      submitBtn.disabled = false;
+      return;
+    }
+    const file = upload.files[0];
+    if (file.size > maxSize) {
+      uploadHelp.textContent = 'File too large. Max size is 5MB.';
+      uploadHelp.classList.add('text-danger');
+      submitBtn.disabled = true;
+      return;
+    }
+    uploadHelp.textContent = `Selected: ${file.name} (${Math.ceil(file.size / 1024)} KB)`;
+    uploadHelp.classList.remove('text-danger');
+    submitBtn.disabled = false;
+  };
+
+  updateCounts();
+  title.addEventListener('input', updateCounts);
+  desc.addEventListener('input', updateCounts);
+  upload.addEventListener('change', updateUpload);
+</script>
+{% endblock %}

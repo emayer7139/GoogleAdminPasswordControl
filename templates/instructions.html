@@ -1,65 +1,12 @@
-<!DOCTYPE html>
-<html lang="en" class="light-mode">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>How to Use ResetApp</title>
+{% extends "base.html" %}
 
-  <!-- Bootstrap & Icons -->
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-  />
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
-    rel="stylesheet"
-  />
+{% block title %}How to Use ResetApp{% endblock %}
 
-  <style>
-    /* Light & dark backgrounds */
-    body, html {
-      height: 100%; margin: 0;
-      transition: background 0.3s, color 0.3s;
-    }
-    .light-mode body {
-      background: #f8f9fa;
-      color: #212529;
-    }
-    .dark-mode body {
-      background: #121212;
-      color: #e1e1e1;
-    }
-
-    /* Inherit card‐style inversion for containers if you ever wrap in .card */
-    .container {
-      transition: background 0.3s, color 0.3s;
-    }
-    .light-mode .container {
-      background: transparent;
-      color: #212529;
-    }
-    .dark-mode .container {
-      background: transparent;
-      color: #e1e1e1;
-    }
-
-    /* Link colors */
-     /* Link colors inside cards – but NOT buttons */
-+  .light-mode .card a:not(.btn) { color: #0d6efd; }
-+  .dark-mode  .card a:not(.btn) { color: #64b5f6; }
-
-    /* Bug‐report styling */
-    .bug-report {
-      text-align: center;
-      margin: 3rem 0;
-    }
-  </style>
-</head>
-<body>
-  {% include 'partials/navbar.html' %}
-
-  <div class="container py-5">
-    <h1 class="display-4 mb-4">How to Use ResetApp</h1>
+{% block content %}
+<div class="container py-5">
+  <div class="card shadow-lg p-5">
+    <h1 class="display-5 mb-3">How to Use ResetApp</h1>
+    <p class="text-muted mb-4">Quick steps for finding a student and resetting passwords.</p>
 
     <ol class="fs-5">
       <li>
@@ -95,23 +42,14 @@
       </li>
     </ol>
 
-    <div class="mt-5">
-      <a href="{{ url_for('index') }}" class="btn btn-primary">
-        ← Back to Reset Page
+    <div class="mt-4 d-flex flex-wrap gap-2">
+      <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+        Back to Reset Page
+      </a>
+      <a href="{{ url_for('report_bug_page') }}" class="btn btn-outline-danger">
+        Report a Bug
       </a>
     </div>
-
-    <div class="bug-report">
-      <p>See something off? Click the button below to let us know!</p>
-      <button
-        class="btn btn-danger btn-lg"
-        onclick="window.open('https://forms.gle/yourGoogleFormID', '_blank')"
-      >
-        🐞 Report a Bug
-      </button>
-
-  <!-- Bootstrap JS bundle -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Navbar partial’s script already handles theme toggling -->
-</body>
-</html>
+  </div>
+</div>
+{% endblock %}

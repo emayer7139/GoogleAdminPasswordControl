@@ -1,0 +1,13 @@
+[
+  {
+    "id": "36744285",
+    "timestamp": "2026-01-21 16:05:27",
+    "reporter": "dev@example.com",
+    "title": "test",
+    "description": "test",
+    "severity": "high",
+    "page": "",
+    "status": "Open",
+    "attachment": "uploads/bug_reports/2e2ea88c673feb1d.png"
+  }
+]

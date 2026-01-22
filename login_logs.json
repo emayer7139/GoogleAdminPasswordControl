@@ -1,0 +1,14 @@
+[
+  {
+    "timestamp": "2026-01-21 17:06:06",
+    "user": "Unknown",
+    "outcome": "Failed: Not logged in",
+    "ip": "127.0.0.1"
+  },
+  {
+    "timestamp": "2026-01-21 17:06:10",
+    "user": "dev@example.com",
+    "outcome": "Success (Dev Login)",
+    "ip": "127.0.0.1"
+  }
+]

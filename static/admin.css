@@ -1,0 +1,99 @@
+.admin-hero {
+    padding: 1.25rem 1.5rem;
+    border-radius: 1.25rem;
+    background: linear-gradient(135deg, #e7f0ff, #f6f7ff);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.admin-stat {
+    padding: 1.1rem 1.25rem;
+    border-radius: 1rem;
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+.admin-stat-label {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6b7280;
+}
+
+.admin-stat-value {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.admin-tabs .nav-tabs {
+    border-bottom: 1px solid rgba(15, 23, 42, 0.15);
+}
+
+.admin-tabs .nav-link {
+    border: none;
+    border-radius: 999px;
+    padding: 0.5rem 1.2rem;
+    color: #374151;
+    margin-right: 0.5rem;
+}
+
+.admin-tabs .nav-link.active {
+    background: #111827;
+    color: #ffffff;
+}
+
+.admin-table {
+    background: #ffffff;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 0.5rem;
+}
+
+.bug-thumb-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.bug-thumb {
+    width: 42px;
+    height: 32px;
+    object-fit: cover;
+    border-radius: 0.4rem;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+html.dark-mode .admin-hero {
+    background: linear-gradient(135deg, #1f2937, #111827);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+html.dark-mode .admin-stat,
+html.dark-mode .admin-table {
+    background: #111827;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+}
+
+html.dark-mode .admin-stat-label {
+    color: #9ca3af;
+}
+
+html.dark-mode .admin-stat-value {
+    color: #f9fafb;
+}
+
+html.dark-mode .admin-tabs .nav-link {
+    color: #d1d5db;
+}
+
+html.dark-mode .admin-tabs .nav-link.active {
+    background: #f9fafb;
+    color: #111827;
+}
+
+html.dark-mode .bug-thumb {
+    border-color: rgba(255, 255, 255, 0.2);
+}

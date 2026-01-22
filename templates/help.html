@@ -2,10 +2,14 @@
 
 {% block title %}Need Help Signing In?{% endblock %}
 
+{% block extra_css %}
+<link href="{{ url_for('static', filename='help.css') }}" rel="stylesheet" />
+{% endblock %}
+
 {% block content %}
-<div class="center-container">
-    <div class="card shadow-lg p-5 text-center content-card">
-        <h1 class="display-4 mb-4">Need Help Signing In?</h1>
+<div class="container py-5">
+    <div class="card shadow-lg p-5 content-card">
+        <h1 class="display-5 mb-3">Need Help Signing In?</h1>
 
         <p class="lead mb-4">
             If you're having trouble with Google sign-in, try these first:
@@ -13,9 +17,10 @@
 
         <ul class="text-start mb-5 fs-5">
             <li>Use your Hart County email (<code>@hart.k12.ga.us</code>).</li>
-            <li>Clear cookies and cache for <code>https://resetapp.hart.k12.ga.us</code>, then retry.
+            <li>
+                Clear cookies and cache for <code>https://resetapp.hart.k12.ga.us</code>, then retry.
                 <a href="https://support.google.com/accounts/answer/32050?hl=en&co=GENIE.Platform%3DDesktop"
-                   target="_blank">
+                   target="_blank" rel="noopener">
                     How to clear cookies &amp; cache
                 </a>
             </li>
@@ -28,18 +33,23 @@
         </p>
         <p class="fs-5 mb-4">
             Email us at
-            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=support@hart.k12.ga.us" target="_blank">
+            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=support@hart.k12.ga.us" target="_blank" rel="noopener">
                 support@hart.k12.ga.us
             </a><br/>
             Or submit a ticket:
-            <a href="https://support.hart.k12.ga.us" target="_blank">
+            <a href="https://support.hart.k12.ga.us" target="_blank" rel="noopener">
                 support.hart.k12.ga.us
             </a>
         </p>
 
-        <a href="{{ url_for('login_page') }}" class="btn btn-primary btn-lg px-4 py-2 fs-5">
-            ← Back to Sign In
-        </a>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ url_for('support_page') }}" class="btn btn-outline-primary btn-lg px-4 py-2 fs-5">
+                Visit Support Page
+            </a>
+            <a href="{{ url_for('auth.login_page') }}" class="btn btn-primary btn-lg px-4 py-2 fs-5">
+                Back to Sign In
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}

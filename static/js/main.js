@@ -22,6 +22,11 @@ document.addEventListener('DOMContentLoaded', function() {
             html.className = nextTheme + '-mode';
             localStorage.setItem('theme', nextTheme);
             updateText();
+            fetch('/theme', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ theme: nextTheme })
+            }).catch(() => {});
         });
     }
 });

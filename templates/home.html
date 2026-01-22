@@ -27,7 +27,7 @@
       <span class="me-3">Hello, {{ user.name }}!</span>
       <button id="toggleTheme" class="btn btn-sm btn-outline-secondary theme-toggle">🌓</button>
       <a href="{{ url_for('help_page') }}" class="btn btn-sm btn-outline-primary">Help</a>
-      <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-danger">Logout</a>
+      <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-danger">Logout</a>
     </div>
   </nav>
 

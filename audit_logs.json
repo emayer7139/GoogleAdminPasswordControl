@@ -1,0 +1,12 @@
+[
+  {
+    "timestamp": "2026-01-21 17:01:02",
+    "admin": "dev@example.com",
+    "student": "THIS IS NOT GOOD",
+    "outcome": "Known Issue Added",
+    "role": "global_admin",
+    "action_type": "admin_action",
+    "admin_ou": "/Dev",
+    "admin_school": "Dev"
+  }
+]

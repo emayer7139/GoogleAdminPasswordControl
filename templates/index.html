@@ -4,11 +4,44 @@
 
 {% block content %}
 <div class="container py-4">
+    {% if global_issues %}
+    <div class="alert alert-warning d-flex align-items-center gap-2 global-issue-banner" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <div>
+            <strong>Known Issue:</strong>
+            <span id="global-issue-text">{{ global_issues[0].text }}</span>
+            <div class="small text-muted mt-1" id="global-issue-meta">
+                Reported {{ global_issues[0].created_at }}
+            </div>
+            {% if global_issues[0].update_note %}
+            <div class="small text-muted" id="global-issue-update">
+                Update: {{ global_issues[0].update_note }}{% if global_issues[0].updated_at %} ({{ global_issues[0].updated_at }}){% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
     <div class="row">
         <div class="col-md-8 mx-auto">
             <div class="card shadow">
                 <div class="card-body">
-                    <h1 class="h3 mb-4">Reset Student Password</h1>
+                    <h1 class="display-6 mb-2">Reset Student Password</h1>
+                    {% if role == 'teacher' %}
+                    <p class="text-muted">You can reset passwords for students in your Google Classroom rosters.</p>
+                    {% if classroom_sync %}
+                    <div class="alert alert-info">
+                        Classroom roster synced {{ classroom_sync.count }} students on {{ classroom_sync.timestamp }}.
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        Classroom roster not synced yet. Click Sync to load your students.
+                    </div>
+                    {% endif %}
+                    {% elif role == 'media_specialist' %}
+                    <p class="text-muted">You can reset passwords for students in your school.</p>
+                    {% elif role in ['admin', 'global_admin'] %}
+                    <p class="text-muted">You can reset passwords for any student in the domain.</p>
+                    {% endif %}
                     
                     {% if new_password %}
                     <div class="alert alert-success">
@@ -27,15 +60,22 @@
                                    value="{{ student_email }}" required>
                             <div class="invalid-feedback">Please enter a valid student email address.</div>
                         </div>
-
-                        <div class="mb-3">
-                            <label for="student_name" class="form-label">Student Name (Optional)</label>
-                            <input type="text" class="form-control" id="student_name" name="student_name" 
-                                   value="{{ student_name }}">
-                        </div>
-
                         <button type="submit" class="btn btn-primary">Reset Password</button>
                     </form>
+
+                    {% if role == 'teacher' %}
+                    <div class="mt-3">
+                        <a class="btn btn-outline-primary btn-sm" href="{{ url_for('main.sync_classroom') }}">
+                            Sync with Google Classroom
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    {% if request_more_url %}
+                    <div class="mt-3">
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ request_more_url }}">Request More Resets</a>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -45,4 +85,52 @@
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='form-validation.js') }}" defer></script>
+<script>
+  const globalIssues = {{ global_issues | default([]) | tojson }};
+  let globalIssueIndex = 0;
+  const banner = document.querySelector('.global-issue-banner');
+
+  function rotateGlobalIssues() {
+    const el = document.getElementById('global-issue-text');
+    const meta = document.getElementById('global-issue-meta');
+    const update = document.getElementById('global-issue-update');
+    if (!el || !globalIssues.length) return;
+    if (banner) banner.classList.add('banner-fade');
+    globalIssueIndex = (globalIssueIndex + 1) % globalIssues.length;
+    const issue = globalIssues[globalIssueIndex] || {};
+    window.setTimeout(() => {
+      el.textContent = issue.text || '';
+      if (meta) meta.textContent = issue.created_at ? `Reported ${issue.created_at}` : '';
+      if (update) {
+        if (issue.update_note) {
+          update.textContent = issue.updated_at
+            ? `Update: ${issue.update_note} (${issue.updated_at})`
+            : `Update: ${issue.update_note}`;
+          update.style.display = '';
+        } else {
+          update.textContent = '';
+          update.style.display = 'none';
+        }
+      }
+      if (banner) banner.classList.remove('banner-fade');
+    }, 250);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (globalIssues.length > 1) {
+      setInterval(rotateGlobalIssues, 6000);
+    }
+    const form = document.querySelector('form.needs-validation');
+    const role = "{{ role }}";
+    if (!form || !role || (role !== 'admin' && role !== 'global_admin')) return;
+    form.addEventListener('submit', (event) => {
+      const email = document.getElementById('student_email')?.value || '';
+      const ok = window.confirm(`Confirm reset for ${email}?`);
+      if (!ok) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    });
+  });
+</script>
 {% endblock %}

@@ -1,0 +1,148 @@
+{% extends "base_login.html" %}
+
+{% block title %}Support - ResetApp{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="card shadow-lg p-5">
+        <h1 class="display-6 mb-3">Support &amp; Contact</h1>
+        <p class="lead mb-4">Need help with access, password resets, or account issues? The Technology Department can help.</p>
+
+        {% if global_issues %}
+        <div class="alert alert-warning d-flex align-items-center gap-2 global-issue-banner" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <div>
+                <strong>Known Issue:</strong>
+                <span id="support-global-issue-text">{{ global_issues[0].text }}</span>
+                <div class="small text-muted mt-1" id="support-global-issue-meta">
+                    Reported {{ global_issues[0].created_at }}
+                </div>
+                {% if global_issues[0].update_note %}
+                <div class="small text-muted" id="support-global-issue-update">
+                    Update: {{ global_issues[0].update_note }}{% if global_issues[0].updated_at %} ({{ global_issues[0].updated_at }}){% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="row g-4">
+            <div class="col-12 col-lg-6">
+                <h3 class="h5">Contact Options</h3>
+                <ul class="fs-5">
+                    <li>Email: <a href="mailto:support@hart.k12.ga.us">support@hart.k12.ga.us</a></li>
+                    <li>Ticket Portal: <a href="https://support.hart.k12.ga.us" target="_blank" rel="noopener">support.hart.k12.ga.us</a></li>
+                    <li>Technology Dept: main line ext. 71555</li>
+                </ul>
+            </div>
+            <div class="col-12 col-lg-6">
+                <h3 class="h5">Before You Reach Out</h3>
+                <ul class="fs-5">
+                    <li>Use your district email when signing in.</li>
+                    <li>Clear cached credentials if login loops.</li>
+                    <li>Allow pop-ups for Google sign-in.</li>
+                    <li>Verify you are in the correct OU for access.</li>
+                    <li>Try an incognito window or a different browser.</li>
+                    <li>Confirm your network/VPN is connected.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="row g-4 mt-1">
+            <div class="col-12 col-lg-6">
+                <h3 class="h5">Include These Details</h3>
+                <ul class="fs-5">
+                    <li>Name, school, and district email.</li>
+                    <li>What you were trying to do.</li>
+                    <li>Exact error message or screenshot.</li>
+                    <li>Device and browser (Chrome, Edge, iPad).</li>
+                </ul>
+            </div>
+            <div class="col-12 col-lg-6">
+                <h3 class="h5">Common Topics</h3>
+                <ul class="fs-5">
+                    <li>Google sign-in issues.</li>
+                    <li>Password reset permissions.</li>
+                    <li>Classroom sync and roster accuracy.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="row g-4 mt-1">
+            <div class="col-12 col-lg-6">
+                <h3 class="h5">Escalation Path</h3>
+                <ol class="fs-5">
+                    <li>Call the Technology Dept main line (ext. 71555).</li>
+                    <li>If unresolved, submit a ticket in the portal.</li>
+                </ol>
+            </div>
+        </div>
+
+        {% if support_issues %}
+        <div class="mt-4">
+            <h3 class="h5">Known Issues (Support)</h3>
+            <ul class="fs-5">
+                {% for issue in support_issues %}
+                <li>{{ issue.text }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="mt-4 d-flex flex-wrap gap-2">
+            <a class="btn btn-primary" href="https://support.hart.k12.ga.us" target="_blank" rel="noopener">
+                Open Ticket Portal
+            </a>
+            {% if session.get('user_info') %}
+            <a class="btn btn-outline-secondary" href="{{ url_for('main.index') }}">
+                Back to Home
+            </a>
+            {% else %}
+            <a class="btn btn-outline-secondary" href="{{ url_for('auth.login_page') }}">
+                Back to Sign In
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const supportGlobalIssues = {{ global_issues | default([]) | tojson }};
+  let supportIssueIndex = 0;
+  const supportBanner = document.querySelector('.global-issue-banner');
+
+  function rotateSupportIssues() {
+    const el = document.getElementById('support-global-issue-text');
+    const meta = document.getElementById('support-global-issue-meta');
+    const update = document.getElementById('support-global-issue-update');
+    if (!el || !supportGlobalIssues.length) return;
+    if (supportBanner) supportBanner.classList.add('banner-fade');
+    supportIssueIndex = (supportIssueIndex + 1) % supportGlobalIssues.length;
+    const issue = supportGlobalIssues[supportIssueIndex] || {};
+    window.setTimeout(() => {
+      el.textContent = issue.text || '';
+      if (meta) meta.textContent = issue.created_at ? `Reported ${issue.created_at}` : '';
+      if (update) {
+        if (issue.update_note) {
+          update.textContent = issue.updated_at
+            ? `Update: ${issue.update_note} (${issue.updated_at})`
+            : `Update: ${issue.update_note}`;
+          update.style.display = '';
+        } else {
+          update.textContent = '';
+          update.style.display = 'none';
+        }
+      }
+      if (supportBanner) supportBanner.classList.remove('banner-fade');
+    }, 250);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (supportGlobalIssues.length > 1) {
+      setInterval(rotateSupportIssues, 6000);
+    }
+  });
+</script>
+{% endblock %}

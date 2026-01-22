@@ -11,10 +11,23 @@
                     <div class="logo-container mb-5">
                         <img src="{{ url_for('static', filename='img/logo.png') }}" alt="ResetApp Logo" class="img-fluid logo-image">
                     </div>
-                    <a href="{{ url_for('login_google') }}" class="btn btn-primary btn-lg d-inline-flex align-items-center gap-3 px-5 py-3 fs-5 login-button">
+                    <a href="{{ url_for('auth.login_google') }}" class="btn btn-primary btn-lg d-inline-flex align-items-center gap-3 px-5 py-3 fs-5 login-button">
                         <i class="bi bi-google fs-4"></i>
                         <span>Sign in with Google</span>
                     </a>
+                    {% if dev_login_enabled %}
+                    <div class="mt-3 d-flex flex-column gap-2">
+                        <a href="{{ url_for('auth.login_dev') }}" class="btn btn-outline-secondary btn-sm">
+                            Dev Login (Global Admin)
+                        </a>
+                        <a href="{{ url_for('auth.login_dev_teacher') }}" class="btn btn-outline-secondary btn-sm">
+                            Dev Login (Teacher)
+                        </a>
+                        <a href="{{ url_for('auth.login_dev_media') }}" class="btn btn-outline-secondary btn-sm">
+                            Dev Login (Media Specialist)
+                        </a>
+                    </div>
+                    {% endif %}
                     <div class="mt-4">
                         <a href="{{ url_for('help_page') }}" class="text-muted">
                             <i class="bi bi-question-circle"></i>

@@ -1,0 +1,104 @@
+.doc-hero {
+    padding: 1.5rem 1.75rem;
+    border-radius: 1.5rem;
+    background: linear-gradient(120deg, #e9f0ff, #fef9c3);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.doc-layout {
+    display: grid;
+    grid-template-columns: minmax(220px, 280px) 1fr;
+    gap: 1.5rem;
+}
+
+.doc-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.doc-card {
+    background: #ffffff;
+    border-radius: 1.25rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
+    padding: 1.25rem;
+}
+
+.doc-card h2 {
+    font-family: var(--font-display);
+    letter-spacing: 0.08em;
+    color: #111827;
+}
+
+.doc-card ol,
+.doc-card ul {
+    padding-left: 1.1rem;
+    margin: 0;
+}
+
+.doc-card a {
+    color: #1f6feb;
+    text-decoration: none;
+}
+
+.doc-card a:hover {
+    text-decoration: underline;
+}
+
+.doc-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+.doc-section {
+    background: #ffffff;
+    border-radius: 1.25rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 1.5rem;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.doc-diagram {
+    background: #f8fafc;
+    border-radius: 0.9rem;
+    border: 1px dashed rgba(15, 23, 42, 0.2);
+    padding: 0.9rem 1.1rem;
+}
+
+.doc-callout {
+    padding: 1rem 1.2rem;
+    border-radius: 0.9rem;
+    background: #f8fafc;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    margin-bottom: 0.75rem;
+}
+
+@media (max-width: 991px) {
+    .doc-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+html.dark-mode .doc-hero {
+    background: linear-gradient(120deg, #1f2937, #111827);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+html.dark-mode .doc-card,
+html.dark-mode .doc-section {
+    background: #111827;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+}
+
+html.dark-mode .doc-card a {
+    color: #93c5fd;
+}
+
+html.dark-mode .doc-diagram,
+html.dark-mode .doc-callout {
+    background: #0f172a;
+    border-color: rgba(255, 255, 255, 0.08);
+}

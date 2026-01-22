@@ -1,29 +1,10 @@
 /* Help page styles */
 body, html {
-    height: 100%;
     margin: 0;
-    transition: background 0.3s, color 0.3s;
-}
-
-.dark-mode body {
-    background: #121212;
-    color: #e1e1e1;
-}
-
-.light-mode body {
-    background: #f8f9fa;
-    color: #212529;
 }
 
 .card {
     border-radius: 1rem;
-}
-
-.theme-toggle {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    z-index: 1000;
 }
 
 /* Dark mode overrides */
@@ -45,15 +26,8 @@ html.dark-mode a:hover {
     color: #adc8ff;
 }
 
-/* Center container */
-.center-container {
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
 .content-card {
     max-width: 700px;
     width: 90%;
+    margin: 0 auto;
 } 
