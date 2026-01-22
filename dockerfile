@@ -9,7 +9,8 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Copy all project files into the container
 COPY . .
+RUN chmod +x /app/run_gunicorn.sh
 
 EXPOSE 5000
 
-CMD ["python", "app.py"]
+CMD ["/app/run_gunicorn.sh"]

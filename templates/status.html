@@ -55,6 +55,145 @@
       </div>
     </div>
 
+    <div class="row g-3 mt-2">
+      <div class="col-12 col-lg-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <h3 class="h6 text-uppercase text-muted mb-2">App Info</h3>
+          </div>
+          <ul class="list-group list-group-flush">
+            {% for item in app_info %}
+              <li class="list-group-item d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="fw-semibold">{{ item.name }}</div>
+                  <div class="small text-muted">{{ item.detail }}</div>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <div class="col-12 col-lg-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <h3 class="h6 text-uppercase text-muted mb-2">Runtime</h3>
+          </div>
+          <ul class="list-group list-group-flush">
+            {% for item in runtime_details %}
+              <li class="list-group-item d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="fw-semibold">{{ item.name }}</div>
+                  <div class="small text-muted">{{ item.detail }}</div>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <div class="col-12 col-lg-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <h3 class="h6 text-uppercase text-muted mb-2">Config Checks</h3>
+          </div>
+          <ul class="list-group list-group-flush">
+            {% for item in config_checks %}
+              <li class="list-group-item d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="fw-semibold">{{ item.name }}</div>
+                  <div class="small text-muted">{{ item.detail }}</div>
+                </div>
+                {% if item.ok is defined %}
+                  <span class="badge {{ 'bg-success' if item.ok else 'bg-danger' }}">
+                    {{ 'OK' if item.ok else 'Error' }}
+                  </span>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <div class="col-12 col-lg-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <h3 class="h6 text-uppercase text-muted mb-2">Storage</h3>
+          </div>
+          <ul class="list-group list-group-flush">
+            {% for item in storage_checks %}
+              <li class="list-group-item d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="fw-semibold">{{ item.name }}</div>
+                  <div class="small text-muted">{{ item.detail }}</div>
+                </div>
+                {% if item.ok is defined %}
+                  <span class="badge {{ 'bg-success' if item.ok else 'bg-danger' }}">
+                    {{ 'OK' if item.ok else 'Error' }}
+                  </span>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <div class="col-12 col-lg-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <h3 class="h6 text-uppercase text-muted mb-2">Database Details</h3>
+          </div>
+          <ul class="list-group list-group-flush">
+            {% for item in db_details %}
+              <li class="list-group-item d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="fw-semibold">{{ item.name }}</div>
+                  <div class="small text-muted">{{ item.detail }}</div>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <div class="col-12 col-lg-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <h3 class="h6 text-uppercase text-muted mb-2">DB Table Counts</h3>
+          </div>
+          <ul class="list-group list-group-flush">
+            {% if db_counts %}
+              {% for item in db_counts %}
+                <li class="list-group-item d-flex justify-content-between align-items-start">
+                  <div class="fw-semibold">{{ item.name }}</div>
+                  <span class="badge bg-info text-dark">{{ item.count }}</span>
+                </li>
+              {% endfor %}
+            {% else %}
+              <li class="list-group-item text-muted small">No data available.</li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="card h-100">
+          <div class="card-body">
+            <h3 class="h6 text-uppercase text-muted mb-2">Google Admin Details</h3>
+          </div>
+          <ul class="list-group list-group-flush">
+            {% for item in google_details %}
+              <li class="list-group-item d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="fw-semibold">{{ item.name }}</div>
+                  <div class="small text-muted">{{ item.detail }}</div>
+                </div>
+                {% if item.ok is defined %}
+                  <span class="badge {{ 'bg-success' if item.ok else 'bg-danger' }}">
+                    {{ 'OK' if item.ok else 'Error' }}
+                  </span>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
     <div class="mt-4">
       <a class="btn btn-outline-secondary" href="{{ url_for('admin.admin_page') }}">Back to Admin</a>
     </div>

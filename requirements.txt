@@ -1,5 +1,5 @@
 Flask==2.2.5
-Flask-Limiter==3.11.0
+Flask-Limiter==3.12
 google-auth==2.21.0
 google-auth-oauthlib==0.5.3
 google-api-python-client==2.70.0
@@ -10,3 +10,4 @@ cachetools==5.3.3
 cryptography==42.0.8
 SQLAlchemy==2.0.30
 psycopg[binary]==3.1.19
+gunicorn==22.0.0
