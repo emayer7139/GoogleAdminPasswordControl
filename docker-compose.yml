@@ -6,6 +6,11 @@ services:
       POSTGRES_DB: resetapp
       POSTGRES_USER: resetapp
       POSTGRES_PASSWORD: resetapp
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U resetapp -d resetapp"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     volumes:
       - resetapp_db:/var/lib/postgresql/data
     ports:
@@ -17,7 +22,8 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
       - "5000:5000"
     env_file:
