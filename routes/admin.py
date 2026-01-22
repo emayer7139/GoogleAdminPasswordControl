@@ -8,13 +8,16 @@ from datetime import datetime, timedelta
 from flask import Blueprint, abort, current_app, flash, jsonify, redirect, render_template, request, session, url_for
 from googleapiclient.errors import HttpError
 
-from auth import login_required, admin_required
+from auth import login_required, admin_required, role_required
 from services.google_admin import search_staff
+from services.roles import ROLE_GLOBAL_ADMIN
 from services.storage import (
     get_audit_logs,
     get_login_logs,
     load_admins,
     save_admins,
+    load_global_admins,
+    save_global_admins,
     load_requests,
     save_requests,
     load_bug_reports,
@@ -88,6 +91,7 @@ def admin_page():
         audit_logs=audit_logs,
         login_logs=login_logs,
         admin_users=load_admins(),
+        global_admins=load_global_admins(),
         requests_list=load_requests(),
         bug_reports=load_bug_reports(),
         known_issues=load_known_issues()
@@ -407,6 +411,36 @@ def add_admin():
     return redirect(url_for('admin.admin_page'))
 
 
+@bp.route('/add_global_admin', methods=['POST'])
+@login_required
+@role_required({ROLE_GLOBAL_ADMIN})
+def add_global_admin():
+    token = request.form.get('csrf_token')
+    if not token or token != session.get('csrf_token'):
+        abort(403)
+    email = request.form.get('email', '').strip().lower()
+    if not email:
+        flash('Email is required.', 'warning')
+        return redirect(url_for('admin.admin_page'))
+    admins = load_global_admins()
+    if email in admins:
+        flash(f'{email} already a global admin.', 'warning')
+    else:
+        admins.append(email)
+        save_global_admins(admins)
+        flash(f'Added {email} as global admin.', 'success')
+        log_audit_event(
+            admin_email=session['user_info']['email'],
+            outcome='Global Admin Added',
+            detail=email,
+            role=session.get('role'),
+            action_type='admin_action',
+            admin_ou=session.get('orgUnitPath'),
+            admin_school=session.get('school')
+        )
+    return redirect(url_for('admin.admin_page'))
+
+
 @bp.route('/remove_admin', methods=['POST'])
 @login_required
 @admin_required
@@ -427,6 +461,35 @@ def remove_admin():
         log_audit_event(
             admin_email=session['user_info']['email'],
             outcome='Admin Removed',
+            detail=email,
+            role=session.get('role'),
+            action_type='admin_action',
+            admin_ou=session.get('orgUnitPath'),
+            admin_school=session.get('school')
+        )
+    return redirect(url_for('admin.admin_page'))
+
+
+@bp.route('/remove_global_admin', methods=['POST'])
+@login_required
+@role_required({ROLE_GLOBAL_ADMIN})
+def remove_global_admin():
+    token = request.form.get('csrf_token')
+    if not token or token != session.get('csrf_token'):
+        abort(403)
+    email = request.form.get('email', '').strip().lower()
+    admins = load_global_admins()
+    if email not in admins:
+        flash(f'{email} not found.', 'warning')
+    elif email == session['user_info']['email'].lower():
+        flash('Cannot remove yourself.', 'danger')
+    else:
+        admins.remove(email)
+        save_global_admins(admins)
+        flash(f'Removed {email}', 'success')
+        log_audit_event(
+            admin_email=session['user_info']['email'],
+            outcome='Global Admin Removed',
             detail=email,
             role=session.get('role'),
             action_type='admin_action',

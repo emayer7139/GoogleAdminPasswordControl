@@ -152,6 +152,24 @@
     </div>
 
 
+    <div class="col-12 col-md-6 col-xl-3">
+
+
+      <div class="admin-stat">
+
+
+        <div class="admin-stat-label">Global Admins</div>
+
+
+        <div class="admin-stat-value">{{ global_admins|length }}</div>
+
+
+      </div>
+
+
+    </div>
+
+
   </div>
 
 
@@ -594,6 +612,99 @@
 
 
           </div>
+
+          {% if role == 'global_admin' %}
+
+          <div class="col-12 col-lg-6">
+
+
+            <h3 class="h5">Current Global Admins</h3>
+
+
+            <input id="search-global-admins" class="form-control mb-3" placeholder="Filter global admins" />
+
+
+            <ul class="list-group mb-3" id="list-global-admins">
+
+
+              {% for email in global_admins %}
+
+
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+
+
+                  {{ email }}
+
+
+                  {% if email != user.email %}
+
+
+                    <form method="post" action="{{ url_for('admin.remove_global_admin') }}"
+
+
+                          onsubmit="return confirm('Remove {{ email }} as global admin?')">
+
+
+                      <input type="hidden" name="email" value="{{ email }}" />
+
+
+                      <input type="hidden" name="csrf_token" value="{{ session['csrf_token'] }}" />
+
+
+                      <button class="btn btn-sm btn-outline-danger">Remove</button>
+
+
+                    </form>
+
+
+                  {% endif %}
+
+
+                </li>
+
+
+              {% endfor %}
+
+
+            </ul>
+
+
+          </div>
+
+
+          <div class="col-12 col-lg-6">
+
+
+            <h3 class="h5">Add Staff as Global Admin</h3>
+
+
+            <input id="global-search" class="form-control mb-2" placeholder="Type staff name or email" />
+
+
+            <ul class="list-group mb-3" id="global-suggestions"></ul>
+
+
+            <form id="add-global-form" method="post" action="{{ url_for('admin.add_global_admin') }}"
+
+
+                  onsubmit="return confirm('Add ' + document.getElementById('new-global-email').value + ' as global admin?')">
+
+
+              <input type="hidden" id="new-global-email" name="email" />
+
+
+              <input type="hidden" name="csrf_token" value="{{session['csrf_token'] }}" />
+
+
+              <button id="add-global-btn" class="btn btn-warning" disabled>Add Global Admin</button>
+
+
+            </form>
+
+
+          </div>
+
+          {% endif %}
 
 
         </div>
@@ -1228,6 +1339,9 @@
   makeSearch('search-admins', 'list-admins');
 
 
+  makeSearch('search-global-admins', 'list-global-admins');
+
+
   makeSearch('search-requests', 'tbl-requests');
 
 
@@ -1303,121 +1417,104 @@
 
 
 
-  const staffSearch = document.getElementById('staff-search');
+    function initStaffSearch(searchId, suggestionsId, hiddenId, buttonId) {
 
+    const staffSearch = document.getElementById(searchId);
 
-  if (staffSearch) {
-
+    if (!staffSearch) return;
 
     staffSearch.addEventListener('input', () => {
 
-
       clearTimeout(debounce);
-
 
       const q = staffSearch.value.trim();
 
+      const sugg = document.getElementById(suggestionsId);
 
-      const sugg = document.getElementById('staff-suggestions');
+      const addBtn = document.getElementById(buttonId);
 
+      const hidden = document.getElementById(hiddenId);
 
-      const addBtn = document.getElementById('add-admin-btn');
+      if (addBtn) addBtn.disabled = true;
 
+      if (hidden) hidden.value = '';
 
-      const hidden = document.getElementById('new-admin-email');
+      if (!q) {
 
+        if (sugg) sugg.innerHTML = '';
 
-      addBtn.disabled = true;
+        return;
 
-
-      hidden.value = '';
-
-
-      if (!q) return sugg.innerHTML = '';
-
+      }
 
       debounce = setTimeout(async () => {
 
-
-        sugg.innerHTML = '<li class="list-group-item">Searching...</li>';
-
+        if (sugg) sugg.innerHTML = '<li class="list-group-item">Searching...</li>';
 
         try {
 
-
           const res = await fetch(`/search_staff?q=${encodeURIComponent(q)}`);
-
 
           const list = await res.json();
 
+          if (!sugg) return;
 
           sugg.innerHTML = list.length
 
-
             ? list.map(u =>
-
 
                 `<li class="list-group-item list-group-item-action"
 
-
-                     onclick="selectStaff('${u.value}','${u.label.replace(/'/g,"\\'")}')">
-
+                     onclick="selectStaff('${searchId}','${hiddenId}','${buttonId}','${suggestionsId}','${u.value}','${u.label.replace(/'/g, "\\'")}')">
 
                    ${u.label}
 
-
                  </li>`
-
 
               ).join('')
 
-
             : '<li class="list-group-item">No staff found</li>';
-
 
         } catch {
 
-
-          sugg.innerHTML = '<li class="list-group-item text-danger">Error</li>';
-
+          if (sugg) sugg.innerHTML = '<li class="list-group-item text-danger">Error</li>';
 
         }
 
-
       }, 300);
-
 
     });
 
+  }
+
+  function selectStaff(searchId, hiddenId, buttonId, suggestionsId, email, label) {
+
+    const search = document.getElementById(searchId);
+
+    const hidden = document.getElementById(hiddenId);
+
+    const button = document.getElementById(buttonId);
+
+    const suggestions = document.getElementById(suggestionsId);
+
+    if (search) search.value = label;
+
+    if (hidden) hidden.value = email;
+
+    if (button) button.disabled = false;
+
+    if (suggestions) suggestions.innerHTML = '';
 
   }
 
+  initStaffSearch('staff-search', 'staff-suggestions', 'new-admin-email', 'add-admin-btn');
+
+  initStaffSearch('global-search', 'global-suggestions', 'new-global-email', 'add-global-btn');
 
 
 
 
-  function selectStaff(email, label) {
-
-
-    document.getElementById('staff-search').value = label;
-
-
-    document.getElementById('new-admin-email').value = email;
-
-
-    document.getElementById('add-admin-btn').disabled = false;
-
-
-    document.getElementById('staff-suggestions').innerHTML = '';
-
-
-  }
-
-
-
-
-
-  const bugSearch = document.getElementById('search-bugs');
+const bugSearch = document.getElementById('search-bugs');
 
 
   const bugStatus = document.getElementById('filter-bug-status');
