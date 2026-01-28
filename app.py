@@ -110,14 +110,27 @@ def _run_git(args):
         return ''
 
 
+def _load_build_info_file():
+    path = os.path.join(app.root_path, 'build_info.json')
+    if not os.path.isfile(path):
+        return {}
+    try:
+        with open(path, 'r', encoding='utf-8') as handle:
+            data = json.load(handle)
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
 def _get_build_metadata():
     cached = getattr(_get_build_metadata, '_cache', None)
     if cached:
         return cached
 
-    version = (os.environ.get('APP_VERSION') or '').strip()
-    commit = (os.environ.get('GIT_SHA') or '').strip()
-    build_time = (os.environ.get('BUILD_TIME') or '').strip()
+    file_info = _load_build_info_file()
+    version = (os.environ.get('APP_VERSION') or file_info.get('version') or '').strip()
+    commit = (os.environ.get('GIT_SHA') or file_info.get('commit') or '').strip()
+    build_time = (os.environ.get('BUILD_TIME') or file_info.get('build_time') or '').strip()
 
     if not commit:
         commit = _run_git(['rev-parse', 'HEAD'])
