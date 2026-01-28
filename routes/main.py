@@ -56,9 +56,13 @@ def index():
 
     settings = load_app_settings()
     require_request = _truthy(settings.get('require_reset_request', 'true'))
+    require_teacher_approval = _truthy(settings.get('require_teacher_approval', 'false'))
     cooldown_minutes = _safe_int(settings.get('reset_cooldown_minutes', 0), 0)
     if cooldown_minutes < 0:
         cooldown_minutes = 0
+
+    actual_role = session.get('role')
+    role = _effective_role(actual_role)
 
     today = date.today().isoformat()
     done = 0
@@ -79,6 +83,7 @@ def index():
 
     new_pw = None
     request_more_url = None
+    request_more_label = None
     se = sn = outcome = ''
 
     if request.method == 'POST':
@@ -86,13 +91,19 @@ def index():
         if not token or token != session.get('csrf_token'):
             abort(403)
 
-        role = session.get('role')
         if role not in (ROLE_ADMIN, ROLE_GLOBAL_ADMIN) and cooldown_minutes:
             remaining = _cooldown_remaining(last_reset_at, cooldown_minutes)
             if remaining:
                 wait_minutes = max(1, math.ceil(remaining / 60))
                 flash(f'Please wait {wait_minutes} minute(s) before another reset.', 'warning')
                 outcome = 'Cooldown'
+
+        if not outcome:
+            if role == ROLE_TEACHER and require_teacher_approval and not _has_approved_request(user_info['email'], today):
+                flash('Teacher resets require admin approval. Submit a request.', 'warning')
+                request_more_url = url_for('main.request_more', token=session.get('csrf_token'))
+                request_more_label = 'Request Reset Approval'
+                outcome = 'Approval Required'
 
         if not outcome:
             limit_reached = (
@@ -102,6 +113,7 @@ def index():
             if limit_reached and require_request and not _has_approved_request(user_info['email'], today):
                 flash('Daily limit reached.', 'danger')
                 request_more_url = url_for('main.request_more', token=session.get('csrf_token'))
+                request_more_label = 'Request More Resets'
                 outcome = 'Limit Reached'
             else:
                 se = request.form.get('student_email', '').strip().lower()
@@ -132,7 +144,7 @@ def index():
             admin_email=user_info['email'],
             outcome=outcome,
             detail=f"{se} ({sn})" if sn else se,
-            role=session.get('role'),
+            role=role,
             action_type='password_reset',
             admin_ou=session.get('orgUnitPath'),
             admin_school=session.get('school')
@@ -150,8 +162,9 @@ def index():
         new_password=new_pw,
         student_email=se,
         student_name=sn,
-        role=session.get('role'),
+        role=role,
         request_more_url=request_more_url,
+        request_more_label=request_more_label,
         classroom_sync=get_classroom_sync(user_info['email']),
         known_issues=known_issues,
         global_issues=global_issues
@@ -165,7 +178,9 @@ def request_more():
     if not token or token != session.get('csrf_token'):
         abort(403)
     settings = load_app_settings()
-    if not _truthy(settings.get('require_reset_request', 'true')):
+    allow_requests = _truthy(settings.get('require_reset_request', 'true'))
+    allow_requests = allow_requests or _truthy(settings.get('require_teacher_approval', 'false'))
+    if not allow_requests:
         flash('Reset requests are disabled.', 'info')
         return redirect(url_for('main.index'))
     reqs = load_requests()
@@ -352,6 +367,15 @@ def _can_reset_student(role, student, teacher_email):
 def _generate_password(length=12):
     alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
     return ''.join(secrets.choice(alphabet) for _ in range(length))
+
+
+def _effective_role(actual_role):
+    if actual_role != ROLE_GLOBAL_ADMIN:
+        return actual_role
+    preview = session.get('role_preview')
+    if preview in (ROLE_TEACHER, ROLE_MEDIA_SPECIALIST, ROLE_ADMIN, ROLE_GLOBAL_ADMIN):
+        return preview
+    return actual_role
 
 
 def _parse_timestamp(value):

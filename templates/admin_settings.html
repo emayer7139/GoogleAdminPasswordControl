@@ -33,12 +33,39 @@
         </div>
       </div>
 
+      <div class="col-12">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="require-teacher-approval"
+                 name="require_teacher_approval" {% if require_teacher_approval %}checked{% endif %}>
+          <label class="form-check-label fw-semibold" for="require-teacher-approval">
+            Require approval before teachers can reset passwords
+          </label>
+          <div class="form-text">
+            When enabled, teachers must submit a reset request and get approval before any resets.
+          </div>
+        </div>
+      </div>
+
       <div class="col-12 col-md-6">
         <label for="reset-cooldown" class="form-label fw-semibold">Reset cooldown (minutes)</label>
         <input class="form-control" type="number" id="reset-cooldown" name="reset_cooldown_minutes"
                min="0" max="1440" value="{{ cooldown_minutes }}">
         <div class="form-text">
           Applies to non-admins. Set to 0 to disable.
+        </div>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label for="role-preview" class="form-label fw-semibold">Role preview (session only)</label>
+        <select id="role-preview" name="role_preview" class="form-select">
+          <option value="" {% if not role_preview %}selected{% endif %}>Use my real role</option>
+          <option value="teacher" {% if role_preview == 'teacher' %}selected{% endif %}>Teacher</option>
+          <option value="media_specialist" {% if role_preview == 'media_specialist' %}selected{% endif %}>Media Specialist</option>
+          <option value="admin" {% if role_preview == 'admin' %}selected{% endif %}>Admin</option>
+          <option value="global_admin" {% if role_preview == 'global_admin' %}selected{% endif %}>Global Admin</option>
+        </select>
+        <div class="form-text">
+          Preview how the app behaves for another role without changing permissions for other users.
         </div>
       </div>
 

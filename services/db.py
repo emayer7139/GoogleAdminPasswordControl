@@ -19,6 +19,7 @@ metadata = MetaData()
 DEFAULT_APP_SETTINGS = {
     'require_reset_request': 'true',
     'reset_cooldown_minutes': '0',
+    'require_teacher_approval': 'false',
 }
 
 schema_meta_table = Table(

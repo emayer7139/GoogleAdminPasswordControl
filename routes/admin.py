@@ -10,7 +10,7 @@ from googleapiclient.errors import HttpError
 
 from auth import login_required, admin_required, role_required
 from services.google_admin import search_staff
-from services.roles import ROLE_GLOBAL_ADMIN
+from services.roles import ROLE_ADMIN, ROLE_GLOBAL_ADMIN, ROLE_MEDIA_SPECIALIST, ROLE_TEACHER
 from services.storage import (
     get_audit_logs,
     get_login_logs,
@@ -170,17 +170,21 @@ def admin_known_issues():
 def admin_settings():
     settings = load_app_settings()
     require_request = str(settings.get('require_reset_request', 'true')).lower() in ('1', 'true', 'yes', 'on')
+    require_teacher_approval = str(settings.get('require_teacher_approval', 'false')).lower() in ('1', 'true', 'yes', 'on')
     cooldown_raw = settings.get('reset_cooldown_minutes', '0')
     try:
         cooldown_minutes = int(cooldown_raw)
     except (TypeError, ValueError):
         cooldown_minutes = 0
 
+    preview_role = session.get('role_preview')
+
     if request.method == 'POST':
         token = request.form.get('csrf_token')
         if not token or token != session.get('csrf_token'):
             abort(403)
         require_request = request.form.get('require_reset_request') == 'on'
+        require_teacher_approval = request.form.get('require_teacher_approval') == 'on'
         cooldown_raw = request.form.get('reset_cooldown_minutes', '').strip()
         try:
             cooldown_minutes = int(cooldown_raw)
@@ -191,15 +195,29 @@ def admin_settings():
             flash('Cooldown must be between 0 and 1440 minutes.', 'danger')
             return redirect(url_for('admin.admin_settings'))
 
+        preview_role = request.form.get('role_preview', '').strip()
+        allowed_preview = {ROLE_ADMIN, ROLE_MEDIA_SPECIALIST, ROLE_TEACHER, ROLE_GLOBAL_ADMIN}
+        if preview_role in allowed_preview and preview_role != ROLE_GLOBAL_ADMIN:
+            session['role_preview'] = preview_role
+        else:
+            session.pop('role_preview', None)
+
         set_app_settings({
             'require_reset_request': 'true' if require_request else 'false',
-            'reset_cooldown_minutes': str(cooldown_minutes)
+            'reset_cooldown_minutes': str(cooldown_minutes),
+            'require_teacher_approval': 'true' if require_teacher_approval else 'false'
         })
         flash('Settings updated.', 'success')
         log_audit_event(
             admin_email=session['user_info']['email'],
             outcome='Admin Settings Updated',
-            detail=f"require_reset_request={require_request}, cooldown_minutes={cooldown_minutes}",
+            detail=(
+                "require_reset_request="
+                f"{require_request}, "
+                "require_teacher_approval="
+                f"{require_teacher_approval}, "
+                f"cooldown_minutes={cooldown_minutes}"
+            ),
             role=session.get('role'),
             action_type='admin_action',
             admin_ou=session.get('orgUnitPath'),
@@ -212,7 +230,9 @@ def admin_settings():
         **_admin_context(
             'settings',
             require_request=require_request,
+            require_teacher_approval=require_teacher_approval,
             cooldown_minutes=cooldown_minutes,
+            role_preview=preview_role,
             reset_limit=current_app.config.get('RESET_LIMIT', 5)
         )
     )
