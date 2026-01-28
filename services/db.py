@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime
 
 from flask import current_app
 from sqlalchemy import (
@@ -14,6 +15,13 @@ from sqlalchemy import (
 )
 
 metadata = MetaData()
+
+schema_meta_table = Table(
+    'schema_meta',
+    metadata,
+    Column('key', String(64), primary_key=True),
+    Column('value', String(64), nullable=False),
+)
 
 audit_logs_table = Table(
     'audit_logs',
@@ -108,6 +116,7 @@ def init_db(app):
     engine = create_engine(app.config['DATABASE_URL'], future=True)
     app.extensions['db_engine'] = engine
     metadata.create_all(engine)
+    _ensure_schema_meta(engine)
     _migrate_json(engine, app.root_path)
 
 
@@ -251,3 +260,17 @@ def _migrate_json(engine, root_path):
                         count=count,
                         timestamp=timestamp
                     ))
+
+
+def _ensure_schema_meta(engine):
+    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    with engine.begin() as conn:
+        existing = conn.execute(
+            select(schema_meta_table.c.value)
+            .where(schema_meta_table.c.key == 'initialized_at')
+        ).scalar()
+        if not existing:
+            conn.execute(schema_meta_table.insert().values(
+                key='initialized_at',
+                value=now
+            ))

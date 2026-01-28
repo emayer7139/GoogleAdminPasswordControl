@@ -42,6 +42,7 @@ from services.db import (
     known_issues_table,
     login_logs_table,
     reset_requests_table,
+    schema_meta_table,
     theme_preferences_table,
 )
 from services.emailer import send_email
@@ -309,6 +310,12 @@ def _collect_status_data():
                     select(func.count()).select_from(table)
                 ).scalar() or 0
                 db_counts.append({'name': name, 'count': count})
+            schema_row = conn.execute(
+                select(schema_meta_table.c.value)
+                .where(schema_meta_table.c.key == 'initialized_at')
+            ).scalar()
+            if schema_row:
+                db_schema_time = schema_row
         db_status['ok'] = True
         db_status['detail'] = 'Connected'
     except Exception as exc:
@@ -443,7 +450,8 @@ def _collect_status_data():
             if db_engine == 'sqlite':
                 db_location = url.database or 'memory'
                 if db_location and os.path.exists(db_location):
-                    db_schema_time = _format_timestamp(os.path.getmtime(db_location))
+                    if db_schema_time in ('n/a', 'unknown', 'not initialized'):
+                        db_schema_time = _format_timestamp(os.path.getmtime(db_location))
                 else:
                     db_schema_time = 'not initialized'
             else:
