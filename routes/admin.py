@@ -34,6 +34,14 @@ logger = logging.getLogger(__name__)
 
 bp = Blueprint('admin', __name__)
 
+def _admin_context(section, **kwargs):
+    context = {
+        'user': session.get('user_info'),
+        'admin_section': section,
+    }
+    context.update(kwargs)
+    return context
+
 
 def _in_date_range(ts, start, end):
     dt = datetime.fromisoformat(ts)
@@ -75,26 +83,82 @@ def _filter_login_logs(start, end):
 @login_required
 @admin_required
 def admin_page():
-    user = session['user_info']
+    return redirect(url_for('admin.admin_audit'))
+
+
+@bp.route('/admin/audit')
+@login_required
+@admin_required
+def admin_audit():
     start = request.args.get('start_date')
     end = request.args.get('end_date')
     audit_role = request.args.get('audit_role', '').strip()
     audit_school = request.args.get('audit_school', '').strip()
     audit_ou = request.args.get('audit_ou', '').strip()
-
     audit_logs = _filter_audit_logs(start, end, audit_role, audit_school, audit_ou)
-    login_logs = _filter_login_logs(start, end)
-
     return render_template(
-        'admin.html',
-        user=user,
-        audit_logs=audit_logs,
-        login_logs=login_logs,
-        admin_users=load_admins(),
-        global_admins=load_global_admins(),
-        requests_list=load_requests(),
-        bug_reports=load_bug_reports(),
-        known_issues=load_known_issues()
+        'admin_audit.html',
+        **_admin_context('audit', audit_logs=audit_logs)
+    )
+
+
+@bp.route('/admin/logins')
+@login_required
+@admin_required
+def admin_logins():
+    start = request.args.get('start_date')
+    end = request.args.get('end_date')
+    login_logs = _filter_login_logs(start, end)
+    return render_template(
+        'admin_logins.html',
+        **_admin_context('logins', login_logs=login_logs)
+    )
+
+
+@bp.route('/admin/students')
+@login_required
+@admin_required
+def admin_students():
+    return render_template('admin_students.html', **_admin_context('students'))
+
+
+@bp.route('/admin/admins')
+@login_required
+@admin_required
+def admin_admins():
+    return render_template(
+        'admin_admins.html',
+        **_admin_context('admins', admin_users=load_admins(), global_admins=load_global_admins())
+    )
+
+
+@bp.route('/admin/requests')
+@login_required
+@admin_required
+def admin_requests():
+    return render_template(
+        'admin_requests.html',
+        **_admin_context('requests', requests_list=load_requests())
+    )
+
+
+@bp.route('/admin/bugs')
+@login_required
+@admin_required
+def admin_bugs():
+    return render_template(
+        'admin_bugs.html',
+        **_admin_context('bugs', bug_reports=load_bug_reports())
+    )
+
+
+@bp.route('/admin/known-issues')
+@login_required
+@admin_required
+def admin_known_issues():
+    return render_template(
+        'admin_known_issues.html',
+        **_admin_context('known_issues', known_issues=load_known_issues())
     )
 
 
@@ -171,10 +235,10 @@ def set_audit_retention():
         days = int(days_raw)
     except ValueError:
         flash('Retention days must be a number.', 'danger')
-        return redirect(url_for('admin.admin_page'))
+        return redirect(url_for('admin.admin_audit'))
     if days < 1 or days > 3650:
         flash('Retention days must be between 1 and 3650.', 'danger')
-        return redirect(url_for('admin.admin_page'))
+        return redirect(url_for('admin.admin_audit'))
     cutoff = datetime.now() - timedelta(days=days)
     remaining = prune_audit_logs(cutoff)
     flash(f'Applied retention: kept {remaining} audit entries.', 'success')
@@ -187,7 +251,7 @@ def set_audit_retention():
         admin_ou=session.get('orgUnitPath'),
         admin_school=session.get('school')
     )
-    return redirect(url_for('admin.admin_page'))
+    return redirect(url_for('admin.admin_audit'))
 
 
 @bp.route('/bug_reports/close', methods=['POST'])
@@ -212,7 +276,7 @@ def close_bug_report():
         )
     else:
         flash(f'Report {report_id} not found.', 'danger')
-    return redirect(url_for('admin.admin_page'))
+    return redirect(url_for('admin.admin_bugs'))
 
 
 @bp.route('/bug_reports/update', methods=['POST'])
@@ -232,7 +296,7 @@ def update_bug_report_route():
         updates['notes'] = notes
     if not updates:
         flash('No changes submitted.', 'warning')
-        return redirect(url_for('admin.admin_page'))
+        return redirect(url_for('admin.admin_bugs'))
 
     updated = update_bug_report(report_id, updates)
     if updated:
@@ -248,7 +312,7 @@ def update_bug_report_route():
         )
     else:
         flash(f'Report {report_id} not found.', 'danger')
-    return redirect(url_for('admin.admin_page'))
+    return redirect(url_for('admin.admin_bugs'))
 
 
 @bp.route('/known_issues/add', methods=['POST'])
@@ -265,7 +329,7 @@ def add_known_issue():
         level = 'support'
     if not issue_text:
         flash('Known issue text is required.', 'danger')
-        return redirect(url_for('admin.admin_page'))
+        return redirect(url_for('admin.admin_known_issues'))
     issue = {
         'id': secrets.token_hex(4),
         'text': issue_text,
@@ -286,7 +350,7 @@ def add_known_issue():
         admin_ou=session.get('orgUnitPath'),
         admin_school=session.get('school')
     )
-    return redirect(url_for('admin.admin_page'))
+    return redirect(url_for('admin.admin_known_issues'))
 
 
 @bp.route('/known_issues/update', methods=['POST'])
@@ -313,7 +377,7 @@ def update_known_issue_route():
         updates['level'] = level
     if not updates:
         flash('No changes submitted.', 'warning')
-        return redirect(url_for('admin.admin_page'))
+        return redirect(url_for('admin.admin_known_issues'))
     updated = update_known_issue(issue_id, updates)
     if updated:
         flash('Known issue updated.', 'success')
@@ -328,7 +392,7 @@ def update_known_issue_route():
         )
     else:
         flash('Known issue not found.', 'danger')
-    return redirect(url_for('admin.admin_page'))
+    return redirect(url_for('admin.admin_known_issues'))
 
 
 @bp.route('/known_issues/delete', methods=['POST'])
@@ -353,7 +417,7 @@ def delete_known_issue_route():
         )
     else:
         flash('Known issue not found.', 'danger')
-    return redirect(url_for('admin.admin_page'))
+    return redirect(url_for('admin.admin_known_issues'))
 
 
 @bp.route('/known_issues/resolve', methods=['POST'])
@@ -381,7 +445,7 @@ def resolve_known_issue():
         )
     else:
         flash('Known issue not found.', 'danger')
-    return redirect(url_for('admin.admin_page'))
+    return redirect(url_for('admin.admin_known_issues'))
 
 
 @bp.route('/add_admin', methods=['POST'])
@@ -408,7 +472,7 @@ def add_admin():
             admin_ou=session.get('orgUnitPath'),
             admin_school=session.get('school')
         )
-    return redirect(url_for('admin.admin_page'))
+    return redirect(url_for('admin.admin_admins'))
 
 
 @bp.route('/add_global_admin', methods=['POST'])
@@ -421,7 +485,7 @@ def add_global_admin():
     email = request.form.get('email', '').strip().lower()
     if not email:
         flash('Email is required.', 'warning')
-        return redirect(url_for('admin.admin_page'))
+        return redirect(url_for('admin.admin_admins'))
     admins = load_global_admins()
     if email in admins:
         flash(f'{email} already a global admin.', 'warning')
@@ -438,7 +502,7 @@ def add_global_admin():
             admin_ou=session.get('orgUnitPath'),
             admin_school=session.get('school')
         )
-    return redirect(url_for('admin.admin_page'))
+    return redirect(url_for('admin.admin_admins'))
 
 
 @bp.route('/remove_admin', methods=['POST'])
@@ -467,7 +531,7 @@ def remove_admin():
             admin_ou=session.get('orgUnitPath'),
             admin_school=session.get('school')
         )
-    return redirect(url_for('admin.admin_page'))
+    return redirect(url_for('admin.admin_admins'))
 
 
 @bp.route('/remove_global_admin', methods=['POST'])
@@ -496,7 +560,7 @@ def remove_global_admin():
             admin_ou=session.get('orgUnitPath'),
             admin_school=session.get('school')
         )
-    return redirect(url_for('admin.admin_page'))
+    return redirect(url_for('admin.admin_admins'))
 
 
 @bp.route('/approve_request', methods=['POST'])
@@ -523,7 +587,7 @@ def approve_request():
             )
             break
     save_requests(reqs)
-    return redirect(url_for('admin.admin_page'))
+    return redirect(url_for('admin.admin_requests'))
 
 
 @bp.route('/deny_request', methods=['POST'])
@@ -550,7 +614,7 @@ def deny_request():
             )
             break
     save_requests(reqs)
-    return redirect(url_for('admin.admin_page'))
+    return redirect(url_for('admin.admin_requests'))
 
 
 @bp.route('/search_staff')

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title or 'Admin Console' }} - ResetApp{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='admin.css') }}" rel="stylesheet" />
+{% block admin_extra_css %}{% endblock %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-4 admin-shell">
+  <div class="row g-4">
+    <aside class="col-12 col-lg-3">
+      {% include 'partials/admin_sidebar.html' %}
+    </aside>
+    <section class="col-12 col-lg-9">
+      {% block admin_header %}{% endblock %}
+      {% block admin_body %}{% endblock %}
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% block admin_js %}{% endblock %}
+{% endblock %}

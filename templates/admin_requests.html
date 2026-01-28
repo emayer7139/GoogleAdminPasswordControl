@@ -1,0 +1,64 @@
+{% extends "admin_layout.html" %}
+
+{% set page_title = "Reset Requests" %}
+
+{% block admin_header %}
+<div class="admin-hero d-flex flex-wrap align-items-end justify-content-between gap-3">
+  <div>
+    <h1 class="display-6 mb-1">Reset Requests</h1>
+    <p class="text-muted mb-0">Approve or deny additional reset requests.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block admin_body %}
+<div class="admin-panel mt-3">
+  <input id="search-requests" class="form-control mb-3" placeholder="Search reset requests" />
+  <div class="table-responsive admin-table">
+    <table class="table table-striped" id="tbl-requests">
+      <thead>
+        <tr><th>ID</th><th>Email</th><th>Date</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        {% for r in requests_list %}
+          <tr>
+            <td>{{ r.id }}</td>
+            <td>{{ r.email }}</td>
+            <td>{{ r.date }}</td>
+            <td>{{ r.status }}</td>
+            <td>
+              {% if r.status=='Pending' %}
+                <form class="d-inline" method="post" action="{{ url_for('admin.approve_request') }}">
+                  <input type="hidden" name="id" value="{{ r.id }}" />
+                  <input type="hidden" name="csrf_token" value="{{ session['csrf_token'] }}" />
+                  <button class="btn btn-sm btn-primary">Approve</button>
+                </form>
+                <form class="d-inline" method="post" action="{{ url_for('admin.deny_request') }}">
+                  <input type="hidden" name="id" value="{{ r.id }}" />
+                  <input type="hidden" name="csrf_token" value="{{ session['csrf_token'] }}" />
+                  <button class="btn btn-sm btn-outline-secondary">Deny</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block admin_js %}
+<script>
+  const requestSearch = document.getElementById('search-requests');
+  const requestTable = document.getElementById('tbl-requests');
+  if (requestSearch && requestTable) {
+    requestSearch.addEventListener('input', () => {
+      const q = requestSearch.value.toLowerCase();
+      Array.from(requestTable.tBodies[0].rows).forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
+  }
+</script>
+{% endblock %}

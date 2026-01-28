@@ -5,6 +5,57 @@
     border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
+.admin-shell {
+    min-height: 70vh;
+}
+
+.admin-nav {
+    border-radius: 1.25rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.admin-nav-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+}
+
+.admin-nav-subtitle {
+    font-size: 0.9rem;
+}
+
+.admin-nav-links {
+    gap: 0.35rem;
+}
+
+.admin-nav-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.55rem 0.75rem;
+    border-radius: 0.75rem;
+    color: #374151;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.admin-nav-link:hover {
+    background: rgba(31, 111, 235, 0.08);
+    color: #1f6feb;
+}
+
+.admin-nav-link.active {
+    background: #111827;
+    color: #ffffff;
+}
+
+.admin-nav-divider {
+    height: 1px;
+    background: rgba(15, 23, 42, 0.08);
+    margin: 1rem 0;
+}
+
 .admin-stat {
     padding: 1.1rem 1.25rem;
     border-radius: 1rem;
@@ -50,6 +101,14 @@
     padding: 0.5rem;
 }
 
+.admin-panel {
+    background: #ffffff;
+    border-radius: 1rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 1.5rem;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+}
+
 .bug-thumb-link {
     display: inline-flex;
     align-items: center;
@@ -65,16 +124,39 @@
     border: 1px solid rgba(15, 23, 42, 0.12);
 }
 
+@media (min-width: 992px) {
+    .admin-nav {
+        position: sticky;
+        top: 1rem;
+    }
+}
+
 html.dark-mode .admin-hero {
     background: linear-gradient(135deg, #1f2937, #111827);
     border-color: rgba(255, 255, 255, 0.08);
 }
 
+html.dark-mode .admin-nav,
+html.dark-mode .admin-panel,
 html.dark-mode .admin-stat,
 html.dark-mode .admin-table {
     background: #111827;
     border-color: rgba(255, 255, 255, 0.08);
     box-shadow: none;
+}
+
+html.dark-mode .admin-nav-link {
+    color: #d1d5db;
+}
+
+html.dark-mode .admin-nav-link:hover {
+    background: rgba(59, 130, 246, 0.2);
+    color: #bfdbfe;
+}
+
+html.dark-mode .admin-nav-link.active {
+    background: #f9fafb;
+    color: #111827;
 }
 
 html.dark-mode .admin-stat-label {

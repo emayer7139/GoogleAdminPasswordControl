@@ -1,0 +1,151 @@
+{% extends "admin_layout.html" %}
+
+{% set page_title = "Bug Reports" %}
+
+{% block admin_header %}
+<div class="admin-hero d-flex flex-wrap align-items-end justify-content-between gap-3">
+  <div>
+    <h1 class="display-6 mb-1">Bug Reports</h1>
+    <p class="text-muted mb-0">Review and update reported issues.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block admin_body %}
+<div class="admin-panel mt-3">
+  <div class="row g-2 mb-3">
+    <div class="col-12 col-md-4">
+      <input id="search-bugs" class="form-control" placeholder="Search bug reports" />
+    </div>
+    <div class="col-12 col-md-4">
+      <select id="filter-bug-status" class="form-select">
+        <option value="">All statuses</option>
+        <option value="Open">Open</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Closed">Closed</option>
+      </select>
+    </div>
+    <div class="col-12 col-md-4">
+      <select id="filter-bug-severity" class="form-select">
+        <option value="">All severities</option>
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="table-responsive admin-table">
+    <table class="table table-striped" id="tbl-bugs">
+      <thead>
+        <tr><th>ID</th><th>Timestamp</th><th>Reporter</th><th>Severity</th><th>Title</th><th>Attachment</th><th>Status</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        {% for b in bug_reports %}
+          <tr data-status="{{ b.status }}" data-severity="{{ b.severity }}">
+            <td>{{ b.id }}</td>
+            <td>{{ b.timestamp }}</td>
+            <td>{{ b.reporter }}</td>
+            <td>{{ b.severity }}</td>
+            <td>{{ b.title }}</td>
+            <td>
+              {% if b.attachment %}
+                <a href="{{ url_for('static', filename=b.attachment) }}" target="_blank" class="bug-thumb-link" data-preview="{{ url_for('static', filename=b.attachment) }}">
+                  <img src="{{ url_for('static', filename=b.attachment) }}" alt="Bug attachment" class="bug-thumb">
+                  <span>Open</span>
+                </a>
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            <td>{{ b.status }}</td>
+            <td>
+              <form class="d-inline" method="post" action="{{ url_for('admin.update_bug_report_route') }}">
+                <input type="hidden" name="id" value="{{ b.id }}" />
+                <input type="hidden" name="csrf_token" value="{{ session['csrf_token'] }}" />
+                <select class="form-select form-select-sm d-inline w-auto" name="status">
+                  <option value="">Status</option>
+                  <option value="Open" {% if b.status == 'Open' %}selected{% endif %}>Open</option>
+                  <option value="In Progress" {% if b.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                  <option value="Closed" {% if b.status == 'Closed' %}selected{% endif %}>Closed</option>
+                </select>
+                <button class="btn btn-sm btn-outline-primary ms-1">Save</button>
+              </form>
+            </td>
+          </tr>
+          <tr class="bug-detail-row" data-status="{{ b.status }}" data-severity="{{ b.severity }}">
+            <td colspan="8" class="small text-muted">
+              <div class="mb-2">{{ b.description }}</div>
+              <form method="post" action="{{ url_for('admin.update_bug_report_route') }}" class="d-flex gap-2 align-items-start flex-wrap">
+                <input type="hidden" name="id" value="{{ b.id }}" />
+                <input type="hidden" name="csrf_token" value="{{ session['csrf_token'] }}" />
+                <textarea class="form-control form-control-sm" name="notes" rows="2" placeholder="Admin notes">{{ b.notes or '' }}</textarea>
+                <button class="btn btn-sm btn-outline-secondary">Update Notes</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="bugPreviewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Bug Attachment</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="bugPreviewImg" src="" alt="Bug attachment preview" class="img-fluid rounded">
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block admin_js %}
+<script>
+  const bugSearch = document.getElementById('search-bugs');
+  const bugStatus = document.getElementById('filter-bug-status');
+  const bugSeverity = document.getElementById('filter-bug-severity');
+  const bugRows = () => Array.from(document.querySelectorAll('#tbl-bugs tbody tr'));
+
+  function filterBugs() {
+    const q = (bugSearch?.value || '').toLowerCase();
+    const status = bugStatus?.value || '';
+    const severity = bugSeverity?.value || '';
+    const rows = bugRows();
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const text = row.textContent.toLowerCase();
+      const rowStatus = row.dataset.status || '';
+      const rowSeverity = row.dataset.severity || '';
+      const matches = (!q || text.includes(q)) &&
+        (!status || rowStatus === status) &&
+        (!severity || rowSeverity === severity);
+      row.style.display = matches ? '' : 'none';
+    }
+  }
+
+  if (bugSearch) bugSearch.addEventListener('input', filterBugs);
+  if (bugStatus) bugStatus.addEventListener('change', filterBugs);
+  if (bugSeverity) bugSeverity.addEventListener('change', filterBugs);
+
+  const previewLinks = document.querySelectorAll('.bug-thumb-link[data-preview]');
+  previewLinks.forEach(link => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      const src = link.dataset.preview;
+      const img = document.getElementById('bugPreviewImg');
+      if (img) img.src = src;
+      const modalEl = document.getElementById('bugPreviewModal');
+      if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+      }
+    });
+  });
+</script>
+{% endblock %}

@@ -31,7 +31,7 @@
                     <li><a class="dropdown-item" href="{{ url_for('support_page') }}">Support</a></li>
                     <li><a class="dropdown-item" href="{{ url_for('report_bug_page') }}">Report a Bug</a></li>
                     {% if role in ['admin', 'global_admin'] %}
-                    <li><a class="dropdown-item" href="{{ url_for('admin.admin_page') }}">Admin Page</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('admin.admin_audit') }}">Admin Page</a></li>
                     <li><a class="dropdown-item" href="{{ url_for('status_page') }}">System Status</a></li>
                     {% endif %}
                     <li>

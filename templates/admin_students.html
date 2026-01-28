@@ -1,0 +1,61 @@
+{% extends "admin_layout.html" %}
+
+{% set page_title = "Students" %}
+
+{% block admin_header %}
+<div class="admin-hero d-flex flex-wrap align-items-end justify-content-between gap-3">
+  <div>
+    <h1 class="display-6 mb-1">Students</h1>
+    <p class="text-muted mb-0">Search students by name or email.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block admin_body %}
+<div class="admin-panel mt-3">
+  <input id="user-search" class="form-control mb-3" placeholder="Search students by name or email" />
+  <div class="table-responsive admin-table">
+    <table class="table table-striped" id="tbl-users">
+      <thead>
+        <tr><th>Name</th><th>Email</th></tr>
+      </thead>
+      <tbody id="user-results"></tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block admin_js %}
+<script>
+  const userSearch = document.getElementById('user-search');
+  const tbody = document.getElementById('user-results');
+  const searchUrl = "{{ url_for('main.search_users_route') }}";
+  let debounce;
+
+  if (userSearch && tbody) {
+    userSearch.addEventListener('input', () => {
+      clearTimeout(debounce);
+      const q = userSearch.value.trim();
+      if (!q) {
+        tbody.innerHTML = '';
+        return;
+      }
+      debounce = setTimeout(async () => {
+        tbody.innerHTML = '<tr><td colspan="2">Searching...</td></tr>';
+        try {
+          const res = await fetch(`${searchUrl}?q=${encodeURIComponent(q)}`, {
+            headers: { 'Accept': 'application/json' }
+          });
+          if (!res.ok) throw new Error('Search failed');
+          const users = await res.json();
+          tbody.innerHTML = users.length
+            ? users.map(u => `<tr><td>${u.label}</td><td>${u.value}</td></tr>`).join('')
+            : '<tr><td colspan="2">No students found</td></tr>';
+        } catch {
+          tbody.innerHTML = '<tr><td colspan="2">Error</td></tr>';
+        }
+      }, 300);
+    });
+  }
+</script>
+{% endblock %}

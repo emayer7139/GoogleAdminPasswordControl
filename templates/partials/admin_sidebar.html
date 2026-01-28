@@ -1,0 +1,37 @@
+<div class="admin-nav card shadow-sm">
+  <div class="card-body">
+    <div class="admin-nav-title">Admin Console</div>
+    <p class="admin-nav-subtitle text-muted mb-3">Tools and reports</p>
+
+    <nav class="nav flex-column admin-nav-links">
+      <a class="admin-nav-link {{ 'active' if admin_section == 'audit' else '' }}" href="{{ url_for('admin.admin_audit') }}">
+        Audit Logs
+      </a>
+      <a class="admin-nav-link {{ 'active' if admin_section == 'logins' else '' }}" href="{{ url_for('admin.admin_logins') }}">
+        Login Logs
+      </a>
+      <a class="admin-nav-link {{ 'active' if admin_section == 'students' else '' }}" href="{{ url_for('admin.admin_students') }}">
+        Students
+      </a>
+      <a class="admin-nav-link {{ 'active' if admin_section == 'admins' else '' }}" href="{{ url_for('admin.admin_admins') }}">
+        Admins
+      </a>
+      <a class="admin-nav-link {{ 'active' if admin_section == 'requests' else '' }}" href="{{ url_for('admin.admin_requests') }}">
+        Reset Requests
+      </a>
+      <a class="admin-nav-link {{ 'active' if admin_section == 'bugs' else '' }}" href="{{ url_for('admin.admin_bugs') }}">
+        Bug Reports
+      </a>
+      <a class="admin-nav-link {{ 'active' if admin_section == 'known_issues' else '' }}" href="{{ url_for('admin.admin_known_issues') }}">
+        Known Issues
+      </a>
+    </nav>
+
+    <div class="admin-nav-divider"></div>
+
+    <div class="d-grid gap-2">
+      <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin.export_data') }}">Export Data</a>
+      <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('status_page') }}">System Status</a>
+    </div>
+  </div>
+</div>

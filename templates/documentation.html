@@ -123,7 +123,7 @@
       </section>
 
       <section id="admin-console" class="doc-section">
-        <h2 class="h4">4) Admin Console Tabs</h2>
+        <h2 class="h4">4) Admin Console Pages</h2>
         <ul class="fs-5">
           <li><strong>Audit Logs</strong>: every reset action with outcome.</li>
           <li><strong>Login Logs</strong>: successful and failed sign-ins.</li>
@@ -131,6 +131,7 @@
           <li><strong>Admins</strong>: add/remove admin access.</li>
           <li><strong>Reset Requests</strong>: approve extra resets.</li>
           <li><strong>Bug Reports</strong>: view and close submitted bugs.</li>
+          <li><strong>Known Issues</strong>: manage support banners and updates.</li>
         </ul>
         <div class="mt-3 doc-diagram">
           <p class="mb-1"><strong>Diagram:</strong> Admin Console Flow</p>
@@ -231,7 +232,7 @@ Audit     Login   Students   Admins   Requests   Bugs
       </section>
 
       <div class="mt-4">
-        <a href="{{ url_for('admin.admin_page') }}" class="btn btn-primary">
+        <a href="{{ url_for('admin.admin_audit') }}" class="btn btn-primary">
           Back to Admin Console
         </a>
       </div>

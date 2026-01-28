@@ -1,0 +1,93 @@
+{% extends "admin_layout.html" %}
+
+{% set page_title = "Audit Logs" %}
+
+{% block admin_header %}
+<div class="admin-hero d-flex flex-wrap align-items-end justify-content-between gap-3">
+  <div>
+    <h1 class="display-6 mb-1">Audit Logs</h1>
+    <p class="text-muted mb-0">Track admin actions and reset activity.</p>
+  </div>
+  <form class="d-flex flex-wrap gap-2" method="get">
+    <input type="date" name="start_date" class="form-control" value="{{ request.args.get('start_date','') }}">
+    <input type="date" name="end_date" class="form-control" value="{{ request.args.get('end_date','') }}">
+    <button class="btn btn-primary">Filter</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block admin_body %}
+<div class="admin-panel mt-3">
+  <form class="row g-2 mb-3" method="get">
+    <div class="col-12 col-md-4 col-xl-3">
+      <select class="form-select" name="audit_role">
+        <option value="">All roles</option>
+        <option value="teacher" {% if request.args.get('audit_role') == 'teacher' %}selected{% endif %}>Teacher</option>
+        <option value="media_specialist" {% if request.args.get('audit_role') == 'media_specialist' %}selected{% endif %}>Media Specialist</option>
+        <option value="admin" {% if request.args.get('audit_role') == 'admin' %}selected{% endif %}>Admin</option>
+        <option value="global_admin" {% if request.args.get('audit_role') == 'global_admin' %}selected{% endif %}>Global Admin</option>
+      </select>
+    </div>
+    <div class="col-12 col-md-4 col-xl-3">
+      <input class="form-control" name="audit_school" placeholder="School" value="{{ request.args.get('audit_school','') }}">
+    </div>
+    <div class="col-12 col-md-4 col-xl-3">
+      <input class="form-control" name="audit_ou" placeholder="OU contains" value="{{ request.args.get('audit_ou','') }}">
+    </div>
+    <div class="col-12 col-xl-3">
+      <button class="btn btn-outline-primary w-100">Filter</button>
+    </div>
+    <input type="hidden" name="start_date" value="{{ request.args.get('start_date','') }}">
+    <input type="hidden" name="end_date" value="{{ request.args.get('end_date','') }}">
+  </form>
+
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    <a class="btn btn-outline-secondary btn-sm"
+       href="{{ url_for('admin.export_audit_csv', start_date=request.args.get('start_date',''), end_date=request.args.get('end_date',''), audit_role=request.args.get('audit_role',''), audit_school=request.args.get('audit_school',''), audit_ou=request.args.get('audit_ou','')) }}">
+      Export CSV
+    </a>
+    <form method="post" action="{{ url_for('admin.set_audit_retention') }}" class="d-flex gap-2 flex-wrap">
+      <input type="hidden" name="csrf_token" value="{{ session['csrf_token'] }}" />
+      <input type="number" min="1" max="3650" class="form-control form-control-sm" name="retention_days" placeholder="Retention days">
+      <button class="btn btn-outline-danger btn-sm">Apply Retention</button>
+    </form>
+  </div>
+
+  <input id="search-audit" class="form-control mb-3" placeholder="Search audit logs" />
+
+  <div class="table-responsive admin-table">
+    <table class="table table-striped" id="tbl-audit">
+      <thead>
+        <tr><th>Timestamp</th><th>Admin</th><th>Role</th><th>School</th><th>Action</th><th>Details</th></tr>
+      </thead>
+      <tbody>
+        {% for a in audit_logs %}
+          <tr>
+            <td>{{ a.timestamp }}</td>
+            <td>{{ a.admin }}</td>
+            <td>{{ a.role or '-' }}</td>
+            <td>{{ a.admin_school or '-' }}</td>
+            <td>{{ a.outcome }}</td>
+            <td>{{ a.student }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block admin_js %}
+<script>
+  const auditSearch = document.getElementById('search-audit');
+  const auditTable = document.getElementById('tbl-audit');
+  if (auditSearch && auditTable) {
+    auditSearch.addEventListener('input', () => {
+      const q = auditSearch.value.toLowerCase();
+      Array.from(auditTable.tBodies[0].rows).forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
+  }
+</script>
+{% endblock %}
