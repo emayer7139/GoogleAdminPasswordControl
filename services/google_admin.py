@@ -106,6 +106,30 @@ def search_users(query, max_results=50):
     return results
 
 
+def _is_student_account(user):
+    if not user:
+        return False
+    ou_path = (user.get('orgUnitPath', '') or '').strip().lower().rstrip('/')
+    prefixes = [
+        (prefix or '').strip().lower().rstrip('/')
+        for prefix in current_app.config.get('STUDENT_OU_PREFIXES', [])
+        if (prefix or '').strip()
+    ]
+    for prefix in prefixes:
+        if ou_path.startswith(prefix):
+            return True
+    email = (user.get('primaryEmail', '') or '').strip().lower()
+    domains = [
+        (domain or '').strip().lower().lstrip('@')
+        for domain in current_app.config.get('STUDENT_EMAIL_DOMAINS', [])
+        if (domain or '').strip()
+    ]
+    for domain in domains:
+        if email.endswith(f'@{domain}'):
+            return True
+    return False
+
+
 def search_staff(query, staff_prefixes, max_results=50):
     candidates = search_users(query, max_results=max_results)
     unique = {u['primaryEmail']: u for u in candidates if u.get('primaryEmail')}
@@ -122,8 +146,14 @@ def search_staff(query, staff_prefixes, max_results=50):
         return any(path.startswith(prefix) for prefix in prefixes)
 
     staff = [u for u in unique.values() if matches_prefix(u)]
-    if staff or not prefixes:
+    if staff:
         return staff
+
+    # If exact email is provided, allow any non-student account.
+    if '@' in (query or ''):
+        non_students = [u for u in unique.values() if not _is_student_account(u)]
+        if non_students:
+            return non_students
 
     # Fallback: if configured prefixes miss a staff OU, treat any /Staff/* account as staff.
     def matches_staff_root(user):
