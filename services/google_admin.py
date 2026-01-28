@@ -109,7 +109,25 @@ def search_users(query, max_results=50):
 def search_staff(query, staff_prefixes, max_results=50):
     candidates = search_users(query, max_results=max_results)
     unique = {u['primaryEmail']: u for u in candidates if u.get('primaryEmail')}
-    return [
-        u for u in unique.values()
-        if any(u.get('orgUnitPath', '').startswith(prefix) for prefix in staff_prefixes)
+    prefixes = [
+        (prefix or '').strip().lower().rstrip('/')
+        for prefix in (staff_prefixes or [])
+        if (prefix or '').strip()
     ]
+
+    def matches_prefix(user):
+        path = (user.get('orgUnitPath', '') or '').strip().lower().rstrip('/')
+        if not path:
+            return False
+        return any(path.startswith(prefix) for prefix in prefixes)
+
+    staff = [u for u in unique.values() if matches_prefix(u)]
+    if staff or not prefixes:
+        return staff
+
+    # Fallback: if configured prefixes miss a staff OU, treat any /Staff/* account as staff.
+    def matches_staff_root(user):
+        path = (user.get('orgUnitPath', '') or '').strip().lower().rstrip('/')
+        return path == '/staff' or path.startswith('/staff/')
+
+    return [u for u in unique.values() if matches_staff_root(u)]
