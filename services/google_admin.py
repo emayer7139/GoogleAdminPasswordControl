@@ -60,9 +60,18 @@ def search_users(query, max_results=50):
     raw = (query or '').strip()
     if not raw:
         return []
+    cache_key = f"search:{raw.lower()}:{max_results}"
+    cached = admin_api_cache.get(cache_key)
+    if cached is not None:
+        return cached
+    fields = 'users(primaryEmail,name(givenName,familyName),orgUnitPath),nextPageToken'
     if '@' in raw:
         try:
-            user = svc.users().get(userKey=raw).execute()
+            user = svc.users().get(
+                userKey=raw,
+                fields='primaryEmail,name(givenName,familyName),orgUnitPath'
+            ).execute()
+            admin_api_cache[cache_key] = [user]
             return [user]
         except HttpError:
             raw = raw.split('@', 1)[0].strip()
@@ -71,14 +80,15 @@ def search_users(query, max_results=50):
     toks = raw.split()
     if not toks:
         return []
-    results = []
-    for field in ('givenName', 'familyName', 'email'):
-        resp = svc.users().list(
-            customer='my_customer',
-            query=f"{field}:{toks[0]}*",
-            maxResults=max_results
-        ).execute()
-        results.extend(resp.get('users', []))
+    term = toks[0]
+    resp = svc.users().list(
+        customer='my_customer',
+        query=f"givenName:{term}* OR familyName:{term}* OR email:{term}*",
+        maxResults=max_results,
+        fields=fields
+    ).execute()
+    results = resp.get('users', [])
+    admin_api_cache[cache_key] = results
     return results
 
 

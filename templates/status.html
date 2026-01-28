@@ -2,201 +2,234 @@
 
 {% block title %}System Status - ResetApp{% endblock %}
 
+{% block extra_css %}
+<link href="{{ url_for('static', filename='status.css') }}" rel="stylesheet" />
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-  <div class="card shadow-lg p-4">
-    <h1 class="display-6 mb-3">System Status</h1>
-    <p class="text-muted mb-4">Live checks for database and Google integrations.</p>
+<div class="container py-5 status-page">
+  {% set ns = namespace(has_issues=false) %}
+  {% if not db_status.ok %}{% set ns.has_issues = true %}{% endif %}
+  {% if not google_status.ok %}{% set ns.has_issues = true %}{% endif %}
+  {% if not google_token.ok %}{% set ns.has_issues = true %}{% endif %}
+  {% for item in config_checks %}
+    {% if item.ok is defined and not item.ok %}{% set ns.has_issues = true %}{% endif %}
+  {% endfor %}
+  {% for item in storage_checks %}
+    {% if item.ok is defined and not item.ok %}{% set ns.has_issues = true %}{% endif %}
+  {% endfor %}
 
-    <div class="row g-3">
-      <div class="col-12 col-lg-4">
-        <div class="card h-100">
-          <div class="card-body">
-            <h3 class="h6 text-uppercase text-muted mb-2">Database</h3>
-            <p class="mb-1">
-              {% if db_status.ok %}
-                <span class="badge bg-success">OK</span>
-              {% else %}
-                <span class="badge bg-danger">Error</span>
-              {% endif %}
-            </p>
-            <div class="small text-muted">{{ db_status.detail }}</div>
-          </div>
+  <div class="status-hero">
+    <div>
+      <div class="status-eyebrow">System Status</div>
+      <h1 class="display-6 mb-1">System Status</h1>
+      <p class="text-muted mb-0">Live checks for database, Google Admin SDK, and storage.</p>
+    </div>
+    <div>
+      <span class="status-pill {{ 'status-pill--bad' if ns.has_issues else 'status-pill--good' }}">
+        {{ 'Attention needed' if ns.has_issues else 'All systems normal' }}
+      </span>
+    </div>
+  </div>
+
+  <div class="status-grid status-grid--summary mt-4">
+    <div class="status-card status-card--summary">
+      <div class="status-card-header">
+        <div>
+          <div class="status-card-title">Database</div>
+          <div class="status-card-value">{{ 'OK' if db_status.ok else 'Error' }}</div>
+        </div>
+        <span class="badge status-badge {{ 'bg-success' if db_status.ok else 'bg-danger' }}">
+          {{ 'OK' if db_status.ok else 'Error' }}
+        </span>
+      </div>
+      <div class="status-card-detail">{{ db_status.detail }}</div>
+    </div>
+    <div class="status-card status-card--summary">
+      <div class="status-card-header">
+        <div>
+          <div class="status-card-title">Google Admin SDK</div>
+          <div class="status-card-value">{{ 'OK' if google_status.ok else 'Error' }}</div>
+        </div>
+        <span class="badge status-badge {{ 'bg-success' if google_status.ok else 'bg-danger' }}">
+          {{ 'OK' if google_status.ok else 'Error' }}
+        </span>
+      </div>
+      <div class="status-card-detail">{{ google_status.detail }}</div>
+    </div>
+    <div class="status-card status-card--summary">
+      <div class="status-card-header">
+        <div>
+          <div class="status-card-title">Google Token</div>
+          <div class="status-card-value">{{ 'OK' if google_token.ok else 'Error' }}</div>
+        </div>
+        <span class="badge status-badge {{ 'bg-success' if google_token.ok else 'bg-danger' }}">
+          {{ 'OK' if google_token.ok else 'Error' }}
+        </span>
+      </div>
+      <div class="status-card-detail">{{ google_token.detail }}</div>
+    </div>
+    <div class="status-card status-card--summary">
+      <div class="status-card-header">
+        <div>
+          <div class="status-card-title">Classroom Sync</div>
+          <div class="status-card-value">{{ classroom_sync_count }} synced</div>
+        </div>
+        <span class="badge status-badge bg-info text-dark">Info</span>
+      </div>
+      <div class="status-card-detail">Last sync: {{ classroom_last_sync or 'No syncs yet' }}</div>
+    </div>
+  </div>
+
+  <div class="status-grid status-grid--two mt-4">
+    <div class="status-card">
+      <div class="status-card-header">
+        <div>
+          <div class="status-card-title">App Info</div>
+          <div class="status-card-value">Build details</div>
         </div>
       </div>
-      <div class="col-12 col-lg-4">
-        <div class="card h-100">
-          <div class="card-body">
-            <h3 class="h6 text-uppercase text-muted mb-2">Google Admin SDK</h3>
-            <p class="mb-1">
-              {% if google_status.ok %}
-                <span class="badge bg-success">OK</span>
-              {% else %}
-                <span class="badge bg-danger">Error</span>
-              {% endif %}
-            </p>
-            <div class="small text-muted">{{ google_status.detail }}</div>
+      <div class="status-list status-list--two-col">
+        {% for item in app_info %}
+          <div class="status-item">
+            <div class="status-label">{{ item.name }}</div>
+            <div class="status-detail">{{ item.detail }}</div>
           </div>
-        </div>
-      </div>
-      <div class="col-12 col-lg-4">
-        <div class="card h-100">
-          <div class="card-body">
-            <h3 class="h6 text-uppercase text-muted mb-2">Classroom Sync</h3>
-            <p class="mb-1">
-              <span class="badge bg-info text-dark">{{ classroom_sync_count }}</span>
-              synced teachers
-            </p>
-            <div class="small text-muted">
-              Last sync: {{ classroom_last_sync or 'No syncs yet' }}
-            </div>
-          </div>
-        </div>
+        {% endfor %}
       </div>
     </div>
+    <div class="status-card">
+      <div class="status-card-header">
+        <div>
+          <div class="status-card-title">Runtime</div>
+          <div class="status-card-value">Live instance</div>
+        </div>
+      </div>
+      <div class="status-list status-list--two-col">
+        {% for item in runtime_details %}
+          <div class="status-item">
+            <div class="status-label">{{ item.name }}</div>
+            <div class="status-detail">{{ item.detail }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
 
-    <div class="row g-3 mt-2">
-      <div class="col-12 col-lg-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <h3 class="h6 text-uppercase text-muted mb-2">App Info</h3>
-          </div>
-          <ul class="list-group list-group-flush">
-            {% for item in app_info %}
-              <li class="list-group-item d-flex justify-content-between align-items-start">
-                <div>
-                  <div class="fw-semibold">{{ item.name }}</div>
-                  <div class="small text-muted">{{ item.detail }}</div>
-                </div>
-              </li>
-            {% endfor %}
-          </ul>
+  <div class="status-grid status-grid--two mt-3">
+    <div class="status-card">
+      <div class="status-card-header">
+        <div>
+          <div class="status-card-title">Config Checks</div>
+          <div class="status-card-value">Environment</div>
         </div>
       </div>
-      <div class="col-12 col-lg-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <h3 class="h6 text-uppercase text-muted mb-2">Runtime</h3>
-          </div>
-          <ul class="list-group list-group-flush">
-            {% for item in runtime_details %}
-              <li class="list-group-item d-flex justify-content-between align-items-start">
-                <div>
-                  <div class="fw-semibold">{{ item.name }}</div>
-                  <div class="small text-muted">{{ item.detail }}</div>
-                </div>
-              </li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-      <div class="col-12 col-lg-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <h3 class="h6 text-uppercase text-muted mb-2">Config Checks</h3>
-          </div>
-          <ul class="list-group list-group-flush">
-            {% for item in config_checks %}
-              <li class="list-group-item d-flex justify-content-between align-items-start">
-                <div>
-                  <div class="fw-semibold">{{ item.name }}</div>
-                  <div class="small text-muted">{{ item.detail }}</div>
-                </div>
-                {% if item.ok is defined %}
-                  <span class="badge {{ 'bg-success' if item.ok else 'bg-danger' }}">
-                    {{ 'OK' if item.ok else 'Error' }}
-                  </span>
-                {% endif %}
-              </li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-      <div class="col-12 col-lg-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <h3 class="h6 text-uppercase text-muted mb-2">Storage</h3>
-          </div>
-          <ul class="list-group list-group-flush">
-            {% for item in storage_checks %}
-              <li class="list-group-item d-flex justify-content-between align-items-start">
-                <div>
-                  <div class="fw-semibold">{{ item.name }}</div>
-                  <div class="small text-muted">{{ item.detail }}</div>
-                </div>
-                {% if item.ok is defined %}
-                  <span class="badge {{ 'bg-success' if item.ok else 'bg-danger' }}">
-                    {{ 'OK' if item.ok else 'Error' }}
-                  </span>
-                {% endif %}
-              </li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-      <div class="col-12 col-lg-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <h3 class="h6 text-uppercase text-muted mb-2">Database Details</h3>
-          </div>
-          <ul class="list-group list-group-flush">
-            {% for item in db_details %}
-              <li class="list-group-item d-flex justify-content-between align-items-start">
-                <div>
-                  <div class="fw-semibold">{{ item.name }}</div>
-                  <div class="small text-muted">{{ item.detail }}</div>
-                </div>
-              </li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-      <div class="col-12 col-lg-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <h3 class="h6 text-uppercase text-muted mb-2">DB Table Counts</h3>
-          </div>
-          <ul class="list-group list-group-flush">
-            {% if db_counts %}
-              {% for item in db_counts %}
-                <li class="list-group-item d-flex justify-content-between align-items-start">
-                  <div class="fw-semibold">{{ item.name }}</div>
-                  <span class="badge bg-info text-dark">{{ item.count }}</span>
-                </li>
-              {% endfor %}
-            {% else %}
-              <li class="list-group-item text-muted small">No data available.</li>
+      <div class="status-list">
+        {% for item in config_checks %}
+          <div class="status-item">
+            <div class="status-label">{{ item.name }}</div>
+            <div class="status-detail">{{ item.detail }}</div>
+            {% if item.ok is defined %}
+              <span class="badge status-badge {{ 'bg-success' if item.ok else 'bg-danger' }}">
+                {{ 'OK' if item.ok else 'Error' }}
+              </span>
             {% endif %}
-          </ul>
-        </div>
-      </div>
-      <div class="col-12">
-        <div class="card h-100">
-          <div class="card-body">
-            <h3 class="h6 text-uppercase text-muted mb-2">Google Admin Details</h3>
           </div>
-          <ul class="list-group list-group-flush">
-            {% for item in google_details %}
-              <li class="list-group-item d-flex justify-content-between align-items-start">
-                <div>
-                  <div class="fw-semibold">{{ item.name }}</div>
-                  <div class="small text-muted">{{ item.detail }}</div>
-                </div>
-                {% if item.ok is defined %}
-                  <span class="badge {{ 'bg-success' if item.ok else 'bg-danger' }}">
-                    {{ 'OK' if item.ok else 'Error' }}
-                  </span>
-                {% endif %}
-              </li>
-            {% endfor %}
-          </ul>
-        </div>
+        {% endfor %}
       </div>
     </div>
-
-    <div class="mt-4">
-      <a class="btn btn-outline-secondary" href="{{ url_for('admin.admin_page') }}">Back to Admin</a>
+    <div class="status-card">
+      <div class="status-card-header">
+        <div>
+          <div class="status-card-title">Storage</div>
+          <div class="status-card-value">Disk access</div>
+        </div>
+      </div>
+      <div class="status-list">
+        {% for item in storage_checks %}
+          <div class="status-item">
+            <div class="status-label">{{ item.name }}</div>
+            <div class="status-detail">{{ item.detail }}</div>
+            {% if item.ok is defined %}
+              <span class="badge status-badge {{ 'bg-success' if item.ok else 'bg-danger' }}">
+                {{ 'OK' if item.ok else 'Error' }}
+              </span>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
     </div>
+  </div>
+
+  <div class="status-grid status-grid--two mt-3">
+    <div class="status-card">
+      <div class="status-card-header">
+        <div>
+          <div class="status-card-title">Database Details</div>
+          <div class="status-card-value">Engine + schema</div>
+        </div>
+      </div>
+      <div class="status-list status-list--two-col">
+        {% for item in db_details %}
+          <div class="status-item">
+            <div class="status-label">{{ item.name }}</div>
+            <div class="status-detail">{{ item.detail }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="status-card">
+      <div class="status-card-header">
+        <div>
+          <div class="status-card-title">DB Table Counts</div>
+          <div class="status-card-value">Record totals</div>
+        </div>
+      </div>
+      <div class="status-list">
+        {% if db_counts %}
+          {% for item in db_counts %}
+            <div class="status-item">
+              <div class="status-label">{{ item.name }}</div>
+              <div class="status-detail">Total rows</div>
+              <span class="badge status-badge bg-info text-dark">{{ item.count }}</span>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="status-item">
+            <div class="status-label">No data</div>
+            <div class="status-detail">No table counts available.</div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="status-grid status-grid--one mt-3">
+    <div class="status-card">
+      <div class="status-card-header">
+        <div>
+          <div class="status-card-title">Google Admin Details</div>
+          <div class="status-card-value">API health</div>
+        </div>
+      </div>
+      <div class="status-list">
+        {% for item in google_details %}
+          <div class="status-item">
+            <div class="status-label">{{ item.name }}</div>
+            <div class="status-detail">{{ item.detail }}</div>
+            {% if item.ok is defined %}
+              <span class="badge status-badge {{ 'bg-success' if item.ok else 'bg-danger' }}">
+                {{ 'OK' if item.ok else 'Error' }}
+              </span>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <a class="btn btn-outline-secondary" href="{{ url_for('admin.admin_page') }}">Back to Admin</a>
   </div>
 </div>
 {% endblock %}

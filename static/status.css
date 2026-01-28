@@ -1,0 +1,196 @@
+.status-page {
+    --status-border: rgba(15, 23, 42, 0.08);
+    --status-card-bg: #ffffff;
+    --status-muted: #64748b;
+    --status-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    --status-accent: #1f6feb;
+}
+
+.status-hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1.75rem;
+    border-radius: 1.5rem;
+    background: linear-gradient(120deg, #eef2ff, #f8fafc 55%);
+    border: 1px solid var(--status-border);
+}
+
+.status-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.72rem;
+    color: var(--status-muted);
+    margin-bottom: 0.35rem;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 0.45rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.status-pill--good {
+    background: rgba(22, 163, 74, 0.12);
+    color: #166534;
+    border-color: rgba(22, 163, 74, 0.25);
+}
+
+.status-pill--bad {
+    background: rgba(220, 38, 38, 0.1);
+    color: #991b1b;
+    border-color: rgba(220, 38, 38, 0.2);
+}
+
+.status-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.status-grid--summary {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.status-grid--two {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.status-grid--one {
+    grid-template-columns: 1fr;
+}
+
+.status-card {
+    background: var(--status-card-bg);
+    border: 1px solid var(--status-border);
+    border-radius: 1.25rem;
+    box-shadow: var(--status-shadow);
+    overflow: hidden;
+}
+
+.status-card--summary {
+    min-height: 170px;
+}
+
+.status-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem 0.75rem;
+}
+
+.status-card-title {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--status-muted);
+    margin-bottom: 0.35rem;
+}
+
+.status-card-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.status-card-detail {
+    color: var(--status-muted);
+    font-size: 0.92rem;
+    padding: 0 1.5rem 1.25rem;
+    word-break: break-word;
+}
+
+.status-list {
+    display: grid;
+}
+
+.status-item {
+    display: grid;
+    grid-template-columns: minmax(150px, 1.1fr) minmax(0, 1.8fr) auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    border-top: 1px solid var(--status-border);
+}
+
+.status-list--two-col .status-item {
+    grid-template-columns: minmax(160px, 1.1fr) minmax(0, 2fr);
+}
+
+.status-item:first-child {
+    border-top: 0;
+}
+
+.status-label {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.status-detail {
+    color: var(--status-muted);
+    word-break: break-word;
+}
+
+.status-badge {
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.65rem;
+}
+
+@media (max-width: 575px) {
+    .status-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .status-item {
+        grid-template-columns: 1fr;
+        gap: 0.35rem;
+    }
+
+    .status-list--two-col .status-item {
+        grid-template-columns: 1fr;
+    }
+}
+
+html.dark-mode .status-page {
+    --status-card-bg: #111827;
+    --status-border: rgba(255, 255, 255, 0.08);
+    --status-muted: #9ca3af;
+    --status-shadow: none;
+}
+
+html.dark-mode .status-hero {
+    background: linear-gradient(120deg, #1f2937, #0f172a 60%);
+}
+
+html.dark-mode .status-label {
+    color: #e5e7eb;
+}
+
+html.dark-mode .status-pill {
+    background: rgba(148, 163, 184, 0.15);
+    color: #e2e8f0;
+    border-color: rgba(148, 163, 184, 0.25);
+}
+
+html.dark-mode .status-pill--good {
+    background: rgba(34, 197, 94, 0.15);
+    color: #bbf7d0;
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+html.dark-mode .status-pill--bad {
+    background: rgba(248, 113, 113, 0.12);
+    color: #fecaca;
+    border-color: rgba(248, 113, 113, 0.3);
+}

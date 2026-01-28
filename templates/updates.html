@@ -17,6 +17,7 @@
     <span class="text-muted me-2">Filter version:</span>
     <select class="form-select form-select-sm updates-filter-select" aria-label="Filter updates">
       <option value="all" selected>All</option>
+      <option value="1.1.1">1.1.1</option>
       <option value="1.1">1.1</option>
       <option value="1.0.9">1.0.9</option>
       <option value="1.0.8">1.0.8</option>
@@ -36,12 +37,13 @@
       <h4>Known Bugs</h4>
       <ul class="mb-0">
         {% set active_issues = known_issues | selectattr('status', 'equalto', 'Active') | list if known_issues else [] %}
-        {% for issue in active_issues %}
-          <li>{{ issue.text }}</li>
-        {% endfor %}
-        <li>Searching for adding admin is "No staff found".</li>
-        <li>Emailing admins for reset limits.</li>
-        <li>Staff search results depend on accurate OU assignments.</li>
+        {% if active_issues %}
+          {% for issue in active_issues %}
+            <li>{{ issue.text }}</li>
+          {% endfor %}
+        {% else %}
+          <li>No active known issues reported.</li>
+        {% endif %}
       </ul>
       <p class="mt-2"><em>We're actively working on fixes.</em></p>
     </div>
@@ -54,6 +56,28 @@
     </div>
   </div>
 
+  
+  <div class="updates-card mt-4 latest" data-version="1.1.1">
+    <h4><span class="date-label">2026-01-28</span> Version 1.1.1</h4>
+    <ul class="list-group updates-list">
+      <li class="list-group-item">Student search now runs a single Admin SDK query with caching for faster results.</li>
+      <li class="list-group-item">Search calls now use the routed endpoint, improving reliability behind base paths.</li>
+      <li class="list-group-item">System Status layout refreshed for clearer, more even sections.</li>
+      <li class="list-group-item">Status summary now includes Google token health at a glance.</li>
+    </ul>
+  </div>
+
+  <div class="updates-card mt-4" data-version="1.1">
+    <h4>📅 <span class="date-label">2026-01-22</span> Version 1.1</h4>
+    <ul class="list-group updates-list">
+      <li class="list-group-item">Updated production domain to reset.hart.k12.ga.us.</li>
+      <li class="list-group-item">🗄️ Migrated audit logs, bug reports, known issues, and login logs to the database.</li>
+      <li class="list-group-item">🧾 Added data export ZIP for audits, bugs, and known issues.</li>
+      <li class="list-group-item">🧭 Added System Status page with DB, Admin SDK, and Classroom sync checks.</li>
+      <li class="list-group-item">🛠️ Known Issues admin tools now support edit, level changes, and delete.</li>
+      <li class="list-group-item">🔒 Dev login routes now 404 when disabled.</li>
+    </ul>
+  </div>
   <div class="updates-card mt-4" data-version="1.0.9">
     <h4>📅 <span class="date-label">2026-01-21</span> Version 1.0.9</h4>
     <ul class="list-group updates-list">
@@ -67,18 +91,6 @@
       <li class="list-group-item">⚠️ Admin/global resets require confirmation.</li>
       <li class="list-group-item">📝 Bug reports support admin notes and status updates.</li>
       <li class="list-group-item">📚 Documentation rebuilt with book-stack layout and admin menu details.</li>
-    </ul>
-  </div>
-
-  <div class="updates-card mt-4" data-version="1.1">
-    <h4>📅 <span class="date-label">2026-01-22</span> Version 1.1</h4>
-    <ul class="list-group updates-list">
-      <li class="list-group-item">Updated production domain to reset.hart.k12.ga.us.</li>
-      <li class="list-group-item">🗄️ Migrated audit logs, bug reports, known issues, and login logs to the database.</li>
-      <li class="list-group-item">🧾 Added data export ZIP for audits, bugs, and known issues.</li>
-      <li class="list-group-item">🧭 Added System Status page with DB, Admin SDK, and Classroom sync checks.</li>
-      <li class="list-group-item">🛠️ Known Issues admin tools now support edit, level changes, and delete.</li>
-      <li class="list-group-item">🔒 Dev login routes now 404 when disabled.</li>
     </ul>
   </div>
 

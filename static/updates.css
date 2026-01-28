@@ -19,6 +19,11 @@
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
 }
 
+.updates-card.latest {
+    border-color: rgba(37, 99, 235, 0.25);
+    background: linear-gradient(120deg, #eef2ff, #ffffff 60%);
+}
+
 .updates-filter {
     display: flex;
     flex-wrap: wrap;
@@ -70,6 +75,11 @@ html.dark-mode .updates-card {
     background: #111827;
     border-color: rgba(255, 255, 255, 0.08);
     box-shadow: none;
+}
+
+html.dark-mode .updates-card.latest {
+    background: linear-gradient(120deg, #1f2937, #111827 60%);
+    border-color: rgba(59, 130, 246, 0.35);
 }
 
 html.dark-mode .updates-list .list-group-item {
