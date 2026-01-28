@@ -81,6 +81,7 @@ def search_users(query, max_results=50):
     if not toks:
         return []
     term = toks[0]
+    results = []
     try:
         resp = svc.users().list(
             customer='my_customer',
@@ -91,6 +92,8 @@ def search_users(query, max_results=50):
         results = resp.get('users', [])
     except HttpError:
         results = []
+
+    if not results:
         for field in ('givenName', 'familyName', 'email'):
             resp = svc.users().list(
                 customer='my_customer',
