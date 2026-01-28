@@ -8,10 +8,11 @@ set -euo pipefail
 # Change to the directory where this script lives
 cd "$(dirname "$0")"
 
-echo "Starting Gunicorn on 0.0.0.0:5000 with 3 workers..."
+WORKERS="${WEB_CONCURRENCY:-${GUNICORN_WORKERS:-3}}"
+echo "Starting Gunicorn on 0.0.0.0:5000 with ${WORKERS} workers..."
 
 exec gunicorn \
-  --workers 3 \
+  --workers "${WORKERS}" \
   --bind 0.0.0.0:5000 \
   --access-logfile - \
   --error-logfile - \

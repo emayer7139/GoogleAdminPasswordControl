@@ -18,6 +18,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:-}
+        GIT_SHA: ${GIT_SHA:-}
+        BUILD_TIME: ${BUILD_TIME:-}
     restart: unless-stopped
     depends_on:
       db:
@@ -30,6 +34,7 @@ services:
       - FLASK_DEBUG=0
       - FLASK_ENV=production
       - DATABASE_URL=postgresql+psycopg://resetapp:resetapp@db:5432/resetapp
+      - WEB_CONCURRENCY=${WEB_CONCURRENCY:-3}
     volumes:
       - ./service_account.json:/app/service_account.json:ro
       - ./templates:/app/templates:ro
