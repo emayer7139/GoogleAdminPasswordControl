@@ -1438,6 +1438,12 @@
 
       if (hidden) hidden.value = '';
 
+      const isEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(q);
+      if (isEmail) {
+        if (hidden) hidden.value = q.toLowerCase();
+        if (addBtn) addBtn.disabled = false;
+      }
+
       if (!q) {
 
         if (sugg) sugg.innerHTML = '';

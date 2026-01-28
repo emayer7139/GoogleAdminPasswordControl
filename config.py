@@ -44,6 +44,7 @@ class Config:
             '/Staff/District,/Staff/Faculty,/Staff/Long Term Subs,/Staff/School Admins,/Staff/Media Specialists'
         )
     )
+    STAFF_EMAIL_DOMAINS = _split_csv(os.environ.get('STAFF_EMAIL_DOMAINS', ''))
 
     STUDENT_OU_PREFIXES = _split_csv(os.environ.get('STUDENT_OU_PREFIXES', '/Students'))
     STUDENT_EMAIL_DOMAINS = _split_csv(os.environ.get('STUDENT_EMAIL_DOMAINS', ''))

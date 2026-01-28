@@ -130,7 +130,21 @@ def _is_student_account(user):
     return False
 
 
-def search_staff(query, staff_prefixes, max_results=50):
+def _get_staff_domains():
+    domains = [
+        (domain or '').strip().lower().lstrip('@')
+        for domain in current_app.config.get('STAFF_EMAIL_DOMAINS', [])
+        if (domain or '').strip()
+    ]
+    if domains:
+        return domains
+    admin_user = (current_app.config.get('ADMIN_USER') or '').strip().lower()
+    if '@' in admin_user:
+        return [admin_user.split('@', 1)[1]]
+    return []
+
+
+def search_staff(query, staff_prefixes, max_results=200):
     candidates = search_users(query, max_results=max_results)
     unique = {u['primaryEmail']: u for u in candidates if u.get('primaryEmail')}
     prefixes = [
@@ -138,6 +152,7 @@ def search_staff(query, staff_prefixes, max_results=50):
         for prefix in (staff_prefixes or [])
         if (prefix or '').strip()
     ]
+    staff_domains = _get_staff_domains()
 
     def matches_prefix(user):
         path = (user.get('orgUnitPath', '') or '').strip().lower().rstrip('/')
@@ -152,6 +167,11 @@ def search_staff(query, staff_prefixes, max_results=50):
     # If exact email is provided, allow any non-student account.
     if '@' in (query or ''):
         non_students = [u for u in unique.values() if not _is_student_account(u)]
+        if staff_domains:
+            non_students = [
+                u for u in non_students
+                if (u.get('primaryEmail', '').lower().endswith(tuple(f"@{d}" for d in staff_domains)))
+            ]
         if non_students:
             return non_students
 
@@ -160,4 +180,15 @@ def search_staff(query, staff_prefixes, max_results=50):
         path = (user.get('orgUnitPath', '') or '').strip().lower().rstrip('/')
         return path == '/staff' or path.startswith('/staff/')
 
-    return [u for u in unique.values() if matches_staff_root(u)]
+    staff = [u for u in unique.values() if matches_staff_root(u)]
+    if staff:
+        return staff
+
+    # Final fallback: allow non-student accounts on staff domains.
+    non_students = [u for u in unique.values() if not _is_student_account(u)]
+    if staff_domains:
+        non_students = [
+            u for u in non_students
+            if (u.get('primaryEmail', '').lower().endswith(tuple(f"@{d}" for d in staff_domains)))
+        ]
+    return non_students
