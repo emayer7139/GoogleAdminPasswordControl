@@ -16,6 +16,11 @@ from sqlalchemy import (
 
 metadata = MetaData()
 
+DEFAULT_APP_SETTINGS = {
+    'require_reset_request': 'true',
+    'reset_cooldown_minutes': '0',
+}
+
 schema_meta_table = Table(
     'schema_meta',
     metadata,
@@ -96,6 +101,13 @@ reset_requests_table = Table(
     Column('status', String(32), nullable=False),
 )
 
+app_settings_table = Table(
+    'app_settings',
+    metadata,
+    Column('key', String(64), primary_key=True),
+    Column('value', String(255), nullable=False),
+)
+
 theme_preferences_table = Table(
     'theme_preferences',
     metadata,
@@ -117,6 +129,7 @@ def init_db(app):
     app.extensions['db_engine'] = engine
     metadata.create_all(engine)
     _ensure_schema_meta(engine)
+    _ensure_app_settings(engine)
     _migrate_json(engine, app.root_path)
 
 
@@ -274,3 +287,14 @@ def _ensure_schema_meta(engine):
                 key='initialized_at',
                 value=now
             ))
+
+
+def _ensure_app_settings(engine):
+    with engine.begin() as conn:
+        existing = set(conn.execute(select(app_settings_table.c.key)).scalars().all())
+        for key, value in DEFAULT_APP_SETTINGS.items():
+            if key not in existing:
+                conn.execute(app_settings_table.insert().values(
+                    key=key,
+                    value=value
+                ))

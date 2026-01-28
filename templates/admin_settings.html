@@ -1,0 +1,51 @@
+{% extends "admin_layout.html" %}
+
+{% set page_title = "Admin Settings" %}
+
+{% block admin_header %}
+<div class="admin-hero d-flex flex-wrap align-items-end justify-content-between gap-3">
+  <div>
+    <h1 class="display-6 mb-1">Admin Settings</h1>
+    <p class="text-muted mb-0">Global controls for reset approvals and cooldowns.</p>
+  </div>
+  <div class="text-muted small">
+    Daily reset limit (non-admin): <strong>{{ reset_limit }}</strong>
+  </div>
+</div>
+{% endblock %}
+
+{% block admin_body %}
+<div class="admin-panel mt-3">
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ session['csrf_token'] }}" />
+    <div class="row g-4">
+      <div class="col-12">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="require-reset-request"
+                 name="require_reset_request" {% if require_request %}checked{% endif %}>
+          <label class="form-check-label fw-semibold" for="require-reset-request">
+            Require approval to exceed daily reset limit
+          </label>
+          <div class="form-text">
+            When enabled, non-admins who hit the daily limit must submit a reset request and wait for approval.
+            When disabled, non-admins can continue resetting beyond the daily limit.
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label for="reset-cooldown" class="form-label fw-semibold">Reset cooldown (minutes)</label>
+        <input class="form-control" type="number" id="reset-cooldown" name="reset_cooldown_minutes"
+               min="0" max="1440" value="{{ cooldown_minutes }}">
+        <div class="form-text">
+          Applies to non-admins. Set to 0 to disable.
+        </div>
+      </div>
+
+      <div class="col-12">
+        <button class="btn btn-primary">Save Settings</button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

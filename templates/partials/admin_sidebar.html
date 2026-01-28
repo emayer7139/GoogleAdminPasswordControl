@@ -25,6 +25,11 @@
       <a class="admin-nav-link {{ 'active' if admin_section == 'known_issues' else '' }}" href="{{ url_for('admin.admin_known_issues') }}">
         Known Issues
       </a>
+      {% if role == 'global_admin' %}
+      <a class="admin-nav-link {{ 'active' if admin_section == 'settings' else '' }}" href="{{ url_for('admin.admin_settings') }}">
+        Settings
+      </a>
+      {% endif %}
     </nav>
 
     <div class="admin-nav-divider"></div>

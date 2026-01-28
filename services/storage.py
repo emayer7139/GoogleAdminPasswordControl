@@ -11,6 +11,8 @@ from services.db import (
     admin_users_table,
     global_admins_table,
     reset_requests_table,
+    app_settings_table,
+    DEFAULT_APP_SETTINGS,
     theme_preferences_table,
     classroom_sync_table,
 )
@@ -61,6 +63,37 @@ def load_requests():
             .order_by(reset_requests_table.c.date, reset_requests_table.c.id)
         ).mappings().all()
     return [dict(row) for row in rows]
+
+
+def load_app_settings():
+    settings = dict(DEFAULT_APP_SETTINGS)
+    with get_engine().connect() as conn:
+        rows = conn.execute(select(app_settings_table)).mappings().all()
+    for row in rows:
+        key = row.get('key')
+        value = row.get('value')
+        if key:
+            settings[key] = value
+    return settings
+
+
+def set_app_settings(settings):
+    with get_engine().begin() as conn:
+        for key, value in settings.items():
+            key = str(key).strip()
+            if not key:
+                continue
+            val = '' if value is None else str(value).strip()
+            result = conn.execute(
+                app_settings_table.update()
+                .where(app_settings_table.c.key == key)
+                .values(value=val)
+            )
+            if result.rowcount == 0:
+                conn.execute(app_settings_table.insert().values(
+                    key=key,
+                    value=val
+                ))
 
 
 def save_requests(reqs):

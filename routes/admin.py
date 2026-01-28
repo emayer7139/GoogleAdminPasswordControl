@@ -20,6 +20,8 @@ from services.storage import (
     save_global_admins,
     load_requests,
     save_requests,
+    load_app_settings,
+    set_app_settings,
     load_bug_reports,
     load_known_issues,
     add_known_issue as add_known_issue_record,
@@ -159,6 +161,60 @@ def admin_known_issues():
     return render_template(
         'admin_known_issues.html',
         **_admin_context('known_issues', known_issues=load_known_issues())
+    )
+
+
+@bp.route('/admin/settings', methods=['GET', 'POST'])
+@login_required
+@role_required({ROLE_GLOBAL_ADMIN})
+def admin_settings():
+    settings = load_app_settings()
+    require_request = str(settings.get('require_reset_request', 'true')).lower() in ('1', 'true', 'yes', 'on')
+    cooldown_raw = settings.get('reset_cooldown_minutes', '0')
+    try:
+        cooldown_minutes = int(cooldown_raw)
+    except (TypeError, ValueError):
+        cooldown_minutes = 0
+
+    if request.method == 'POST':
+        token = request.form.get('csrf_token')
+        if not token or token != session.get('csrf_token'):
+            abort(403)
+        require_request = request.form.get('require_reset_request') == 'on'
+        cooldown_raw = request.form.get('reset_cooldown_minutes', '').strip()
+        try:
+            cooldown_minutes = int(cooldown_raw)
+        except (TypeError, ValueError):
+            flash('Cooldown must be a whole number of minutes.', 'danger')
+            return redirect(url_for('admin.admin_settings'))
+        if cooldown_minutes < 0 or cooldown_minutes > 1440:
+            flash('Cooldown must be between 0 and 1440 minutes.', 'danger')
+            return redirect(url_for('admin.admin_settings'))
+
+        set_app_settings({
+            'require_reset_request': 'true' if require_request else 'false',
+            'reset_cooldown_minutes': str(cooldown_minutes)
+        })
+        flash('Settings updated.', 'success')
+        log_audit_event(
+            admin_email=session['user_info']['email'],
+            outcome='Admin Settings Updated',
+            detail=f"require_reset_request={require_request}, cooldown_minutes={cooldown_minutes}",
+            role=session.get('role'),
+            action_type='admin_action',
+            admin_ou=session.get('orgUnitPath'),
+            admin_school=session.get('school')
+        )
+        return redirect(url_for('admin.admin_settings'))
+
+    return render_template(
+        'admin_settings.html',
+        **_admin_context(
+            'settings',
+            require_request=require_request,
+            cooldown_minutes=cooldown_minutes,
+            reset_limit=current_app.config.get('RESET_LIMIT', 5)
+        )
     )
 
 

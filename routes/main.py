@@ -1,4 +1,5 @@
 import logging
+import math
 import os
 import secrets
 from datetime import date, datetime
@@ -32,6 +33,7 @@ from services.storage import (
     get_audit_logs,
     load_requests,
     save_requests,
+    load_app_settings,
     set_theme_for_user,
     add_bug_report,
     log_audit_event,
@@ -52,13 +54,28 @@ def index():
     if not user_info:
         return redirect(url_for('auth.login_page'))
 
+    settings = load_app_settings()
+    require_request = _truthy(settings.get('require_reset_request', 'true'))
+    cooldown_minutes = _safe_int(settings.get('reset_cooldown_minutes', 0), 0)
+    if cooldown_minutes < 0:
+        cooldown_minutes = 0
+
     today = date.today().isoformat()
-    done = sum(
-        1 for a in get_audit_logs()
-        if a.get('admin') == user_info['email']
-        and a['timestamp'].startswith(today)
-        and a.get('outcome') == 'Success'
-    )
+    done = 0
+    last_reset_at = None
+    for entry in get_audit_logs():
+        if entry.get('admin') != user_info['email']:
+            continue
+        if entry.get('outcome') != 'Success':
+            continue
+        if entry.get('action_type') != 'password_reset':
+            continue
+        timestamp = entry.get('timestamp', '')
+        if timestamp.startswith(today):
+            done += 1
+        parsed = _parse_timestamp(timestamp)
+        if parsed and (last_reset_at is None or parsed > last_reset_at):
+            last_reset_at = parsed
 
     new_pw = None
     request_more_url = None
@@ -70,34 +87,46 @@ def index():
             abort(403)
 
         role = session.get('role')
-        if role not in (ROLE_ADMIN, ROLE_GLOBAL_ADMIN) and done >= current_app.config.get('RESET_LIMIT', 5):
-            flash('Daily limit reached.', 'danger')
-            request_more_url = url_for('main.request_more', token=session.get('csrf_token'))
-            outcome = 'Limit Reached'
-        else:
-            se = request.form.get('student_email', '').strip().lower()
-            sn = request.form.get('student_name', '').strip()
-            if not se:
-                flash('Enter a student email.', 'danger')
-                outcome = 'Canceled'
+        if role not in (ROLE_ADMIN, ROLE_GLOBAL_ADMIN) and cooldown_minutes:
+            remaining = _cooldown_remaining(last_reset_at, cooldown_minutes)
+            if remaining:
+                wait_minutes = max(1, math.ceil(remaining / 60))
+                flash(f'Please wait {wait_minutes} minute(s) before another reset.', 'warning')
+                outcome = 'Cooldown'
+
+        if not outcome:
+            limit_reached = (
+                role not in (ROLE_ADMIN, ROLE_GLOBAL_ADMIN)
+                and done >= current_app.config.get('RESET_LIMIT', 5)
+            )
+            if limit_reached and require_request and not _has_approved_request(user_info['email'], today):
+                flash('Daily limit reached.', 'danger')
+                request_more_url = url_for('main.request_more', token=session.get('csrf_token'))
+                outcome = 'Limit Reached'
             else:
-                try:
-                    student = get_user(se)
-                    if not _is_student_account(student):
-                        flash('Only student accounts.', 'danger')
-                        outcome = 'Denied'
-                    elif not _can_reset_student(role, student, user_info['email']):
-                        flash('No permission.', 'danger')
-                        outcome = 'Denied'
-                    else:
-                        new_pw = _generate_password(12)
-                        update_password(se, new_pw)
-                        flash('Password reset!', 'success')
-                        outcome = 'Success'
-                except Exception as exc:
-                    logger.error('Reset error', exc_info=True)
-                    flash(f'Error: {exc}', 'danger')
-                    outcome = 'Error'
+                se = request.form.get('student_email', '').strip().lower()
+                sn = request.form.get('student_name', '').strip()
+                if not se:
+                    flash('Enter a student email.', 'danger')
+                    outcome = 'Canceled'
+                else:
+                    try:
+                        student = get_user(se)
+                        if not _is_student_account(student):
+                            flash('Only student accounts.', 'danger')
+                            outcome = 'Denied'
+                        elif not _can_reset_student(role, student, user_info['email']):
+                            flash('No permission.', 'danger')
+                            outcome = 'Denied'
+                        else:
+                            new_pw = _generate_password(12)
+                            update_password(se, new_pw)
+                            flash('Password reset!', 'success')
+                            outcome = 'Success'
+                    except Exception as exc:
+                        logger.error('Reset error', exc_info=True)
+                        flash(f'Error: {exc}', 'danger')
+                        outcome = 'Error'
 
         log_audit_event(
             admin_email=user_info['email'],
@@ -135,12 +164,22 @@ def request_more():
     token = request.args.get('token')
     if not token or token != session.get('csrf_token'):
         abort(403)
+    settings = load_app_settings()
+    if not _truthy(settings.get('require_reset_request', 'true')):
+        flash('Reset requests are disabled.', 'info')
+        return redirect(url_for('main.index'))
     reqs = load_requests()
+    today = date.today().isoformat()
+    addr = session['user_info']['email'].lower()
+    for req in reqs:
+        if req.get('email') == addr and req.get('date') == today and req.get('status') in ('Pending', 'Approved'):
+            flash('Request already submitted for today.', 'info')
+            return redirect(url_for('main.index'))
     rid = secrets.token_hex(4)
     reqs.append({
         'id': rid,
-        'email': session['user_info']['email'],
-        'date': date.today().isoformat(),
+        'email': addr,
+        'date': today,
         'status': 'Pending'
     })
     save_requests(reqs)
@@ -313,3 +352,40 @@ def _can_reset_student(role, student, teacher_email):
 def _generate_password(length=12):
     alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
     return ''.join(secrets.choice(alphabet) for _ in range(length))
+
+
+def _parse_timestamp(value):
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+    except ValueError:
+        return None
+
+
+def _cooldown_remaining(last_reset_at, cooldown_minutes):
+    if not last_reset_at or cooldown_minutes <= 0:
+        return 0
+    elapsed = (datetime.now() - last_reset_at).total_seconds()
+    cooldown_seconds = max(0, int(cooldown_minutes) * 60)
+    return max(0, int(cooldown_seconds - elapsed))
+
+
+def _has_approved_request(email, request_date):
+    addr = (email or '').lower()
+    for req in load_requests():
+        if req.get('email') == addr and req.get('date') == request_date:
+            if str(req.get('status', '')).lower() == 'approved':
+                return True
+    return False
+
+
+def _truthy(value):
+    return str(value).strip().lower() in ('1', 'true', 'yes', 'y', 'on')
+
+
+def _safe_int(value, default=0):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
