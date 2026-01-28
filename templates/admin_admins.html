@@ -15,23 +15,42 @@
 <div class="admin-panel mt-3">
   <div class="row g-3">
     <div class="col-12 col-lg-6">
-      <h3 class="h5">Current Admins</h3>
+      <div class="d-flex align-items-center justify-content-between">
+        <h3 class="h5 mb-0">Current Admins</h3>
+        <span class="badge bg-secondary">{{ admin_users|length }}</span>
+      </div>
       <input id="search-admins" class="form-control mb-3" placeholder="Filter existing admins" />
-      <ul class="list-group mb-3" id="list-admins">
-        {% for email in admin_users %}
-          <li class="list-group-item d-flex justify-content-between align-items-center">
-            {{ email }}
-            {% if email != user.email %}
-              <form method="post" action="{{ url_for('admin.remove_admin') }}"
-                    onsubmit="return confirm('Remove {{ email }}?')">
-                <input type="hidden" name="email" value="{{ email }}" />
-                <input type="hidden" name="csrf_token" value="{{ session['csrf_token'] }}" />
-                <button class="btn btn-sm btn-outline-danger">Remove</button>
-              </form>
-            {% endif %}
-          </li>
-        {% endfor %}
-      </ul>
+      <div class="admin-list mb-3" id="list-admins">
+        <table class="table table-sm align-middle mb-0">
+          <thead>
+            <tr><th>Email</th><th class="text-end">Action</th></tr>
+          </thead>
+          <tbody>
+            {% for email in admin_users %}
+              <tr>
+                <td>
+                  <div class="fw-semibold">{{ email }}</div>
+                  {% if email == user.email %}
+                    <span class="badge bg-light text-dark border">You</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  {% if email != user.email %}
+                    <form method="post" action="{{ url_for('admin.remove_admin') }}"
+                          onsubmit="return confirm('Remove {{ email }}?')">
+                      <input type="hidden" name="email" value="{{ email }}" />
+                      <input type="hidden" name="csrf_token" value="{{ session['csrf_token'] }}" />
+                      <button class="btn btn-sm btn-outline-danger">Remove</button>
+                    </form>
+                  {% else %}
+                    <span class="text-muted small">Cannot remove self</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
     <div class="col-12 col-lg-6">
       <h3 class="h5">Add Staff as Admin</h3>
@@ -47,23 +66,42 @@
 
     {% if role == 'global_admin' %}
     <div class="col-12 col-lg-6">
-      <h3 class="h5">Current Global Admins</h3>
+      <div class="d-flex align-items-center justify-content-between">
+        <h3 class="h5 mb-0">Current Global Admins</h3>
+        <span class="badge bg-secondary">{{ global_admins|length }}</span>
+      </div>
       <input id="search-global-admins" class="form-control mb-3" placeholder="Filter global admins" />
-      <ul class="list-group mb-3" id="list-global-admins">
-        {% for email in global_admins %}
-          <li class="list-group-item d-flex justify-content-between align-items-center">
-            {{ email }}
-            {% if email != user.email %}
-              <form method="post" action="{{ url_for('admin.remove_global_admin') }}"
-                    onsubmit="return confirm('Remove {{ email }} as global admin?')">
-                <input type="hidden" name="email" value="{{ email }}" />
-                <input type="hidden" name="csrf_token" value="{{ session['csrf_token'] }}" />
-                <button class="btn btn-sm btn-outline-danger">Remove</button>
-              </form>
-            {% endif %}
-          </li>
-        {% endfor %}
-      </ul>
+      <div class="admin-list mb-3" id="list-global-admins">
+        <table class="table table-sm align-middle mb-0">
+          <thead>
+            <tr><th>Email</th><th class="text-end">Action</th></tr>
+          </thead>
+          <tbody>
+            {% for email in global_admins %}
+              <tr>
+                <td>
+                  <div class="fw-semibold">{{ email }}</div>
+                  {% if email == user.email %}
+                    <span class="badge bg-light text-dark border">You</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  {% if email != user.email %}
+                    <form method="post" action="{{ url_for('admin.remove_global_admin') }}"
+                          onsubmit="return confirm('Remove {{ email }} as global admin?')">
+                      <input type="hidden" name="email" value="{{ email }}" />
+                      <input type="hidden" name="csrf_token" value="{{ session['csrf_token'] }}" />
+                      <button class="btn btn-sm btn-outline-danger">Remove</button>
+                    </form>
+                  {% else %}
+                    <span class="text-muted small">Cannot remove self</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
     <div class="col-12 col-lg-6">
       <h3 class="h5">Add Staff as Global Admin</h3>
@@ -87,10 +125,11 @@
     const inp = document.getElementById(inpId);
     const list = document.getElementById(listId);
     if (!inp || !list) return;
+    const rows = list.querySelectorAll('tbody tr');
     inp.addEventListener('input', () => {
       const q = inp.value.toLowerCase();
-      Array.from(list.children).forEach(item => {
-        item.style.display = item.textContent.toLowerCase().includes(q) ? '' : 'none';
+      rows.forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
       });
     });
   }
