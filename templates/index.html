@@ -56,8 +56,13 @@
                         
                         <div class="mb-3">
                             <label for="student_email" class="form-label">Student Email</label>
-                            <input type="email" class="form-control" id="student_email" name="student_email" 
-                                   value="{{ student_email }}" required>
+                            <div class="position-relative">
+                                <input type="email" class="form-control" id="student_email" name="student_email"
+                                       value="{{ student_email }}" autocomplete="off" required>
+                                <ul class="list-group position-absolute w-100 shadow-sm" id="student-suggestions"
+                                    style="z-index: 1000; max-height: 220px; overflow-y: auto;"></ul>
+                            </div>
+                            <input type="hidden" id="student_name" name="student_name" value="{{ student_name }}">
                             <div class="invalid-feedback">Please enter a valid student email address.</div>
                         </div>
                         <button type="submit" class="btn btn-primary">Reset Password</button>
@@ -107,6 +112,8 @@
   const globalIssues = {{ global_issues | default([]) | tojson }};
   let globalIssueIndex = 0;
   const banner = document.querySelector('.global-issue-banner');
+  const isAdmin = {{ 'true' if role in ['admin', 'global_admin'] else 'false' }};
+  const searchUrl = "{{ url_for('main.search_users_route') }}";
 
   function rotateGlobalIssues() {
     const el = document.getElementById('global-issue-text');
@@ -134,37 +141,123 @@
     }, 250);
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
+  function initResetPage() {
     if (globalIssues.length > 1) {
       setInterval(rotateGlobalIssues, 6000);
     }
     const form = document.querySelector('form.needs-validation');
-    const role = "{{ role }}";
-    if (!form || !role || (role !== 'admin' && role !== 'global_admin')) return;
-    const modalEl = document.getElementById('confirmResetModal');
-    const confirmEmail = document.getElementById('confirm-reset-email');
-    const confirmBtn = document.getElementById('confirm-reset-btn');
-    if (!modalEl || !confirmEmail || !confirmBtn) return;
-    const modal = new bootstrap.Modal(modalEl);
+    if (!form) return;
 
-    form.addEventListener('submit', (event) => {
-      if (form.dataset.confirmed === 'true') return;
-      if (!form.checkValidity()) return;
-      event.preventDefault();
-      event.stopPropagation();
-      const email = document.getElementById('student_email')?.value || '';
-      confirmEmail.textContent = email || 'this student';
-      modal.show();
-    });
+    if (isAdmin) {
+      const studentInput = document.getElementById('student_email');
+      const studentNameInput = document.getElementById('student_name');
+      const suggestions = document.getElementById('student-suggestions');
+      let searchDebounce;
 
-    confirmBtn.addEventListener('click', () => {
-      form.dataset.confirmed = 'true';
-      if (form.requestSubmit) {
-        form.requestSubmit();
-      } else {
-        form.submit();
+      const clearSuggestions = () => {
+        if (suggestions) suggestions.innerHTML = '';
+      };
+
+      const renderMessage = (text, extraClass = '') => {
+        if (!suggestions) return;
+        suggestions.innerHTML = '';
+        const item = document.createElement('li');
+        item.className = `list-group-item ${extraClass}`.trim();
+        item.textContent = text;
+        suggestions.appendChild(item);
+      };
+
+      if (studentInput && suggestions) {
+        studentInput.addEventListener('input', () => {
+          clearTimeout(searchDebounce);
+          if (studentNameInput) studentNameInput.value = '';
+          const q = studentInput.value.trim();
+          if (q.length < 2) {
+            clearSuggestions();
+            return;
+          }
+          searchDebounce = setTimeout(async () => {
+            renderMessage('Searching...');
+            try {
+              const res = await fetch(`${searchUrl}?q=${encodeURIComponent(q)}`, {
+                headers: { 'Accept': 'application/json' }
+              });
+              if (!res.ok) throw new Error('Search failed');
+              const users = await res.json();
+              suggestions.innerHTML = '';
+              if (!users.length) {
+                renderMessage('No students found');
+                return;
+              }
+              users.forEach((u) => {
+                const item = document.createElement('li');
+                item.className = 'list-group-item list-group-item-action';
+                item.dataset.email = u.value || '';
+                item.dataset.name = u.label || '';
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = u.label || u.value || 'Student';
+                const emailSpan = document.createElement('span');
+                emailSpan.className = 'text-muted small ms-2';
+                emailSpan.textContent = u.value || '';
+                item.appendChild(nameSpan);
+                if (u.value && u.label !== u.value) {
+                  item.appendChild(emailSpan);
+                }
+                suggestions.appendChild(item);
+              });
+            } catch {
+              renderMessage('Search failed', 'text-danger');
+            }
+          }, 300);
+        });
+
+        suggestions.addEventListener('click', (event) => {
+          const item = event.target.closest('li[data-email]');
+          if (!item) return;
+          studentInput.value = item.dataset.email || '';
+          if (studentNameInput) studentNameInput.value = item.dataset.name || '';
+          clearSuggestions();
+        });
+
+        document.addEventListener('click', (event) => {
+          if (event.target === studentInput || suggestions.contains(event.target)) {
+            return;
+          }
+          clearSuggestions();
+        });
       }
-    });
-  });
+
+      const modalEl = document.getElementById('confirmResetModal');
+      const confirmEmail = document.getElementById('confirm-reset-email');
+      const confirmBtn = document.getElementById('confirm-reset-btn');
+      if (!modalEl || !confirmEmail || !confirmBtn) return;
+      const modal = new bootstrap.Modal(modalEl);
+
+      form.addEventListener('submit', (event) => {
+        if (form.dataset.confirmed === 'true') return;
+        if (!form.checkValidity()) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const email = document.getElementById('student_email')?.value || '';
+        confirmEmail.textContent = email || 'this student';
+        modal.show();
+      });
+
+      confirmBtn.addEventListener('click', () => {
+        form.dataset.confirmed = 'true';
+        if (form.requestSubmit) {
+          form.requestSubmit();
+        } else {
+          form.submit();
+        }
+      });
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initResetPage);
+  } else {
+    initResetPage();
+  }
 </script>
 {% endblock %}
