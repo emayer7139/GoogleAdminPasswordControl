@@ -9,19 +9,20 @@
     rel="stylesheet"
   />
   <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
-    rel="stylesheet"
-  />
+  href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+  rel="stylesheet"
+/>
   <link href="{{ url_for('static', filename='error.css') }}" rel="stylesheet" />
 </head>
 <body>
   <div class="meme-container">
+    <!-- your Travolta GIF -->
     <img src="{{ url_for('static', filename='img/404.gif') }}"
          alt="Error 404: The page you are looking for doesn't exist" />
-    <a href="{{ url_for('auth.login_page') }}"
+    <a href="{{ url_for('login_page') }}"
        class="btn btn-home">
       Return Home
     </a>
   </div>
 </body>
-</html>
+
