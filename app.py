@@ -6,6 +6,7 @@ import platform
 import secrets
 import sys
 import time
+import subprocess
 from datetime import datetime, timedelta
 
 from flask import (
@@ -95,6 +96,66 @@ def _format_timestamp(ts):
         return datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
     except Exception:
         return 'unknown'
+
+
+def _run_git(args):
+    try:
+        return subprocess.check_output(
+            ['git'] + list(args),
+            cwd=app.root_path,
+            stderr=subprocess.DEVNULL,
+            text=True
+        ).strip()
+    except Exception:
+        return ''
+
+
+def _get_build_metadata():
+    cached = getattr(_get_build_metadata, '_cache', None)
+    if cached:
+        return cached
+
+    version = (os.environ.get('APP_VERSION') or '').strip()
+    commit = (os.environ.get('GIT_SHA') or '').strip()
+    build_time = (os.environ.get('BUILD_TIME') or '').strip()
+
+    if not commit:
+        commit = _run_git(['rev-parse', 'HEAD'])
+    if not version:
+        version = _run_git(['describe', '--tags', '--always', '--dirty'])
+        if not version and commit:
+            version = commit[:7]
+    if not build_time:
+        build_time = _run_git(['show', '-s', '--format=%cI', 'HEAD'])
+    if not build_time:
+        try:
+            build_time = datetime.utcfromtimestamp(
+                os.path.getmtime(__file__)
+            ).strftime('%Y-%m-%d %H:%M:%S UTC')
+        except Exception:
+            build_time = ''
+
+    info = {
+        'version': version or 'unknown',
+        'commit': commit or 'unknown',
+        'build_time': build_time or 'unknown',
+    }
+    _get_build_metadata._cache = info
+    return info
+
+
+def _check_writable_dir(path):
+    if not path:
+        return False, 'not set'
+    try:
+        os.makedirs(path, exist_ok=True)
+        probe_path = os.path.join(path, '.write_test')
+        with open(probe_path, 'w', encoding='utf-8') as handle:
+            handle.write('ok')
+        os.remove(probe_path)
+        return True, path
+    except Exception as exc:
+        return False, f"{path} ({exc})"
 
 
 def _load_status_notification_state(path):
@@ -214,7 +275,7 @@ def _collect_status_data():
     db_status = {'ok': False, 'detail': ''}
     db_details = []
     db_counts = []
-    db_schema_time = 'unknown'
+    db_schema_time = 'n/a'
     try:
         engine = get_engine()
         with engine.connect() as conn:
@@ -285,10 +346,11 @@ def _collect_status_data():
             default=''
         )
 
+    build_info = _get_build_metadata()
     app_info = [
-        {'name': 'Version', 'detail': os.environ.get('APP_VERSION', 'unknown')},
-        {'name': 'Commit', 'detail': os.environ.get('GIT_SHA', 'unknown')},
-        {'name': 'Build time', 'detail': os.environ.get('BUILD_TIME', 'unknown')},
+        {'name': 'Version', 'detail': build_info['version']},
+        {'name': 'Commit', 'detail': build_info['commit']},
+        {'name': 'Build time', 'detail': build_info['build_time']},
         {'name': 'Python', 'detail': platform.python_version()},
     ]
 
@@ -343,16 +405,18 @@ def _collect_status_data():
 
     data_dir = os.path.join(app.root_path, 'data')
     upload_dir = app.config.get('UPLOAD_FOLDER')
+    data_ok, data_detail = _check_writable_dir(data_dir)
+    upload_ok, upload_detail = _check_writable_dir(upload_dir)
     storage_checks = [
         {
             'name': 'Data directory writable',
-            'detail': data_dir,
-            'ok': os.path.isdir(data_dir) and os.access(data_dir, os.W_OK),
+            'detail': data_detail,
+            'ok': data_ok,
         },
         {
             'name': 'Upload directory writable',
-            'detail': upload_dir,
-            'ok': bool(upload_dir) and os.path.isdir(upload_dir) and os.access(upload_dir, os.W_OK),
+            'detail': upload_detail,
+            'ok': upload_ok,
         },
     ]
 
@@ -367,6 +431,8 @@ def _collect_status_data():
                 db_location = url.database or 'memory'
                 if db_location and os.path.exists(db_location):
                     db_schema_time = _format_timestamp(os.path.getmtime(db_location))
+                else:
+                    db_schema_time = 'not initialized'
             else:
                 host = url.host or 'local'
                 port = f":{url.port}" if url.port else ''

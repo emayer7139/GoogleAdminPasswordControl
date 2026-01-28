@@ -34,5 +34,6 @@ services:
       - ./service_account.json:/app/service_account.json:ro
       - ./templates:/app/templates:ro
       - ./static:/app/static:ro
+      - ./static/uploads:/app/static/uploads
 volumes:
   resetapp_db:

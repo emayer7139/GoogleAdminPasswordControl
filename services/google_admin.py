@@ -81,13 +81,24 @@ def search_users(query, max_results=50):
     if not toks:
         return []
     term = toks[0]
-    resp = svc.users().list(
-        customer='my_customer',
-        query=f"givenName:{term}* OR familyName:{term}* OR email:{term}*",
-        maxResults=max_results,
-        fields=fields
-    ).execute()
-    results = resp.get('users', [])
+    try:
+        resp = svc.users().list(
+            customer='my_customer',
+            query=f"givenName:{term}* OR familyName:{term}* OR email:{term}*",
+            maxResults=max_results,
+            fields=fields
+        ).execute()
+        results = resp.get('users', [])
+    except HttpError:
+        results = []
+        for field in ('givenName', 'familyName', 'email'):
+            resp = svc.users().list(
+                customer='my_customer',
+                query=f"{field}:{term}*",
+                maxResults=max_results,
+                fields=fields
+            ).execute()
+            results.extend(resp.get('users', []))
     admin_api_cache[cache_key] = results
     return results
 
