@@ -77,23 +77,6 @@
     color: #111827;
 }
 
-.admin-tabs .nav-tabs {
-    border-bottom: 1px solid rgba(15, 23, 42, 0.15);
-}
-
-.admin-tabs .nav-link {
-    border: none;
-    border-radius: 999px;
-    padding: 0.5rem 1.2rem;
-    color: #374151;
-    margin-right: 0.5rem;
-}
-
-.admin-tabs .nav-link.active {
-    background: #111827;
-    color: #ffffff;
-}
-
 .admin-table {
     background: #ffffff;
     border-radius: 0.75rem;
@@ -165,15 +148,6 @@ html.dark-mode .admin-stat-label {
 
 html.dark-mode .admin-stat-value {
     color: #f9fafb;
-}
-
-html.dark-mode .admin-tabs .nav-link {
-    color: #d1d5db;
-}
-
-html.dark-mode .admin-tabs .nav-link.active {
-    background: #f9fafb;
-    color: #111827;
 }
 
 html.dark-mode .bug-thumb {
