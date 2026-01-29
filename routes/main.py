@@ -144,7 +144,7 @@ def index():
             admin_email=user_info['email'],
             outcome=outcome,
             detail=f"{se} ({sn})" if sn else se,
-            role=role,
+            role=actual_role,
             action_type='password_reset',
             admin_ou=session.get('orgUnitPath'),
             admin_school=session.get('school')

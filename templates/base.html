@@ -36,6 +36,28 @@
         {% endwith %}
     </div>
 
+    {% if actual_role == 'global_admin' and role_preview %}
+    <div class="container">
+        <div class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between gap-3" role="alert">
+            <div>
+                <strong>Role Preview:</strong>
+                {{ role_preview.replace('_', ' ').title() }}
+                <span class="text-muted ms-2">You are viewing the app as this role.</span>
+            </div>
+            <div class="d-flex gap-2">
+                <a class="btn btn-sm btn-outline-dark" href="{{ url_for('admin.admin_settings') }}">
+                    Manage Preview
+                </a>
+                <form method="post" action="{{ url_for('admin.clear_role_preview') }}">
+                    <input type="hidden" name="csrf_token" value="{{ session['csrf_token'] }}" />
+                    <input type="hidden" name="next" value="{{ request.path }}" />
+                    <button class="btn btn-sm btn-dark">Exit Preview</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Main Content -->
     <main>
         {% block content %}{% endblock %}

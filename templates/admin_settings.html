@@ -16,8 +16,9 @@
 
 {% block admin_body %}
 <div class="admin-panel mt-3">
-  <form method="post">
+  <form method="post" class="mb-4">
     <input type="hidden" name="csrf_token" value="{{ session['csrf_token'] }}" />
+    <input type="hidden" name="action" value="save_settings" />
     <div class="row g-4">
       <div class="col-12">
         <div class="form-check form-switch">
@@ -55,6 +56,18 @@
         </div>
       </div>
 
+      <div class="col-12">
+        <button class="btn btn-primary">Save Settings</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="admin-nav-divider"></div>
+
+  <form method="post" class="mt-4">
+    <input type="hidden" name="csrf_token" value="{{ session['csrf_token'] }}" />
+    <input type="hidden" name="action" value="role_preview" />
+    <div class="row g-3">
       <div class="col-12 col-md-6">
         <label for="role-preview" class="form-label fw-semibold">Role preview (session only)</label>
         <select id="role-preview" name="role_preview" class="form-select">
@@ -67,10 +80,20 @@
         <div class="form-text">
           Preview how the app behaves for another role without changing permissions for other users.
         </div>
+        {% if role_preview %}
+        <div class="small text-muted mt-2">
+          Currently previewing: <strong>{{ role_preview.replace('_', ' ').title() }}</strong>
+        </div>
+        {% endif %}
       </div>
-
-      <div class="col-12">
-        <button class="btn btn-primary">Save Settings</button>
+      <div class="col-12 col-md-6 d-flex flex-wrap align-items-end gap-2">
+        <button class="btn btn-outline-primary"
+                onclick="return confirm('Start role preview as ' + document.getElementById('role-preview').selectedOptions[0].text + '?')">
+          Apply Role Preview
+        </button>
+        <button class="btn btn-outline-secondary" name="clear_preview" value="1">
+          Clear Preview
+        </button>
       </div>
     </div>
   </form>

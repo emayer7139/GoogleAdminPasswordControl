@@ -83,6 +83,8 @@ def inject_user():
     return {
         'user': session.get('user_info'),
         'role': session.get('role'),
+        'actual_role': session.get('role'),
+        'role_preview': session.get('role_preview'),
         'theme': session.get('theme', 'light')
     }
 

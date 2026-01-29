@@ -183,6 +183,29 @@ def admin_settings():
         token = request.form.get('csrf_token')
         if not token or token != session.get('csrf_token'):
             abort(403)
+        action = request.form.get('action', 'save_settings')
+        if action == 'role_preview':
+            preview_role = request.form.get('role_preview', '').strip()
+            clear_preview = request.form.get('clear_preview')
+            allowed_preview = {ROLE_ADMIN, ROLE_MEDIA_SPECIALIST, ROLE_TEACHER, ROLE_GLOBAL_ADMIN}
+            if clear_preview or preview_role not in allowed_preview or preview_role == ROLE_GLOBAL_ADMIN:
+                session.pop('role_preview', None)
+                flash('Role preview cleared.', 'success')
+                preview_role = None
+            else:
+                session['role_preview'] = preview_role
+                flash(f'Role preview enabled: {preview_role.replace("_", " ").title()}', 'success')
+            log_audit_event(
+                admin_email=session['user_info']['email'],
+                outcome='Role Preview Updated',
+                detail=f'role_preview={preview_role or "none"}',
+                role=session.get('role'),
+                action_type='admin_action',
+                admin_ou=session.get('orgUnitPath'),
+                admin_school=session.get('school')
+            )
+            return redirect(url_for('admin.admin_settings'))
+
         require_request = request.form.get('require_reset_request') == 'on'
         require_teacher_approval = request.form.get('require_teacher_approval') == 'on'
         cooldown_raw = request.form.get('reset_cooldown_minutes', '').strip()
@@ -194,13 +217,6 @@ def admin_settings():
         if cooldown_minutes < 0 or cooldown_minutes > 1440:
             flash('Cooldown must be between 0 and 1440 minutes.', 'danger')
             return redirect(url_for('admin.admin_settings'))
-
-        preview_role = request.form.get('role_preview', '').strip()
-        allowed_preview = {ROLE_ADMIN, ROLE_MEDIA_SPECIALIST, ROLE_TEACHER, ROLE_GLOBAL_ADMIN}
-        if preview_role in allowed_preview and preview_role != ROLE_GLOBAL_ADMIN:
-            session['role_preview'] = preview_role
-        else:
-            session.pop('role_preview', None)
 
         set_app_settings({
             'require_reset_request': 'true' if require_request else 'false',
@@ -236,6 +252,18 @@ def admin_settings():
             reset_limit=current_app.config.get('RESET_LIMIT', 5)
         )
     )
+
+
+@bp.route('/admin/role-preview/clear', methods=['POST'])
+@login_required
+@role_required({ROLE_GLOBAL_ADMIN})
+def clear_role_preview():
+    token = request.form.get('csrf_token')
+    if not token or token != session.get('csrf_token'):
+        abort(403)
+    session.pop('role_preview', None)
+    flash('Role preview cleared.', 'success')
+    return redirect(request.form.get('next') or request.referrer or url_for('main.index'))
 
 
 @bp.route('/audit/export')
